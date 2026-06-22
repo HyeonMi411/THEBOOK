@@ -14,7 +14,7 @@ public interface BookMapper {
 	public List<BookDto> findAll(HashMap<String,Integer> map);
 	public   int              findAllCnt(); 
     // 단건 조회
-	public BookDto findById(Integer bookId);
+	public BookDto findById(BookDto dto);
 
     // 등록
 	public int insert(BookDto book);

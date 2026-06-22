@@ -2,19 +2,24 @@ package com.the703.service;
 
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import com.the703.dto.BoardDto;
 import com.the703.dto.BookDto;
 
 public interface BookService {
 
     public List<BookDto> findAll(int  pstartno);
+	public int             findAllCnt();    
 
-    public BookDto findById(Integer bookId);
+    public int insert(BookDto dto , MultipartFile file);
+    
+    public BookDto        detail(BookDto dto);
+    
+	public BookDto        editView(BookDto dto); 
+	public int             edit(BookDto  dto , MultipartFile file);     
 
-    public int insert(BookDto book);
-
-    public int update(BookDto book);
-
-    public int delete(Integer bookId);
+	public int             delete(BookDto  dto);
 
     public List<BookDto> findByCategory(String category);
 

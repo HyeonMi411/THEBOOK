@@ -1,76 +1,124 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>   
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib uri="http://www.springframework.org/security/tags" prefix="sec" %>
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MVC1-BOARD</title>
-    <!-- Latest compiled and minified CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Latest compiled JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <link href="./css/board.css" rel="stylesheet">
-</head>
-<body>
-    <!--  header  -->
-    <header> 
-        <div class="p-5 bg-primary text-white text-center myvisual">
-            <h1>THEJOA703</h1>
-            <p>MVC1 JSP PROJECT</p>
-        </div> 
-        <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-            <h2  class="myhidden">주메뉴</h2>
-            <div class="container-fluid">
-                <a class="navbar-brand" href="javascript:void(0)">Logo</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mynavbar">
-                <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="mynavbar">
-                <ul class="navbar-nav ms-auto">
-                <!--  애플리케이션 루트기준  --> 
-                <%@ taglib  prefix="c"  uri="http://java.sun.com/jsp/jstl/core" %>
-                <%@ taglib uri="http://www.springframework.org/security/tags" prefix="sec" %>  
-                <!-- 로그인 안한상태 -->
-                <sec:authorize  access="isAnonymous()" >    
-                    <li class="nav-item">
-                    <a class="nav-link" href="${pageContext.request.contextPath}/users/login">Login</a>
-                    </li>
-                    <li class="nav-item">
-                    <a class="nav-link" href="${pageContext.request.contextPath}/users/join">Join</a>
-                    </li>
-                </sec:authorize>
-                  
-                 <li class="nav-item">
-                 	<a class="nav-link" href="${pageContext.request.contextPath}/board/list.do">BOARD</a>
-                 </li> 
-                 
-                <!--  현재 사용자가 인증된 상태    access="isAuthenticated()" / 특정권한 access="hasRole('ROLE_ADMIN')"  -->
-                <sec:authorize  access="isAuthenticated()" >     
-                    <li class="nav-item">
-	                    <a class="nav-link" href="${pageContext.request.contextPath}/users/mypage">
-	                    	<sec:authentication property="principal.dto.email"/>
-	                    </a>
-                    </li> 
-                    <li class="nav-item">
-                      <form  action="${pageContext.request.contextPath}/users/logout"   method="post">
-                      	<input type="hidden"   name="${_csrf.parameterName}"    value="${_csrf.token}"/>
-                      	<input type="submit"  value="로그아웃"   class="btn btn-danger"/>
-                      </form>
-                    </li>
-                </sec:authorize>
-                
-                
-                </ul> 
-                </div>
-            </div>
-        </nav>
-    </header>
-    <!--  header -->
-    <!--  header -->
-    <!--  header -->
-    <!--  header -->
-    <!--  jsp014_header.jsp -->
-    <!--  jsp014_header.jsp -->
+    <title>BookStore</title>
 
- 
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        /* BookStore 스타일 */
+        .header {
+            width:100%;
+            background:#ffffff;
+            border-bottom:1px solid #e5e5e5;
+            padding:12px 0;
+            position:sticky;
+            top:0;
+            z-index:100;
+        }
+        .header-inner {
+            max-width:1200px;
+            margin:auto;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:20px;
+            padding:0 20px;
+        }
+        .logo {
+            font-size:22px;
+            font-weight:700;
+            color:#333;
+            white-space:nowrap;
+        }
+        .search-box {
+            flex:1;
+            display:flex;
+            justify-content:center;
+        }
+        .search-box input {
+            width:70%;
+            padding:10px 14px;
+            border:1px solid #ccc;
+            border-radius:20px;
+            font-size:14px;
+            outline:none;
+            transition:0.2s;
+        }
+        .search-box input:focus {
+            border-color:#666;
+        }
+        .nav a {
+            margin-left:20px;
+            text-decoration:none;
+            color:#333;
+            font-size:15px;
+            transition:0.2s;
+        }
+        .nav a:hover {
+            color:#0077ff;
+        }
+        .login-btn {
+            margin-left:20px;
+            color:#0077ff;
+            font-weight:600;
+        }
+        .logout-btn {
+            margin-left:20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- 통합 헤더 -->
+<header class="header">
+    <div class="header-inner">
+
+        <!-- 로고 -->
+        <div class="logo">📚 THEJOA703 BookStore</div>
+
+        <!-- 검색창 -->
+        <div class="search-box">
+            <form action="/books/search" method="get" style="width:100%;">
+                <input type="text" name="keyword" placeholder="도서 제목, 작가, 출판사를 검색하세요">
+            </form>
+        </div>
+
+        <!-- 메뉴 + 로그인/로그아웃 -->
+        <nav class="nav">
+
+            <a href="/books">홈</a>
+            <a href="/books/category/소설">소설</a>
+            <a href="/books/category/에세이">에세이</a>
+            <a href="/books/category/자기계발">자기계발</a>
+
+            <!-- 로그인 안한 상태 -->
+            <sec:authorize access="isAnonymous()">
+                <a href="${pageContext.request.contextPath}/users/login" class="login-btn">Login</a>
+                <a href="${pageContext.request.contextPath}/users/join" class="login-btn">Join</a>
+            </sec:authorize>
+
+            <!-- 로그인한 상태 -->
+            <sec:authorize access="isAuthenticated()">
+                <a href="${pageContext.request.contextPath}/users/mypage">
+                    <sec:authentication property="principal.dto.email"/>
+                </a>
+
+                <form action="${pageContext.request.contextPath}/users/logout" method="post" class="logout-btn">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                    <input type="submit" value="로그아웃" class="btn btn-danger btn-sm"/>
+                </form>
+            </sec:authorize>
+
+        </nav>
+
+    </div>
+</header>

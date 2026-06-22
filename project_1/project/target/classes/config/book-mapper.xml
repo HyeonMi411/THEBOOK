@@ -20,14 +20,14 @@
   
 
     <!-- 단건 조회 -->
-    <select id="findById" resultType="BookDto">
+    <select resultType="BookDto"  id="findById"  parameterType="BookDto"  >
         SELECT *
         FROM book
         WHERE book_id = #{bookId}
     </select>
 
     <!-- 등록 -->
-    <insert id="insert" parameterType="com.the703.dto.BookDto" useGeneratedKeys="true" keyProperty="bookId">
+    <insert id="insert" parameterType="BookDto" useGeneratedKeys="true" keyProperty="bookId">
         INSERT INTO book (
             title, author, publisher, publish_date, category,
             ranking, review_count, rating, description, pages,
