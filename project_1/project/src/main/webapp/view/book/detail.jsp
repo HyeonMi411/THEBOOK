@@ -4,6 +4,55 @@
 <%@include file="../inc/header.jsp"  %>
 <!-- 	header		 -->
 <!-- 	header		 -->
+<style>
+.btn-area {
+    margin-top: 30px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn-custom {
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.25s;
+    display: inline-block;
+}
+
+/* 목록 버튼 */
+.btn-back {
+    background: #f1f3f5;
+    color: #333;
+    border: 1px solid #d0d4d8;
+}
+.btn-back:hover {
+    background: #e2e6ea;
+}
+
+/* 수정 버튼 */
+.btn-edit {
+    background: #4dabf7;
+    color: white;
+}
+.btn-edit:hover {
+    background: #339af0;
+}
+
+/* 삭제 버튼 */
+.btn-delete {
+    background: #ff6b6b;
+    color: white;
+}
+.btn-delete:hover {
+    background: #fa5252;
+}
+
+
+</style>
+
+
     <section class="container  my-5">
 
     <!-- 책 표지 -->

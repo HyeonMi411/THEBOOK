@@ -83,7 +83,9 @@
     <div class="header-inner">
 
         <!-- 로고 -->
-        <div class="logo">📚 THEJOA703 BookStore</div>
+        <div class="logo">
+         <a href="${pageContext.request.contextPath}/book/list" class="login-btn">📚BookStore</a>
+        </div>
 
         <!-- 검색창 -->
         <div class="search-box">
@@ -93,13 +95,8 @@
         </div>
 
         <!-- 메뉴 + 로그인/로그아웃 -->
-        <nav class="nav">
-
-            <a href="/books">홈</a>
-            <a href="/books/category/소설">소설</a>
-            <a href="/books/category/에세이">에세이</a>
-            <a href="/books/category/자기계발">자기계발</a>
-
+        <nav class="nav">           
+           <a href="${pageContext.request.contextPath}/board/list.do" class="login-btn">공지사항</a>
             <!-- 로그인 안한 상태 -->
             <sec:authorize access="isAnonymous()">
                 <a href="${pageContext.request.contextPath}/users/login" class="login-btn">Login</a>

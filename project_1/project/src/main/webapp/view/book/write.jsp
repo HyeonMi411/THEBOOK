@@ -140,7 +140,7 @@
 
         <div class="btn-area">
             <button type="submit" class="btn btn-submit">등록하기</button>
-            <a href="/book/${book.bookId}" class="btn btn-cancel">취소</a>
+            <a href="javascript:history.go(-1)" class="btn btn-cancel">취소</a>
         </div>
 
     </form>
