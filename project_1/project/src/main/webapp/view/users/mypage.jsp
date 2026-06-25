@@ -3,7 +3,7 @@
 <%@include file="../inc/header.jsp" %>
 
 <div class="container my-5">
-  <h3>마이페이지</h3> 
+  <h3>MyPage</h3> 
   <table class="table table-bordered table-striped">
     <caption>Userinfo</caption>
     <tbody>

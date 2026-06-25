@@ -1,64 +1,51 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>   
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<%@include file="../inc/header.jsp"  %>
-<!-- 	header		 -->
-<!-- 	header		 -->
+<%@include file="../inc/header.jsp" %>
+
 <style>
-.btn-area {
-    margin-top: 30px;
-    display: flex;
-    gap: 12px;
-}
+    body { font-family:'Noto Sans KR', sans-serif; background:#fafafa; margin:0; padding:30px; }
+    .container { display:flex; gap:30px; max-width:900px; margin:auto; }
+    img { width:280px; border-radius:10px; height:380px; object-fit:cover; }
+    .info { flex:1; }
+    .title { font-size:28px; font-weight:700; margin-bottom:10px; }
+    .meta { color:#555; margin-bottom:10px; }
+    .rating { font-size:18px; color:#f39c12; margin-bottom:10px; }
+    .desc { margin-top:20px; line-height:1.6; }
+    .box { background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
 
-.btn-custom {
-    padding: 10px 22px;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: 0.25s;
-    display: inline-block;
-}
-
-/* 목록 버튼 */
-.btn-back {
-    background: #f1f3f5;
-    color: #333;
-    border: 1px solid #d0d4d8;
-}
-.btn-back:hover {
-    background: #e2e6ea;
-}
-
-/* 수정 버튼 */
-.btn-edit {
-    background: #4dabf7;
-    color: white;
-}
-.btn-edit:hover {
-    background: #339af0;
-}
-
-/* 삭제 버튼 */
-.btn-delete {
-    background: #ff6b6b;
-    color: white;
-}
-.btn-delete:hover {
-    background: #fa5252;
-}
-
-
+    /* 버튼 영역 */
+    .btn-area {
+        margin-top: 30px;
+        display: flex;
+        gap: 12px;
+    }
+    .btn-custom {
+        padding: 10px 22px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.25s;
+        display: inline-block;
+    }
+    .btn-back { background:#f1f3f5; color:#333; border:1px solid #d0d4d8; }
+    .btn-back:hover { background:#e2e6ea; }
+    .btn-edit { background:#4dabf7; color:white; }
+    .btn-edit:hover { background:#339af0; }
+    .btn-delete { background:#ff6b6b; color:white; }
+    .btn-delete:hover { background:#fa5252; }
 </style>
 
-
-    <section class="container  my-5">
+<section class="container my-5">
 
     <!-- 책 표지 -->
     <img src="${pageContext.request.contextPath}/upload/${book.bookCover}">
 
     <div class="info">
+
         <!-- 제목 -->
         <div class="title">${book.title}</div>
 
@@ -93,15 +80,15 @@
 
         <!-- 버튼 영역 -->
         <div class="btn-area">
-            <a href="${pageContext.request.contextPath}/book/list" class="btn btn-back">목록으로</a>
-            <a href="${pageContext.request.contextPath}/book/edit?bookId=${book.bookId}" class="btn btn-edit">수정</a>
-            <a href="${pageContext.request.contextPath}/book/delete?bookId=${book.bookId}" class="btn btn-delete"
+            <a href="${pageContext.request.contextPath}/book/list" class="btn-custom btn-back">목록으로</a>
+            <a href="${pageContext.request.contextPath}/book/edit?bookId=${book.bookId}" class="btn-custom btn-edit">수정</a>
+            <a href="${pageContext.request.contextPath}/book/delete?bookId=${book.bookId}" 
+               class="btn-custom btn-delete"
                onclick="return confirm('정말 삭제하시겠습니까?')">삭제</a>
         </div>
 
     </div>
 
 </section>
-<!-- 	footer		 -->
-<!-- 	footer		 -->
-<%@include file="../inc/footer.jsp"  %>
+
+<%@include file="../inc/footer.jsp" %>
