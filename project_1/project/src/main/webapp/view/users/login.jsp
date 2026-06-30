@@ -1,7 +1,68 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@include file="../inc/header.jsp" %>
 
-<div class="container my-5" style="max-width: 500px;">
+<style>
+    /* BookStore 테마 맞춤 스타일 */
+    :root {
+        --bs-primary: #0077ff;
+    }
+
+    .card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background-color: #ffffff !important;
+        border-bottom: 1px solid #eeeeee;
+        padding: 25px 20px 15px 20px;
+    }
+
+    .card-header h4 {
+        color: #333;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: -0.5px;
+    }
+
+    .form-label {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        border-radius: 10px;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        font-size: 15px;
+    }
+
+    .form-control:focus {
+        border-color: #0077ff;
+        box-shadow: 0 0 0 0.25rem rgba(0, 119, 255, 0.1);
+    }
+
+    .btn-primary {
+        background-color: #0077ff;
+        border: none;
+        border-radius: 10px;
+        padding: 12px;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-outline-secondary {
+        border-radius: 10px;
+        padding: 12px;
+    }
+</style>
+
+<div class="container my-5" style="max-width: 450px;">
 
     <script>
         window.addEventListener("load", function() {
@@ -18,39 +79,34 @@
     </script>
 
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white">
+        <div class="card-header">
             <h4 class="mb-0">로그인</h4>
         </div>
 
-        <div class="card-body">
-
-            <form action="${pageContext.request.contextPath}/login"
-                  method="post" onsubmit="return checkForm()">
-
+        <div class="card-body p-4">
+            <form action="${pageContext.request.contextPath}/login" method="post" onsubmit="return checkForm()">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
 
-                <!-- 이메일 -->
-                <div class="mb-4">
+                <div class="mb-3">
                     <label for="email" class="form-label fw-semibold">이메일</label>
-                    <input type="email" class="form-control form-control-lg"
-                           id="email" name="username" placeholder="이메일을 입력하세요" />
+                    <input type="email" class="form-control" id="email" name="username" placeholder="이메일을 입력하세요" />
                 </div>
 
-                <!-- 비밀번호 -->
                 <div class="mb-4">
                     <label for="bpass" class="form-label fw-semibold">비밀번호</label>
-                    <input type="password" class="form-control form-control-lg"
-                           id="bpass" name="password" placeholder="비밀번호를 입력하세요" />
+                    <input type="password" class="form-control" id="bpass" name="password" placeholder="비밀번호를 입력하세요" />
                 </div>
 
-                <!-- 버튼 -->
-                <div class="d-flex justify-content-end gap-2">
-                    <button type="reset" class="btn btn-outline-secondary px-4">취소</button>
-                    <button type="submit" class="btn btn-primary px-4">로그인</button>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">로그인</button>
+                    <button type="reset" class="btn btn-outline-secondary">취소</button>
                 </div>
 
+                <div class="text-center mt-4">
+                    <span class="text-muted font-size-14">아직 회원이 아니신가요?</span>
+                    <a href="${pageContext.request.contextPath}/users/join" class="text-decoration-none ms-1" style="color: #0077ff; font-weight: 600;">회원가입</a>
+                </div>
             </form>
-
         </div>
     </div>
 </div>

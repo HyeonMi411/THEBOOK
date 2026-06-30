@@ -1,12 +1,13 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>   
-<%@include file="../inc/header.jsp" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<%@ include file="../inc/header.jsp" %>
 
 <style>
 /* 전체 컨테이너 */
 .notice-wrap {
     max-width: 1100px;
     margin: 60px auto;
-    font-family: 'Pretendard', sans-serif;
 }
 
 /* 제목 */
@@ -15,10 +16,9 @@
     font-weight: 700;
     color: #1f2937;
     margin-bottom: 32px;
-    padding-left: 4px;
 }
 
-/* 카드 스타일 */
+/* 카드 */
 .notice-card {
     background: #ffffff;
     border-radius: 12px;
@@ -63,7 +63,7 @@
     transition: color 0.2s ease;
 }
 .notice-link:hover {
-    color: #4f46e5;
+    color: #0077ff;
     text-decoration: underline;
 }
 
@@ -86,14 +86,14 @@
     color: #4338ca;
 }
 .custom-pagination .active .page-link {
-    background: #4f46e5;
-    border-color: #4f46e5;
+    background: #0077ff;
+    border-color: #0077ff;
     color: #fff;
 }
 
 /* 글쓰기 버튼 */
 .btn-write {
-    background: #4f46e5;
+    background: #0077ff;
     color: #fff;
     padding: 10px 22px;
     border-radius: 8px;
@@ -102,8 +102,8 @@
     text-decoration: none;
 }
 .btn-write:hover {
-    background: #4338ca;
-    box-shadow: 0 4px 10px rgba(79,70,229,0.25);
+    background: #005fcc;
+    box-shadow: 0 4px 10px rgba(0,119,255,0.25);
 }
 </style>
 
@@ -185,4 +185,4 @@ window.addEventListener("load", function(){
     </div>
 </section>
 
-<%@include file="../inc/footer.jsp" %>
+<%@ include file="../inc/footer.jsp" %>
