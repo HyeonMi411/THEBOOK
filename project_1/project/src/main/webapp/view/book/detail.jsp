@@ -1,94 +1,242 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>   
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+    pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 
-<%@include file="../inc/header.jsp" %>
+<%@ include file="../inc/header.jsp"%>
 
 <style>
-    body { font-family:'Noto Sans KR', sans-serif; background:#fafafa; margin:0; padding:30px; }
-    .container { display:flex; gap:30px; max-width:900px; margin:auto; }
-    img { width:280px; border-radius:10px; height:380px; object-fit:cover; }
-    .info { flex:1; }
-    .title { font-size:28px; font-weight:700; margin-bottom:10px; }
-    .meta { color:#555; margin-bottom:10px; }
-    .rating { font-size:18px; color:#f39c12; margin-bottom:10px; }
-    .desc { margin-top:20px; line-height:1.6; }
-    .box { background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+.detail-container{
+    max-width:1100px;
+    margin:60px auto;
+}
 
-    /* 버튼 영역 */
-    .btn-area {
-        margin-top: 30px;
-        display: flex;
-        gap: 12px;
+.detail-card{
+    background:#fff;
+    border-radius:18px;
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+    overflow:hidden;
+}
+
+.book-cover{
+    width:100%;
+    height:520px;
+    object-fit:cover;
+    border-radius:12px;
+}
+
+.info-title{
+    font-size:32px;
+    font-weight:700;
+    color:#222;
+    margin-bottom:15px;
+}
+
+.info-meta{
+    color:#666;
+    font-size:15px;
+    margin-bottom:12px;
+}
+
+.badge-category{
+    display:inline-block;
+    background:#eef4ff;
+    color:#2563eb;
+    padding:6px 14px;
+    border-radius:30px;
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:18px;
+}
+
+.rating{
+    font-size:20px;
+    color:#f59e0b;
+    font-weight:700;
+    margin-bottom:20px;
+}
+
+.info-table{
+    margin-top:20px;
+}
+
+.info-table th{
+    width:120px;
+    color:#666;
+    font-weight:600;
+    padding:10px 0;
+}
+
+.info-table td{
+    color:#333;
+    padding:10px 0;
+}
+
+.description{
+    margin-top:30px;
+    padding:25px;
+    background:#f8f9fa;
+    border-radius:12px;
+    line-height:1.8;
+    color:#444;
+    white-space:pre-line;
+}
+
+.btn-area{
+    margin-top:35px;
+    display:flex;
+    gap:12px;
+}
+
+.btn-area .btn{
+    min-width:120px;
+    border-radius:10px;
+    font-weight:600;
+}
+
+@media(max-width:768px){
+
+    .book-cover{
+        height:380px;
     }
-    .btn-custom {
-        padding: 10px 22px;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
-        text-decoration: none;
-        transition: 0.25s;
-        display: inline-block;
+
+    .info-title{
+        font-size:26px;
+        margin-top:25px;
     }
-    .btn-back { background:#f1f3f5; color:#333; border:1px solid #d0d4d8; }
-    .btn-back:hover { background:#e2e6ea; }
-    .btn-edit { background:#4dabf7; color:white; }
-    .btn-edit:hover { background:#339af0; }
-    .btn-delete { background:#ff6b6b; color:white; }
-    .btn-delete:hover { background:#fa5252; }
+
+    .btn-area{
+        flex-direction:column;
+    }
+
+    .btn-area .btn{
+        width:100%;
+    }
+
+}
 </style>
 
-<section class="container my-5">
+<div class="container detail-container">
 
-    <!-- 책 표지 -->
-    <img src="${pageContext.request.contextPath}/upload/${book.bookCover}">
+    <div class="detail-card">
 
-    <div class="info">
+        <div class="row g-0">
 
-        <!-- 제목 -->
-        <div class="title">${book.title}</div>
+            <!-- 이미지 -->
+            <div class="col-lg-4 p-4">
 
-        <!-- 저자 / 출판사 / 출판일 -->
-        <div class="meta">
-            ${book.author} | ${book.publisher} | ${book.publishDate} 출간
-        </div>
+                <c:choose>
 
-        <!-- 카테고리 -->
-        <div class="meta">카테고리: ${book.category}</div>
+                    <c:when test="${not empty book.bookCover}">
+                        <img
+                            src="${pageContext.request.contextPath}/upload/${book.bookCover}"
+                            class="book-cover"
+                            alt="${book.title}">
+                    </c:when>
 
-        <!-- 랭킹 -->
-        <c:if test="${book.ranking != null}">
-            <div class="meta">랭킹: ${book.ranking}</div>
-        </c:if>
+                    <c:otherwise>
+                        <img
+                            src="https://via.placeholder.com/320x480?text=No+Image"
+                            class="book-cover"
+                            alt="No Image">
+                    </c:otherwise>
 
-        <!-- 평점 -->
-        <c:if test="${book.rating != null}">
-            <div class="rating">⭐ ${book.rating} (리뷰 ${book.reviewCount}개)</div>
-        </c:if>
+                </c:choose>
 
-        <!-- 설명 -->
-        <div class="box desc">
-            ${book.description}
-        </div>
+            </div>
 
-        <!-- 기타 정보 -->
-        <div class="meta" style="margin-top:20px;">
-            페이지: ${book.pages}쪽 · 가격: <fmt:formatNumber value="${book.price}" type="number"/>원  
-            <br>등록일: ${book.regDate}
-        </div>
+            <!-- 정보 -->
+            <div class="col-lg-8">
 
-        <!-- 버튼 영역 -->
-        <div class="btn-area">
-            <a href="${pageContext.request.contextPath}/book/list" class="btn-custom btn-back">목록으로</a>
-            <a href="${pageContext.request.contextPath}/book/edit?bookId=${book.bookId}" class="btn-custom btn-edit">수정</a>
-            <a href="${pageContext.request.contextPath}/book/delete?bookId=${book.bookId}" 
-               class="btn-custom btn-delete"
-               onclick="return confirm('정말 삭제하시겠습니까?')">삭제</a>
+                <div class="p-4 p-lg-5">
+
+                    <h2 class="info-title">
+                        ${book.title}
+                    </h2>
+
+                    <div class="info-meta">
+                        ${book.author} · ${book.publisher}
+                    </div>
+
+                    <span class="badge-category">
+                        ${book.category}
+                    </span>
+
+                    <c:if test="${book.rating != null}">
+                        <div class="rating">
+                            ⭐ ${book.rating}
+                            <small class="text-secondary">
+                                (${book.reviewCount} Reviews)
+                            </small>
+                        </div>
+                    </c:if>
+
+                    <table class="table info-table">
+
+                        <tr>
+                            <th>출판일</th>
+                            <td>${book.publishDate}</td>
+                        </tr>
+
+                        <tr>
+                            <th>페이지</th>
+                            <td>${book.pages} Page</td>
+                        </tr>
+
+                        <tr>
+                            <th>가격</th>
+                            <td>
+                                <strong class="text-primary">
+                                    <fmt:formatNumber value="${book.price}" pattern="#,###"/>
+                                    원
+                                </strong>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>랭킹</th>
+                            <td>${book.ranking}</td>
+                        </tr>
+
+                        <tr>
+                            <th>등록일</th>
+                            <td>${book.regDate}</td>
+                        </tr>
+
+                    </table>
+
+                    <div class="description">
+                        ${book.description}
+                    </div>
+
+                    <div class="btn-area">
+
+                        <a href="${pageContext.request.contextPath}/book/list"
+                           class="btn btn-outline-secondary">
+                            목록
+                        </a>
+
+                        <a href="${pageContext.request.contextPath}/book/edit?bookId=${book.bookId}"
+                           class="btn btn-primary">
+                            수정
+                        </a>
+
+                        <a href="${pageContext.request.contextPath}/book/delete?bookId=${book.bookId}"
+                           class="btn btn-danger"
+                           onclick="return confirm('정말 삭제하시겠습니까?');">
+                            삭제
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
 
     </div>
 
-</section>
+</div>
 
-<%@include file="../inc/footer.jsp" %>
+<%@ include file="../inc/footer.jsp"%>

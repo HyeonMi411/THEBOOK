@@ -1,81 +1,160 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
-<%@ include file="../inc/header.jsp" %>
+<%@ include file="../inc/header.jsp"%>
 
 <script>
-window.addEventListener("load", function() {
-    let result = '${result}';
-    if (result === "비밀번호 확인!") {
+window.addEventListener("load",function(){
+
+    let result='${result}';
+
+    if(result==="비밀번호 확인!"){
         alert(result);
-        history.go(-1);
-    } else if (result.length !== 0) {
+        history.back();
+    }else if(result.length>0){
         alert(result);
     }
+
 });
 </script>
 
-<div class="container my-5" style="max-width: 900px;">
+<style>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-white border-bottom">
-            <h4 class="mb-0 fw-bold">📌 공지사항 상세보기</h4>
-        </div>
+.detail-wrap{
+    max-width:900px;
+    margin:60px auto;
+}
 
-        <div class="card-body p-4">
+.detail-card{
+    border:none;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
 
-            <!-- 이름 -->
-            <div class="mb-4">
-                <label class="form-label fw-semibold">작성자</label>
-                <input type="text" class="form-control form-control-lg"
-                       value="${dto.bname}" readonly />
-            </div>
+.detail-header{
+    padding:35px;
+    border-bottom:1px solid #eee;
+}
 
-            <!-- 제목 -->
-            <div class="mb-4">
-                <label class="form-label fw-semibold">제목</label>
-                <input type="text" class="form-control form-control-lg"
-                       value="${dto.btitle}" readonly />
-            </div>
+.detail-title{
+    font-size:30px;
+    font-weight:700;
+    margin-bottom:15px;
+}
 
-            <!-- 내용 -->
-            <div class="mb-4">
-                <label class="form-label fw-semibold">내용</label>
-                <textarea class="form-control" rows="8" readonly>${dto.bcontent}</textarea>
-            </div>
+.detail-info{
+    display:flex;
+    gap:30px;
+    color:#666;
+    font-size:15px;
+}
 
-            <!-- 이미지 -->
-            <c:if test="${not empty dto.bfile}">
-                <div class="mb-4 text-center">
-                    <img src="${pageContext.request.contextPath}/upload/${dto.bfile}"
-                         alt="${dto.btitle}"
-                         class="img-fluid rounded shadow-sm"
-                         style="max-height: 350px; object-fit: cover;" />
+.detail-image{
+    padding:30px;
+    text-align:center;
+}
+
+.detail-image img{
+    max-width:100%;
+    max-height:450px;
+    border-radius:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,.1);
+}
+
+.detail-content{
+    padding:35px;
+    border-top:1px solid #eee;
+    white-space:pre-wrap;
+    line-height:1.9;
+    font-size:17px;
+    min-height:220px;
+}
+
+.detail-footer{
+    padding:25px 35px;
+    border-top:1px solid #eee;
+}
+
+.btn{
+    min-width:110px;
+    border-radius:10px;
+}
+
+</style>
+
+<div class="container">
+
+    <div class="detail-wrap">
+
+        <div class="card detail-card">
+
+            <div class="detail-header">
+
+                <div class="detail-title">
+                    ${dto.btitle}
                 </div>
+
+                <div class="detail-info">
+
+                    <div>
+                        👤 <strong>${dto.bname}</strong>
+                    </div>
+
+                    <div>
+                        📌 공지사항
+                    </div>
+
+                </div>
+
+            </div>
+
+            <c:if test="${not empty dto.bfile}">
+
+                <div class="detail-image">
+
+                    <img
+                        src="${pageContext.request.contextPath}/upload/${dto.bfile}"
+                        alt="${dto.btitle}">
+
+                </div>
+
             </c:if>
 
-            <!-- 버튼 영역 -->
-            <div class="d-flex justify-content-end gap-2 mt-4">
+            <div class="detail-content">
 
-                <a href="${pageContext.request.contextPath}/board/edit.do?bno=${dto.bno}"
-                   class="btn btn-outline-primary px-4">
-                    수정
-                </a>
+                ${dto.bcontent}
 
-                <a href="${pageContext.request.contextPath}/board/delete.do?bno=${dto.bno}"
-                   class="btn btn-outline-danger px-4">
-                    삭제
-                </a>
+            </div>
 
-                <a href="${pageContext.request.contextPath}/board/list.do"
-                   class="btn btn-primary px-4">
-                    목록
-                </a>
+            <div class="detail-footer">
+
+                <div class="d-flex justify-content-end gap-2">
+
+                    <a href="${pageContext.request.contextPath}/board/edit.do?bno=${dto.bno}"
+                       class="btn btn-outline-primary">
+                        수정
+                    </a>
+
+                    <a href="${pageContext.request.contextPath}/board/delete.do?bno=${dto.bno}"
+                       class="btn btn-outline-danger">
+                        삭제
+                    </a>
+
+                    <a href="${pageContext.request.contextPath}/board/list.do"
+                       class="btn btn-primary">
+                        목록
+                    </a>
+
+                </div>
 
             </div>
 
         </div>
+
     </div>
+
 </div>
 
-<%@ include file="../inc/footer.jsp" %>
+<%@ include file="../inc/footer.jsp"%>

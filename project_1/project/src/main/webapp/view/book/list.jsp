@@ -1,142 +1,273 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>   
-<%@include file="../inc/header.jsp"  %>
-<!-- 	header		 -->
-<!-- 	header		 -->
+    pageEncoding="UTF-8"%>
+
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+
+<%@ include file="../inc/header.jsp"%>
 
 <style>
-    h1 { margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; }
+body{
+    background:#f5f7fb;
+}
 
-    /* 글쓰기 버튼 */
-    .btn-write {
-        background:#0077ff;
-        color:#fff;
-        padding:10px 18px;
-        border-radius:6px;
-        text-decoration:none;
-        font-size:15px;
-        transition:0.2s;
-    }
-    .btn-write:hover {
-        background:#005fcc;
-    }
+/* ===========================
+   Layout
+=========================== */
 
-    /* 카드 리스트 */
-    .book-list { display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; }
-    .book-card {
-        background:#fff; border-radius:10px; padding:15px;
-        box-shadow:0 2px 6px rgba(0,0,0,0.1);
-        transition:0.2s;
-        cursor:pointer;
-    }
-    .book-card:hover { transform:translateY(-4px); }
-    .book-card img { width:100%; border-radius:8px; height:260px; object-fit:cover; }
-    .title { font-size:18px; font-weight:700; margin:10px 0 5px; }
-    .author { color:#555; margin-bottom:5px; }
-    .rating { color:#f39c12; font-weight:700; }
-    .category { font-size:14px; color:#888; }
+.book-wrap{
+    max-width:1300px;
+    margin:60px auto;
+}
 
-    /* 페이징 */
-    .pagination {
-        margin-top:40px;
-        display:flex;
-        justify-content:center;
-        gap:8px;
-    }
-    .pagination a {
-        padding:8px 14px;
-        background:#fff;
-        border-radius:6px;
-        border:1px solid #ddd;
-        text-decoration:none;
-        color:#333;
-        font-size:14px;
-        transition:0.2s;
-    }
-    .pagination a:hover {
-        background:#0077ff;
-        color:#fff;
-        border-color:#0077ff;
-    }
-    .pagination .active {
-        background:#0077ff;
-        color:#fff;
-        border-color:#0077ff;
-    }
+/* ===========================
+   Header
+=========================== */
+
+.page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:35px;
+}
+
+.page-title{
+    font-size:34px;
+    font-weight:700;
+    color:#222;
+}
+
+.page-title span{
+    color:#2563eb;
+}
+
+.btn-write{
+    border-radius:10px;
+    padding:10px 24px;
+    font-weight:600;
+}
+
+/* ===========================
+   Card Grid
+=========================== */
+
+.book-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+    gap:28px;
+}
+
+/* ===========================
+   Card
+=========================== */
+
+.book-card{
+    background:#fff;
+    border-radius:18px;
+    overflow:hidden;
+    cursor:pointer;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+    transition:.25s;
+}
+
+.book-card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 18px 35px rgba(0,0,0,.15);
+}
+
+.book-cover{
+    height:360px;
+    overflow:hidden;
+}
+
+.book-cover img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    transition:.3s;
+}
+
+.book-card:hover .book-cover img{
+    transform:scale(1.05);
+}
+
+.book-body{
+    padding:18px;
+}
+
+.book-title{
+    font-size:20px;
+    font-weight:700;
+    color:#222;
+    margin-bottom:10px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.book-author{
+    color:#666;
+    margin-bottom:10px;
+}
+
+.book-category{
+    display:inline-block;
+    background:#eef4ff;
+    color:#2563eb;
+    padding:4px 10px;
+    border-radius:30px;
+    font-size:13px;
+    margin-bottom:15px;
+}
+
+.book-rating{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.star{
+    color:#f59e0b;
+    font-weight:700;
+}
+
+.review{
+    color:#888;
+    font-size:14px;
+}
+
+/* ===========================
+   Pagination
+=========================== */
+
+.pagination-area{
+    margin-top:50px;
+}
+
+.page-link{
+    border-radius:8px !important;
+    margin:0 4px;
+}
+
+.page-item.active .page-link{
+    background:#2563eb;
+    border-color:#2563eb;
+}
 </style>
-</head>
 
-<body>
+<div class="container">
 
-    <section class="container  my-5">
-<!-- 제목 + 글쓰기 버튼 -->
-<h1>
-    📚 도서 목록
-    <a href="${pageContext.request.contextPath}/book/write" class="btn-write">+ 글쓰기</a>
-</h1>
+    <div class="book-wrap">
 
-<!-- 도서 카드 리스트 -->
-<div class="book-list">
+        <div class="page-header">
 
-    <c:forEach var="book" items="${list}">
-        <div class="book-card" onclick="location.href='${pageContext.request.contextPath}/book/detail?bookId=${book.bookId}'">
+            <div class="page-title">
+                📚 <span>BookStore</span>
+            </div>
 
-            <img src="${pageContext.request.contextPath}/upload/${book.bookCover}">
-
-            <div class="title">${book.title}</div>
-            <div class="author">${book.author} · ${book.publisher}</div>
-            <div class="category">${book.category}</div>
-
-            <c:if test="${book.rating != null}">
-                <div class="rating">⭐ ${book.rating} (${book.reviewCount}명)</div>
-            </c:if>
+            <a href="${pageContext.request.contextPath}/book/write"
+               class="btn btn-primary btn-write">
+                + 도서 등록
+            </a>
 
         </div>
-    </c:forEach>
 
-</div>
+        <div class="book-grid">
 
-<!-- 페이징 UI -->
-<div class="pagination">
-            	<ul class="pagination  justify-content-center"> 
-            	<!-- 이전 -->
-            	<c:if test="${paging.start > paging.bottomlist}">
-            		<li  class="page-item">
-            			<a href="?pstartno=${paging.start-1}"  class="page-link">이전</a>
-            		</li>
-            	</c:if>
-            	
-            	<!-- 1,2,3,4,5,6,7,8,,10 -->
-            	<c:forEach  var="i"  begin="${paging.start}"  end="${paging.end}">
-            		<li   class="page-item   <c:if test="${i==paging.current}">  active </c:if> ">
-            			<a href="?pstartno=${i}"  class="page-link">${i}</a>
-            		</li>
-            	</c:forEach>
-            	
-            	<!-- 다음 -  다음글이 있다면  -  하단의전체 >  end  -->
-            	<c:if test="${paging.pagetotal > paging.end}">
-            		<li  class="page-item">
-            			<a href="?pstartno=${paging.end+1}"  class="page-link">다음</a>
-            		</li>
-            	</c:if> 
+            <c:forEach var="book" items="${list}">
+
+                <div class="book-card"
+                     onclick="location.href='${pageContext.request.contextPath}/book/detail?bookId=${book.bookId}'">
+
+                    <div class="book-cover">
+
+                        <img src="${pageContext.request.contextPath}/upload/${book.bookCover}"
+                             alt="${book.title}">
+
+                    </div>
+
+                    <div class="book-body">
+
+                        <div class="book-title">
+                            ${book.title}
+                        </div>
+
+                        <div class="book-author">
+                            ${book.author} · ${book.publisher}
+                        </div>
+
+                        <div class="book-category">
+                            ${book.category}
+                        </div>
+
+                        <c:if test="${book.rating != null}">
+
+                            <div class="book-rating">
+
+                                <div class="star">
+                                    ⭐ ${book.rating}
+                                </div>
+
+                                <div class="review">
+                                    리뷰 ${book.reviewCount}
+                                </div>
+
+                            </div>
+
+                        </c:if>
+
+                    </div>
+
+                </div>
+
+            </c:forEach>
+
+        </div>
+
+        <div class="pagination-area">
+
+            <ul class="pagination justify-content-center">
+
+                <c:if test="${paging.start > paging.bottomlist}">
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?pstartno=${paging.start-1}">
+                            이전
+                        </a>
+                    </li>
+                </c:if>
+
+                <c:forEach var="i"
+                           begin="${paging.start}"
+                           end="${paging.end}">
+
+                    <li class="page-item ${i == paging.current ? 'active' : ''}">
+
+                        <a class="page-link"
+                           href="?pstartno=${i}">
+                            ${i}
+                        </a>
+
+                    </li>
+
+                </c:forEach>
+
+                <c:if test="${paging.pagetotal > paging.end}">
+
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?pstartno=${paging.end+1}">
+                            다음
+                        </a>
+                    </li>
+
+                </c:if>
+
             </ul>
-<%--     <!-- 이전 -->
-    <c:if test="${page > 1}">
-        <a href="/books?page=${page - 1}">이전</a>
-    </c:if>
 
-    <!-- 페이지 번호 -->
-    <c:forEach begin="1" end="${totalPage}" var="p">
-        <a href="/books?page=${p}" class="${p == page ? 'active' : ''}">${p}</a>
-    </c:forEach>
+        </div>
 
-    <!-- 다음 -->
-    <c:if test="${page < totalPage}">
-        <a href="/books?page=${page + 1}">다음</a>
-    </c:if> --%>
+    </div>
 
 </div>
-</section>
-<!-- 	footer		 -->
-<!-- 	footer		 -->
-<%@include file="../inc/footer.jsp"  %>
+
+<%@ include file="../inc/footer.jsp"%>

@@ -1,188 +1,349 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
-<%@ include file="../inc/header.jsp" %>
+<%@ include file="../inc/header.jsp"%>
 
 <style>
-/* 전체 컨테이너 */
-.notice-wrap {
-    max-width: 1100px;
-    margin: 60px auto;
+
+body{
+    background:#f5f7fb;
 }
 
-/* 제목 */
-.notice-title {
-    font-size: 1.9rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 32px;
+/* =========================
+   Page
+========================= */
+
+.notice-wrap{
+    max-width:1200px;
+    margin:60px auto;
 }
 
-/* 카드 */
-.notice-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 25px 30px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+.notice-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
 }
 
-/* 테이블 */
-.notice-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+.notice-title h2{
+    font-size:34px;
+    font-weight:800;
+    margin:0;
+    color:#222;
 }
 
-.notice-table thead th {
-    background: #f9fafb;
-    padding: 14px 16px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #6b7280;
-    border-bottom: 2px solid #e5e7eb;
-    text-transform: uppercase;
+.notice-title p{
+    margin-top:8px;
+    color:#777;
+    font-size:15px;
 }
 
-.notice-table tbody td {
-    padding: 16px;
-    font-size: 0.95rem;
-    color: #374151;
-    border-bottom: 1px solid #f1f5f9;
-    transition: background 0.2s ease;
+/* =========================
+   Card
+========================= */
+
+.notice-card{
+    background:#fff;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
 }
 
-.notice-table tbody tr:hover td {
-    background: #f9fafc;
+/* =========================
+   Table
+========================= */
+
+.notice-table{
+    margin:0;
 }
 
-/* 링크 */
-.notice-link {
-    color: #1f2937;
-    font-weight: 500;
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-.notice-link:hover {
-    color: #0077ff;
-    text-decoration: underline;
+.notice-table thead{
+    background:#f8f9fa;
 }
 
-/* 페이징 */
-.pagination-area {
-    margin-top: 25px;
+.notice-table th{
+
+    padding:18px;
+    text-align:center;
+    border:none;
+
+    font-size:15px;
+    color:#555;
+    font-weight:700;
+
 }
 
-.custom-pagination .page-link {
-    color: #4b5563;
-    border: 1px solid #e5e7eb;
-    padding: 8px 14px;
-    border-radius: 6px;
-    margin: 0 3px;
-    transition: all 0.2s ease;
-}
-.custom-pagination .page-link:hover {
-    background: #eef2ff;
-    border-color: #c7d2fe;
-    color: #4338ca;
-}
-.custom-pagination .active .page-link {
-    background: #0077ff;
-    border-color: #0077ff;
-    color: #fff;
+.notice-table td{
+
+    padding:18px;
+    text-align:center;
+    vertical-align:middle;
+
 }
 
-/* 글쓰기 버튼 */
-.btn-write {
-    background: #0077ff;
-    color: #fff;
-    padding: 10px 22px;
-    border-radius: 8px;
-    font-weight: 500;
-    transition: 0.2s ease;
-    text-decoration: none;
+.notice-table tbody tr{
+
+    transition:.2s;
+
 }
-.btn-write:hover {
-    background: #005fcc;
-    box-shadow: 0 4px 10px rgba(0,119,255,0.25);
+
+.notice-table tbody tr:hover{
+
+    background:#f8fbff;
+
 }
+
+.notice-link{
+
+    text-decoration:none;
+    color:#222;
+    font-weight:600;
+
+}
+
+.notice-link:hover{
+
+    color:#0d6efd;
+
+}
+
+.notice-title-cell{
+
+    text-align:left!important;
+
+}
+
+.notice-date{
+
+    color:#777;
+    font-size:14px;
+
+}
+
+/* =========================
+   Button
+========================= */
+
+.btn-write{
+
+    border-radius:30px;
+    padding:10px 24px;
+    font-weight:600;
+
+}
+
+/* =========================
+   Pagination
+========================= */
+
+.pagination{
+
+    margin:35px 0;
+
+}
+
+.page-link{
+
+    border-radius:8px!important;
+    margin:0 3px;
+
+}
+
 </style>
 
 <script>
-window.addEventListener("load", function(){
-    let result = '${result}';
-    if(result === "글쓰기 실패" || result === "비밀번호 확인!"){
+
+window.addEventListener("load",function(){
+
+    let result='${result}';
+
+    if(result=="글쓰기 실패" || result=="비밀번호 확인!"){
+
         alert(result);
-        history.go(-1);
-    } else if(result.length !== 0){
+
+        history.back();
+
+    }else if(result.length>0){
+
         alert(result);
+
     }
+
 });
+
 </script>
 
-<section class="notice-wrap">
-    <h3 class="notice-title">공지사항</h3>
+<div class="container notice-wrap">
+
+    <!-- Header -->
+
+    <div class="notice-header">
+
+        <div class="notice-title">
+
+            <h2>📢 공지사항</h2>
+
+            <p>
+                BookStore의 새로운 소식과 이벤트를 확인하세요.
+            </p>
+
+        </div>
+
+        <a href="${pageContext.request.contextPath}/board/write.do"
+           class="btn btn-primary btn-write">
+
+            + 글쓰기
+
+        </a>
+
+    </div>
+
+    <!-- Table -->
 
     <div class="notice-card">
-        <table class="notice-table">
+
+        <table class="table notice-table">
+
             <thead>
-                <tr>
-                    <th style="width: 8%;">NO</th>
-                    <th style="width: 55%;" class="text-start">TITLE</th>
-                    <th style="width: 12%;">WRITER</th>
-                    <th style="width: 15%;">DATE</th>
-                    <th style="width: 10%;">HIT</th>
-                </tr>
+
+            <tr>
+
+                <th width="8%">번호</th>
+                <th width="54%">제목</th>
+                <th width="12%">작성자</th>
+                <th width="16%">작성일</th>
+                <th width="10%">조회수</th>
+
+            </tr>
+
             </thead>
 
             <tbody>
-                <c:forEach var="dto" items="${list}" varStatus="status">
-                    <tr>
-                        <td>${paging.listtotal - paging.pstartno - status.index}</td>
-                        <td class="text-start">
-                            <a href="${pageContext.request.contextPath}/board/detail.do?bno=${dto.bno}"
-                               class="notice-link">
-                                ${dto.btitle}
-                            </a>
-                        </td>
-                        <td>${dto.bname}</td>
-                        <td><span style="color:#6b7280; font-size:0.9rem;">${dto.bdate}</span></td>
-                        <td>${dto.bhit}</td>
-                    </tr>
-                </c:forEach>
+
+            <c:forEach var="dto"
+                       items="${list}"
+                       varStatus="status">
+
+                <tr>
+
+                    <td>
+
+                        ${paging.listtotal-paging.pstartno-status.index}
+
+                    </td>
+
+                    <td class="notice-title-cell">
+
+                        <a
+                            class="notice-link"
+                            href="${pageContext.request.contextPath}/board/detail.do?bno=${dto.bno}">
+
+                            ${dto.btitle}
+
+                        </a>
+
+                    </td>
+
+                    <td>
+
+                        ${dto.bname}
+
+                    </td>
+
+                    <td class="notice-date">
+
+                        ${dto.bdate}
+
+                    </td>
+
+                    <td>
+
+                        ${dto.bhit}
+
+                    </td>
+
+                </tr>
+
+            </c:forEach>
+
+            <c:if test="${empty list}">
+
+                <tr>
+
+                    <td colspan="5" class="py-5 text-secondary">
+
+                        등록된 공지사항이 없습니다.
+
+                    </td>
+
+                </tr>
+
+            </c:if>
+
             </tbody>
+
         </table>
 
-        <!-- 페이징 -->
-        <div class="row pagination-area align-items-center">
-            <div class="col-sm-2"></div>
-
-            <div class="col-sm-8 d-flex justify-content-center">
-                <ul class="pagination custom-pagination mb-0">
-                    <c:if test="${paging.start > paging.bottomlist}">
-                        <li class="page-item">
-                            <a href="?pstartno=${paging.start-1}" class="page-link">이전</a>
-                        </li>
-                    </c:if>
-
-                    <c:forEach var="i" begin="${paging.start}" end="${paging.end}">
-                        <li class="page-item <c:if test='${i==paging.current}'>active</c:if>'">
-                            <a href="?pstartno=${i}" class="page-link">${i}</a>
-                        </li>
-                    </c:forEach>
-
-                    <c:if test="${paging.pagetotal > paging.end}">
-                        <li class="page-item">
-                            <a href="?pstartno=${paging.end+1}" class="page-link">다음</a>
-                        </li>
-                    </c:if>
-                </ul>
-            </div>
-
-            <div class="col-sm-2 text-end mt-3 mt-sm-0">
-                <a href="${pageContext.request.contextPath}/board/write.do" class="btn-write">글쓰기</a>
-            </div>
-        </div>
     </div>
-</section>
 
-<%@ include file="../inc/footer.jsp" %>
+    <!-- Pagination -->
+
+    <nav>
+
+        <ul class="pagination justify-content-center">
+
+            <c:if test="${paging.start > paging.bottomlist}">
+
+                <li class="page-item">
+
+                    <a class="page-link"
+                       href="?pstartno=${paging.start-1}">
+
+                        이전
+
+                    </a>
+
+                </li>
+
+            </c:if>
+
+            <c:forEach var="i"
+                       begin="${paging.start}"
+                       end="${paging.end}">
+
+                <li class="page-item ${i==paging.current?'active':''}">
+
+                    <a class="page-link"
+                       href="?pstartno=${i}">
+
+                        ${i}
+
+                    </a>
+
+                </li>
+
+            </c:forEach>
+
+            <c:if test="${paging.pagetotal > paging.end}">
+
+                <li class="page-item">
+
+                    <a class="page-link"
+                       href="?pstartno=${paging.end+1}">
+
+                        다음
+
+                    </a>
+
+                </li>
+
+            </c:if>
+
+        </ul>
+
+    </nav>
+
+</div>
+
+<%@ include file="../inc/footer.jsp"%>

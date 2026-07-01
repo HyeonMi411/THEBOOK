@@ -1,61 +1,155 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
-<%@ include file="../inc/header.jsp" %>
+<%@ include file="../inc/header.jsp"%>
 
-<div class="container my-5" style="max-width: 600px;">
+<style>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-white border-bottom">
-            <h4 class="mb-0 fw-bold">🗑️ 게시글 삭제</h4>
-        </div>
+.delete-wrap{
+    max-width:650px;
+    margin:70px auto;
+}
 
-        <div class="card-body p-4">
+.delete-card{
+    border:none;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
 
-            <p class="text-muted mb-4">
-                게시글을 삭제하려면 비밀번호를 입력해주세요.
-            </p>
+.delete-header{
+    background:#dc3545;
+    color:#fff;
+    padding:22px 28px;
+}
 
-            <form action="${pageContext.request.contextPath}/board/delete.do?bno=${param.bno}"
-                  method="post" onsubmit="return checkForm()">
+.delete-header h3{
+    margin:0;
+    font-weight:700;
+}
 
-                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+.delete-body{
+    padding:35px;
+}
 
-                <!-- 비밀번호 입력 -->
-                <div class="mb-4">
-                    <label for="bpass" class="form-label fw-semibold">비밀번호</label>
-                    <input type="password" class="form-control form-control-lg"
-                           id="bpass" name="bpass" placeholder="비밀번호 입력" />
+.delete-icon{
+    font-size:60px;
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.form-control{
+    height:50px;
+    border-radius:10px;
+}
+
+.btn{
+    min-width:120px;
+    border-radius:10px;
+}
+
+</style>
+
+<div class="container">
+
+    <div class="delete-wrap">
+
+        <div class="card delete-card">
+
+            <div class="delete-header">
+
+                <h3>🗑 게시글 삭제</h3>
+
+            </div>
+
+            <div class="delete-body">
+
+                <div class="delete-icon">
+                    ⚠️
                 </div>
 
-                <!-- 버튼 영역 -->
-                <div class="d-flex justify-content-end gap-2 mt-4">
-                    <button type="reset" class="btn btn-outline-secondary px-4">취소</button>
+                <div class="alert alert-warning">
 
-                    <a href="${pageContext.request.contextPath}/board/list.do"
-                       class="btn btn-outline-primary px-4">
-                        목록
-                    </a>
+                    <strong>삭제된 게시글은 복구할 수 없습니다.</strong><br>
+                    계속 진행하려면 작성 시 사용한 비밀번호를 입력하세요.
 
-                    <button type="submit" class="btn btn-danger px-4">삭제하기</button>
                 </div>
 
-            </form>
+                <form action="${pageContext.request.contextPath}/board/delete.do?bno=${param.bno}"
+                      method="post"
+                      onsubmit="return checkForm()">
+
+                    <input type="hidden"
+                           name="${_csrf.parameterName}"
+                           value="${_csrf.token}">
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-bold">
+                            비밀번호
+                        </label>
+
+                        <input
+                            type="password"
+                            class="form-control"
+                            id="bpass"
+                            name="bpass"
+                            placeholder="비밀번호를 입력하세요">
+
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3">
+
+                        <a href="${pageContext.request.contextPath}/board/list.do"
+                           class="btn btn-outline-secondary">
+                            목록
+                        </a>
+
+                        <button
+                            type="reset"
+                            class="btn btn-outline-dark">
+                            다시입력
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-danger">
+                            삭제하기
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
 
         </div>
+
     </div>
+
 </div>
 
 <script>
-function checkForm() {
-    let bpass = document.getElementById("bpass");
-    if (bpass.value.trim() === "") {
+
+function checkForm(){
+
+    const bpass=document.getElementById("bpass");
+
+    if(bpass.value.trim()==""){
+
         alert("비밀번호를 입력해주세요.");
+
         bpass.focus();
+
         return false;
+
     }
-    return true;
+
+    return confirm("정말 삭제하시겠습니까?");
+
 }
+
 </script>
 
-<%@ include file="../inc/footer.jsp" %>
+<%@ include file="../inc/footer.jsp"%>
