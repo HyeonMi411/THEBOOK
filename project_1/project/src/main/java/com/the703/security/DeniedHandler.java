@@ -1,3 +1,4 @@
+
 package com.the703.security;
 
 import java.io.IOException;
@@ -21,3 +22,6 @@ public class DeniedHandler  implements AccessDeniedHandler{
 	}
 
 }
+
+
+

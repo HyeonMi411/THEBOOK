@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.the703.dao.BookMapper">
+
+
+    <!-- 전체 조회 -->
+    <select resultType="BookDto"  id="findAll"  parameterType="java.util.HashMap">
+        SELECT *
+        FROM book
+        ORDER BY book_id DESC
+        limit #{start} , #{end}
+    </select>
+
+  <select    resultType="int"   id="findAllCnt"  >
+    select  count(*)  from book
+  </select>
+  
+
+    <!-- 단건 조회 -->
+    <select resultType="BookDto"  id="findById"  parameterType="BookDto"  >
+        SELECT *
+        FROM book
+        WHERE book_id = #{bookId}
+    </select>
+
+    <!-- 등록 -->
+    <insert id="insert" parameterType="BookDto" useGeneratedKeys="true" keyProperty="bookId">
+        INSERT INTO book (
+            title, author, publisher, publish_date, category,
+            ranking, review_count, rating, description, pages,
+            price, book_cover
+        ) VALUES (
+            #{title}, #{author}, #{publisher}, #{publishDate}, #{category},
+            #{ranking}, #{reviewCount}, #{rating}, #{description}, #{pages},
+            #{price}, #{bookCover}
+        )
+    </insert>
+
+    <!-- 수정 -->
+    <update id="update" parameterType="BookDto">
+        UPDATE book
+        SET
+            title = #{title},
+            author = #{author},
+            publisher = #{publisher},
+            publish_date = #{publishDate},
+            category = #{category},
+            ranking = #{ranking},
+            review_count = #{reviewCount},
+            rating = #{rating},
+            description = #{description},
+            pages = #{pages},
+            price = #{price},
+            book_cover = #{bookCover}
+        WHERE book_id = #{bookId}
+    </update>
+
+    <!-- 삭제 -->
+    <delete id="delete">
+        DELETE FROM book
+        WHERE book_id = #{bookId}
+    </delete>
+
+    <!-- 카테고리별 조회 -->
+    <select id="findByCategory" resultType="BookDto">
+        SELECT *
+        FROM book
+        WHERE category = #{category}
+        ORDER BY book_id DESC
+    </select>
+
+    <!-- 제목 검색 -->
+    <select id="searchByTitle" resultType="BookDto">
+        SELECT *
+        FROM book
+        WHERE title LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY book_id DESC
+    </select>
+
+</mapper>
