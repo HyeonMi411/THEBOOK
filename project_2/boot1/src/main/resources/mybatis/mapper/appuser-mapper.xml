@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.the703.dao.AppUserDao">
+  <insert  id="insertAppUser"                          parameterType="AppUserDto">
+   insert into  appuser 
+   (APP_USER_ID ,EMAIL , PASSWORD , MBTI_TYPE_ID , CREATED_AT , UFILE  , MOBILE, NICKNAME , PROVIDER , PROVIDER_ID)
+   values  (appuser_seq.nextval, #{email} , #{password}, #{mbtiTypeId}, sysdate , #{ufile} , #{mobile} , #{nickname} , #{provider}, #{providerId})
+  </insert>
+  
+  <resultMap id="AppUserAuthResultMap" type="AppUserAuthDto"> 
+    <result property="email" column="email"/>
+    <result property="password" column="password"/>  
+    <collection property="authList" ofType="com.the703.dto.AuthDto">
+        <result  property="auth"  column="auth"   />
+    </collection>
+  </resultMap>
+  
+  <select  id="readAuthByEmail"  resultMap="AppUserAuthResultMap" parameterType="AppUserDto">
+   select   u.email ,  u.password, a.auth
+   from     appuser u  left join  authorities a  on   u.email = a.email
+   where    u.email = #{email}
+  </select>
+  
+  
+  <select  id="findByEmail"      resultType="AppUserDto"     parameterType="AppUserDto">
+   select * from   appuser  where  email=#{email}
+  </select>
+  <select  id="iddoubleByEmail"  resultType="int"           parameterType="AppUserDto">
+     select count(*) from   appuser  where  email=#{email}
+  </select>
+  
+  
+  <update  id="updateAppUser"                          parameterType="AppUserDto">
+    update  appuser  
+    <set>
+      <!-- <if test="password    != null"> password=#{password} ,       </if> -->
+      <if test="mbtiTypeId  != null"> mbti_type_id=#{mbtiTypeId} , </if>
+      <if test="ufile       != null"> ufile  = #{ufile} ,          </if>
+      <if test="nickname    != null"> nickname=#{nickname}  ,      </if>
+      <if test="mobile      != null"> mobile=#{mobile} ,           </if>
+      <if test="provider    != null"> provider=#{provider} ,       </if>
+      <if test="providerId != null"> provider_id=#{providerId}    </if>
+    </set>          
+   where  app_user_id=#{appUserId}
+  </update>
+  
+  <delete  id="deleteAppUser"                          parameterType="AppUserDto">
+     delete from appuser where  app_user_id=#{appUserId}
+  </delete>
+  <insert  id="insertAuth"                             parameterType="AuthDto">
+     insert into authorities ( AUTH_ID , EMAIL,  AUTH) values   ( authorities_seq.nextval , #{email} , #{auth})
+  </insert>
+  <delete  id="deleteAuth"                             parameterType="AuthDto">
+     delete from   authorities  where email =#{email}
+  </delete>
+</mapper>
+<!-- 1) 회원가입
+insert into  appuser 
+(APP_USER_ID ,EMAIL , PASSWORD , MBTI_TYPE_ID , CREATED_AT , UFILE  , MOBILE, NICKNAME , PROVIDER , PROVIDER_ID)
+values   
+(  appuser_seq.nextval, 'first@gmail.com' , '111', 1,sysdate , '1.png' , '0101111111'  , 'first' , 'the703', 't7-1');
+
+2) 로그인 - 이메일로 이메일, 비밀번호, 권한
+select   u.email ,  u.password, a.auth
+from     appuser u  left join  authorities a  on   u.email = a.email
+where    u.email = 'first@gmail.com'; 
+
+3) 이메일로 유저찾기
+select * from   appuser  where  email='first@gmail.com'; 
+
+4) 이메일로 중복검사
+select count(*) from   appuser  where  email='first@gmail.com'; 
+
+5) 회원수정
+update  appuser
+set     password='2222',  
+mbti_type_id=2 ,
+ufile  = '2.png' ,
+nickname='second',
+mobile='0102222222',
+provider='naver',
+provider_id='n-1'
+where  app_user_id=2;    // 있는번호
+
+6) 회원삭제
+delete from appuser  where   app_user_id=2; 
+
+7) 권한삽입
+insert into authorities ( AUTH_ID , EMAIL,  AUTH)
+values                  ( authorities_seq.nextval , 'first@gmail.com' , 'ROLE_MEMBER');
+8) 권한삭제 
+delete from   authorities  where email = 'first@gmail.com'; -->

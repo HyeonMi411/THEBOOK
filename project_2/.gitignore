@@ -1,0 +1,4 @@
+/.metadata/
+/Servers/
+/boot1/src/main/resources/application-oauth.properties
+/boot1/*.zip
