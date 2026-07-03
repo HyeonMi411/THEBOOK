@@ -106,7 +106,7 @@ public class ApiUtilController {
             model.addAttribute("answer", "서버 처리 중 오류가 발생했습니다: " + e.getMessage());
             model.addAttribute("fileName", "오류 발생");
         }
-      return "util/rag";
+      return "util/rag";      
   }
 	
 	

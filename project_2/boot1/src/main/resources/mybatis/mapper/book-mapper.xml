@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.BookMapper">
+
+    <!-- 전체 조회 -->
+    <select id="findAll" resultType="bookMap">
+        SELECT *
+        FROM BOOK
+        ORDER BY BOOK_ID DESC
+    </select>
+
+    <!-- 단건 조회 -->
+    <select id="findById" parameterType="long" resultType="bookMap">
+        SELECT *
+        FROM BOOK
+        WHERE BOOK_ID = #{bookId}
+    </select>
+
+    <!-- 등록 -->
+    <insert id="insertBook" parameterType="com.example.demo.dto.BookDto">
+        INSERT INTO BOOK (
+            BOOK_ID, TITLE, AUTHOR, PUBLISHER, PUBLISH_DATE,
+            CATEGORY, RANKING, REVIEW_COUNT, RATING, DESCRIPTION,
+            PAGES, PRICE, REG_DATE, BOOK_COVER
+        ) VALUES (
+            #{bookId}, #{title}, #{author}, #{publisher}, #{publishDate},
+            #{category}, #{ranking}, #{reviewCount}, #{rating}, #{description},
+            #{pages}, #{price}, #{regDate}, #{bookCover}
+        )
+    </insert>
+
+    <!-- 수정 -->
+    <update id="updateBook" parameterType="com.example.demo.dto.BookDto">
+        UPDATE BOOK
+        SET
+            TITLE = #{title},
+            AUTHOR = #{author},
+            PUBLISHER = #{publisher},
+            PUBLISH_DATE = #{publishDate},
+            CATEGORY = #{category},
+            RANKING = #{ranking},
+            REVIEW_COUNT = #{reviewCount},
+            RATING = #{rating},
+            DESCRIPTION = #{description},
+            PAGES = #{pages},
+            PRICE = #{price},
+            REG_DATE = #{regDate},
+            BOOK_COVER = #{bookCover}
+        WHERE BOOK_ID = #{bookId}
+    </update>
+
+    <!-- 삭제 -->
+    <delete id="deleteBook" parameterType="long">
+        DELETE FROM BOOK
+        WHERE BOOK_ID = #{bookId}
+    </delete>
+
+</mapper>
