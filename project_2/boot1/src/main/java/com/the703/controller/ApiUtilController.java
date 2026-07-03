@@ -7,12 +7,14 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.the703.api.ApiEmail;
 import com.the703.api.ApiNaverBook;
+import com.the703.api.ApiOpenAi;
 import com.the703.api.BookDto;
 
 @Controller
@@ -40,4 +42,21 @@ public class ApiUtilController {
 	public List<BookDto> books_json( @RequestParam String search) {		
 		return apibook.getBooks(search);
 	}
+	
+	////////////4. openai
+	// http://localhost:8080/api/util/openai
+	@Autowired ApiOpenAi ApiOpenAi;
+	
+	@GetMapping("openai")  public String openai_get() {	return "util/openai";}
+	
+	@PostMapping(value="/openai" , produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public String openai_post( @RequestBody String content ) {	return ApiOpenAi.getAIResponse(content);}
+	
 }
+
+
+
+
+
+
