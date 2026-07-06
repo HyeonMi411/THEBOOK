@@ -1,44 +1,70 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.demo.mapper.BookMapper">
+<mapper namespace="com.the703.dao.BookDao">
 
-    <!-- 전체 조회 -->
-    <select id="findAll" resultType="bookMap">
-        SELECT *
-        FROM BOOK
-        ORDER BY BOOK_ID DESC
+    <!-- 전체 조회 (Oracle 페이징: ROWNUM BETWEEN) -->
+    <select id="findAll" resultType="BookDto" parameterType="java.util.HashMap">
+    	SELECT * FROM BOOK  ORDER BY BOOK_ID DESC  OFFSET #{start} ROWS FETCH NEXT #{end} ROWS ONLY
+    </select>
+
+    <!-- 전체 개수 -->
+    <select id="findAllCnt" resultType="int">
+        SELECT COUNT(*) FROM BOOK
     </select>
 
     <!-- 단건 조회 -->
-    <select id="findById" parameterType="long" resultType="bookMap">
+    <select id="findById" resultType="BookDto" parameterType="BookDto">
         SELECT *
         FROM BOOK
         WHERE BOOK_ID = #{bookId}
     </select>
 
-    <!-- 등록 -->
-    <insert id="insertBook" parameterType="com.example.demo.dto.BookDto">
+    <!-- 등록 (Oracle: SEQ 사용) -->
+    <insert id="insert" parameterType="BookDto">
         INSERT INTO BOOK (
-            BOOK_ID, TITLE, AUTHOR, PUBLISHER, PUBLISH_DATE,
-            CATEGORY, RANKING, REVIEW_COUNT, RATING, DESCRIPTION,
-            PAGES, PRICE, REG_DATE, BOOK_COVER
+            BOOK_ID,
+            TITLE,
+            AUTHOR,
+            PUBLISHER,
+            PUBLISH_DATE,
+            CATEGORY,
+            RANKING,
+            REVIEW_COUNT,
+            RATING,
+            DESCRIPTION,
+            PAGES,
+            PRICE,
+            BOOK_COVER,
+            REG_DATE
         ) VALUES (
-            #{bookId}, #{title}, #{author}, #{publisher}, #{publishDate},
-            #{category}, #{ranking}, #{reviewCount}, #{rating}, #{description},
-            #{pages}, #{price}, #{regDate}, #{bookCover}
+            SEQ_BOOK.NEXTVAL,
+            #{title},
+            #{author},
+            #{publisher},
+            TO_DATE(#{publishDate}, 'YYYY-MM-DD'),
+            #{category},
+            #{ranking},
+            #{reviewCount},
+            #{rating},
+            #{description},
+            #{pages},
+            #{price},
+            #{bookCover},
+            SYSTIMESTAMP
         )
     </insert>
 
     <!-- 수정 -->
-    <update id="updateBook" parameterType="com.example.demo.dto.BookDto">
+    <update id="update" parameterType="BookDto">
         UPDATE BOOK
         SET
             TITLE = #{title},
             AUTHOR = #{author},
             PUBLISHER = #{publisher},
-            PUBLISH_DATE = #{publishDate},
+            PUBLISH_DATE = TO_DATE(#{publishDate}, 'YYYY-MM-DD'),
             CATEGORY = #{category},
             RANKING = #{ranking},
             REVIEW_COUNT = #{reviewCount},
@@ -46,15 +72,30 @@
             DESCRIPTION = #{description},
             PAGES = #{pages},
             PRICE = #{price},
-            REG_DATE = #{regDate},
             BOOK_COVER = #{bookCover}
         WHERE BOOK_ID = #{bookId}
     </update>
 
     <!-- 삭제 -->
-    <delete id="deleteBook" parameterType="long">
+    <delete id="delete">
         DELETE FROM BOOK
         WHERE BOOK_ID = #{bookId}
     </delete>
+
+    <!-- 카테고리별 조회 -->
+    <select id="findByCategory" resultType="BookDto">
+        SELECT *
+        FROM BOOK
+        WHERE CATEGORY = #{category}
+        ORDER BY BOOK_ID DESC
+    </select>
+
+    <!-- 제목 검색 (Oracle 문자열 결합 || 사용) -->
+    <select id="searchByTitle" resultType="BookDto">
+        SELECT *
+        FROM BOOK
+        WHERE TITLE LIKE '%' || #{keyword} || '%'
+        ORDER BY BOOK_ID DESC
+    </select>
 
 </mapper>

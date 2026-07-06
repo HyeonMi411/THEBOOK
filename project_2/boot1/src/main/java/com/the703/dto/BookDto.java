@@ -1,26 +1,36 @@
 package com.the703.dto;
 
 import lombok.Data;
-import java.time.LocalDate;
 
 @Data
 public class BookDto {
 
-    private Long bookId;            // NUMBER(10)
-    private String title;           // VARCHAR2(255)
-    private String author;          // VARCHAR2(100)
-    private String publisher;       // VARCHAR2(100)
-    private LocalDate publishDate;  // DATE
-    private String category;        // VARCHAR2(50)
-    private String ranking;         // VARCHAR2(100)
-    private Integer reviewCount;    // NUMBER(10)
-    private Double rating;          // NUMBER(3,2)
-    private String description;     // CLOB
-    private Integer pages;          // NUMBER(10)
-    private Integer price;          // NUMBER(10)
-    private LocalDate regDate;      // DATE
-    private String bookCover;       // VARCHAR2(300)
+    private Integer bookId;        // NUMBER (PK)
+    private String title;          // VARCHAR2(255)
+    private String author;         // VARCHAR2(100)
+    private String publisher;      // VARCHAR2(100)
+
+    // Oracle DATE → Java에서는 String 또는 java.sql.Date 사용 가능
+    private String publishDate;    // DATE
+
+    private String category;       // VARCHAR2(50)
+    private String ranking;        // VARCHAR2(100)
+
+    private Integer reviewCount;   // NUMBER
+    private Double rating;         // NUMBER(3,2)
+
+    // Oracle TEXT → CLOB
+    private String description;    // CLOB
+
+    private Integer pages;         // NUMBER
+    private Integer price;         // NUMBER
+
+    // Oracle TIMESTAMP → String 또는 java.sql.Timestamp
+    private String regDate;        // TIMESTAMP
+
+    private String bookCover;      // VARCHAR2(300)
 }
+
 
 /*
 SQL> desc book;
