@@ -1,35 +1,31 @@
-//package com.the703;
-//
-//import java.util.HashMap;
-//import java.util.List;
-//
-//import org.junit.jupiter.api.Disabled;
-//import org.junit.jupiter.api.Test;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.boot.test.context.SpringBootTest;
-//import org.springframework.mock.web.MockMultipartFile;
-//
-//import com.the703.dao.BookDao;
-//import com.the703.dao.TestDao;
-//import com.the703.dto.BookDto;
+package com.the703;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import com.the703.dao.BookDao;
+import com.the703.dao.TestDao;
+import com.the703.dto.BookDto;
 //import com.the703.service.BookService;
-//
-//@SpringBootTest
-//class Boot1ApplicationTests4 {
-//
-//   @Autowired  TestDao  dao;  
-//   @Autowired BookDao bookDao;
+
+@SpringBootTest
+class Boot1ApplicationTests5 {
+
+   @Autowired  TestDao  dao;  
+   @Autowired BookDao bookDao;
 //   @Autowired private BookService bookService;
-//   // @Ignore - JUnit4
-//	@Disabled  // @Test 
-//   void contextLoads() {
-//      System.out.println("..........................");
-//      System.out.println( dao.readTime());
-//      System.out.println("..........................");
-//   }
-//	
-//	////////////////////////////////////////////////////////////
-//	
+   // @Ignore - JUnit4
+	@Disabled  // @Test 
+   void contextLoads() {
+      System.out.println("..........................");
+      System.out.println( dao.readTime());
+      System.out.println("..........................");
+   }
+	
+	////////////////////////////////////////////////////////////
+	
 //    // -------------------------------
 //    // 1. INSERT 테스트 (Oracle SEQ 사용)
 //    // -------------------------------
@@ -137,32 +133,30 @@
 //        List<BookDto> list = bookService.searchByTitle("테스트");
 //        list.forEach(System.out::println);
 //    }	// ok     
-//	
-//	
-//	////////////////////////////////////////////////////////////
-//
-//	@Disabled 
-//	// @Test
-//	 public void testInsert() {
-//	     BookDto book = new BookDto();
-//	     book.setTitle("테스트 책");
-//	     book.setAuthor("가길동");
-//	     book.setPublisher("테스트출판사");
-//	     book.setPublishDate("2020-06-19");
-//	     book.setCategory("소설");
-//	     book.setRanking("1위");
-//	     book.setReviewCount(10);
-//	     book.setRating(4.5);
-//	     book.setDescription("테스트용 설명입니다.");
-//	     book.setPages(300);
-//	     book.setPrice(15000);
-//	     book.setBookCover("test.jpg");
-//	
-//	     int result = bookDao.insert(book);
-//	     //assertEquals(1, result);	// 예상되는 결과 ,  코드
-//	     System.out.println("INSERT 결과: " + result);
-//	     System.out.println("생성된 bookId: " + book.getBookId());
-//	 }	//ok
+	
+	
+	////////////////////////////////////////////////////////////
+
+    // ■ 등록 테스트
+    @Test
+    void testInsert() {
+        BookDto book = new BookDto();
+        book.setTitle("테스트 도서");
+        book.setAuthor("테스트 작가");
+        book.setPublisher("테스트 출판사");
+        book.setPublishDate("2024-01-01");
+        book.setCategory("소설");
+        book.setRanking("1");
+        book.setReviewCount(10);
+        book.setRating(4.5);
+        book.setDescription("테스트 설명");
+        book.setPages(300);
+        book.setPrice(15000);
+        book.setBookCover("cover.jpg");
+
+        int result = bookDao.insert(book);
+        System.out.println("INSERT 결과: " + result);
+    }
 //	
 //	@Disabled 
 //	// @Test
@@ -219,5 +213,5 @@
 //  public void testSearchByTitle() {
 //		bookDao.searchByTitle("테스트").forEach(System.out::println);
 //  }		// ok 		
-//   
-//}
+   
+}

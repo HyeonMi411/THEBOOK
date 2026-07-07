@@ -1,13 +1,41 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
-<head  lang="ko">
-  <title> BOOT </title>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head lang="ko">
+    <meta charset="UTF-8">
+    <title>BookStore Footer</title>
+
+    <style>
+        .footer{
+            background:#fff;
+            border-top:1px solid #e5e7eb;
+            padding:25px 0;
+            margin-top:60px;
+            text-align:center;
+            box-shadow:0 -4px 12px rgba(0,0,0,.05);
+        }
+        .footer-bottom{
+            color:#666;
+            font-size:15px;
+            font-weight:500;
+        }
+        .footer-bottom strong{
+            color:#2563eb;
+        }
+    </style>
 </head>
-<body>     
+
+<body>
+
 <th:block th:fragment="footer">
-   <div class="mt-5 p-4 bg-dark text-white text-center">
-     <p>Footer</p>
-   </div>
+
+    <footer class="footer">
+        <div class="footer-bottom">
+            © 2026 <strong>BookStore</strong>. All Rights Reserved.
+        </div>
+    </footer>
+
 </th:block>
+
 </body>
 </html>
