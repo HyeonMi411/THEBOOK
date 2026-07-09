@@ -1,69 +1,16 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/layout}">
+   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+   layout:decorate="~{fragments/layout}">
+<!--    #1. layout 렌더링    -->
 <head lang="ko">
-    <meta charset="UTF-8">
-    <title>새 도서 등록</title>
-
-    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
-
-    <style>
-        body{ background:#f5f7fb; }
-        .write-wrap{ max-width:1000px; margin:60px auto; }
-        .write-card{ border:none; border-radius:20px; overflow:hidden; box-shadow:0 12px 35px rgba(0,0,0,.08); }
-        .write-header{ background:linear-gradient(135deg,#2563eb,#0d6efd); color:#fff; padding:35px 40px; }
-        .write-header h2{ margin:0; font-weight:700; }
-        .write-header p{ margin-top:8px; opacity:.9; }
-        .write-body{ padding:40px; }
-        .form-label{ font-weight:700; color:#444; }
-        .form-control{ min-height:48px; border-radius:10px; border:1px solid #dcdfe6; }
-        .form-control:focus{ border-color:#2563eb; box-shadow:0 0 0 .2rem rgba(37,99,235,.15); }
-        textarea.form-control{ min-height:180px; resize:vertical; }
-
-        /* 검색창 */
-        .search-box{ margin-bottom:25px; }
-        .search-input{ width:350px; padding:10px 15px; border-radius:10px; border:1px solid #ccc; }
-        .search-result{ background:#fff; border-radius:10px; margin-top:10px; padding:15px; box-shadow:0 4px 12px rgba(0,0,0,.08); }
-        .search-item{ padding:8px 0; cursor:pointer; }
-        .search-item:hover{ color:#2563eb; }
-
-        /* 중복검사 */
-        .dup-msg{ font-size:14px; margin-top:5px; }
-
-        .preview-box{ border:2px dashed #d8dee8; border-radius:15px; background:#fafbfc; padding:20px; text-align:center; }
-        .preview-box img{ width:180px; height:240px; object-fit:cover; border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,.12); }
-        .upload-box{ border:2px dashed #d8dee8; border-radius:15px; padding:25px; background:#fafbfc; margin-top:20px; }
-
-        .button-area{ margin-top:35px; padding-top:30px; border-top:1px solid #eee; }
-        .btn{ min-width:150px; border-radius:10px; font-weight:600; }
-    </style>
-
-    <script>
-        function readURL(input){
-            if(input.files && input.files[0]){
-                const reader = new FileReader();
-                reader.onload = function(e){
-                    document.getElementById("previewImg").src = e.target.result;
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-    </script>
+<meta charset="UTF-8">
+<title>Insert title here</title>
 </head>
-
 <body>
-<div layout:fragment="content">
-<div class="container">
-
+    <div  layout:fragment="content">
+    
     <div class="write-wrap">
-
-        <!-- 검색창 -->
-        <div class="search-box">
-            <input type="text" id="searchInput" class="search-input"
-                   placeholder="도서명 검색 (자동완성)">
-            <div id="searchResult" class="search-result" style="display:none;"></div>
-        </div>
 
         <div class="card write-card">
 
@@ -78,9 +25,8 @@
                       method="post"
                       enctype="multipart/form-data">
 
-                    <input type="hidden"
-                           th:name="${_csrf.parameterName}"
-                           th:value="${_csrf.token}"/>
+                    <!-- CSRF -->
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
                     <div class="row g-4">
 
@@ -89,12 +35,9 @@
 
                             <div class="row g-3">
 
-                                <!-- 도서 제목 + 중복검사 -->
                                 <div class="col-md-8">
                                     <label class="form-label">도서 제목</label>
-                                    <input type="text" id="titleInput" name="title"
-                                           class="form-control" required>
-                                    <div id="titleMsg" class="dup-msg"></div>
+                                    <input type="text" name="title" class="form-control" required>
                                 </div>
 
                                 <div class="col-md-4">
@@ -156,11 +99,19 @@
                             </div>
 
                             <div class="upload-box">
+
                                 <label class="form-label">표지 이미지</label>
-                                <input type="file" id="file" name="file"
+
+                                <input type="file"
+                                       id="file"
+                                       name="file"
                                        class="form-control"
                                        onchange="readURL(this);">
-                                <div class="form-text mt-2">JPG, PNG 파일 업로드</div>
+
+                                <div class="form-text mt-2">
+                                    JPG, PNG 파일 업로드
+                                </div>
+
                             </div>
 
                         </div>
@@ -169,21 +120,26 @@
 
                     <div class="mt-4">
                         <label class="form-label">도서 소개</label>
-                        <textarea name="description" class="form-control"></textarea>
+                        <textarea name="description"
+                                  class="form-control"></textarea>
                     </div>
 
                     <div class="button-area">
+
                         <div class="d-flex justify-content-end gap-2">
 
-                            <a href="javascript:history.back();" class="btn btn-outline-secondary">
+                            <a href="javascript:history.back();"
+                               class="btn btn-outline-secondary">
                                 취소
                             </a>
 
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit"
+                                    class="btn btn-primary">
                                 📚 도서 등록
                             </button>
 
                         </div>
+
                     </div>
 
                 </form>
@@ -193,72 +149,7 @@
         </div>
 
     </div>
-
-</div>
-</div>
-
-<!-- AJAX SCRIPT -->
-<script>
-    /* 자동검색 */
-    const input = document.getElementById("searchInput");
-    const resultBox = document.getElementById("searchResult");
-
-    input.addEventListener("keyup", function() {
-        const keyword = this.value.trim();
-
-        if (keyword.length < 1) {
-            resultBox.style.display = "none";
-            resultBox.innerHTML = "";
-            return;
-        }
-
-        fetch(`/book/search?keyword=` + keyword)
-            .then(res => res.json())
-            .then(list => {
-                if (list.length === 0) {
-                    resultBox.innerHTML = "<div>검색 결과 없음</div>";
-                    resultBox.style.display = "block";
-                    return;
-                }
-
-                let html = "";
-                list.forEach(book => {
-                    html += `
-                        <div class="search-item"
-                             onclick="location.href='/book/detail?bookId=${book.bookId}'">
-                            ${book.title} - ${book.author}
-                        </div>
-                    `;
-                });
-
-                resultBox.innerHTML = html;
-                resultBox.style.display = "block";
-            });
-    });
-
-    /* 도서명 중복검사 */
-    const titleInput = document.getElementById("titleInput");
-    const titleMsg = document.getElementById("titleMsg");
-
-    titleInput.addEventListener("blur", function() {
-        const title = this.value.trim();
-
-        if (title.length < 1) {
-            titleMsg.innerHTML = "";
-            return;
-        }
-
-        fetch(`/book/check-title?title=` + title)
-            .then(res => res.json())
-            .then(dup => {
-                if (dup) {
-                    titleMsg.innerHTML = "<span style='color:red'>이미 존재하는 도서명입니다.</span>";
-                } else {
-                    titleMsg.innerHTML = "<span style='color:green'>사용 가능한 도서명입니다.</span>";
-                }
-            });
-    });
-</script>
-
+        
+    </div>
 </body>
 </html>

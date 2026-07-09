@@ -1,197 +1,21 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/layout}">
+   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+   layout:decorate="~{fragments/layout}">
+<!--    #1. layout 렌더링    -->
 <head lang="ko">
-    <meta charset="UTF-8">
-    <title th:text="${book.title}">Book Detail</title>
-
-    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
-
-    <style>
-        .detail-container{ max-width:1100px; margin:60px auto; }
-        .detail-card{ background:#fff; border-radius:18px; box-shadow:0 8px 25px rgba(0,0,0,.08); overflow:hidden; }
-
-        /* 검색창 */
-        .search-box{ margin-bottom:25px; }
-        .search-input{ width:350px; padding:10px 15px; border-radius:10px; border:1px solid #ccc; }
-        .search-result{ background:#fff; border-radius:10px; margin-top:10px; padding:15px; box-shadow:0 4px 12px rgba(0,0,0,.08); }
-        .search-item{ padding:8px 0; cursor:pointer; }
-        .search-item:hover{ color:#2563eb; }
-
-        .book-cover{ width:100%; height:520px; object-fit:cover; border-radius:12px; }
-        .info-title{ font-size:32px; font-weight:700; color:#222; margin-bottom:15px; }
-        .info-meta{ color:#666; font-size:15px; margin-bottom:12px; }
-        .badge-category{ display:inline-block; background:#eef4ff; color:#2563eb; padding:6px 14px; border-radius:30px; font-size:14px; font-weight:600; margin-bottom:18px; }
-        .rating{ font-size:20px; color:#f59e0b; font-weight:700; margin-bottom:20px; }
-
-        .info-table{ margin-top:20px; }
-        .info-table th{ width:120px; color:#666; font-weight:600; padding:10px 0; }
-        .info-table td{ color:#333; padding:10px 0; }
-
-        .description{ margin-top:30px; padding:25px; background:#f8f9fa; border-radius:12px; line-height:1.8; color:#444; white-space:pre-line; }
-
-        .btn-area{ margin-top:35px; display:flex; gap:12px; }
-        .btn-area .btn{ min-width:120px; border-radius:10px; font-weight:600; }
-
-        @media(max-width:768px){
-            .book-cover{ height:380px; }
-            .info-title{ font-size:26px; margin-top:25px; }
-            .btn-area{ flex-direction:column; }
-            .btn-area .btn{ width:100%; }
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Insert title here</title>
 </head>
-
 <body>
-<div layout:fragment="content">
-<div class="container detail-container">
-
-    <!-- 검색창 -->
-    <div class="search-box">
-        <input type="text" id="searchInput" class="search-input"
-               placeholder="도서명 검색 (자동완성)">
-        <div id="searchResult" class="search-result" style="display:none;"></div>
+    <div  layout:fragment="content">
+    
+    
+    
+        템플릿
+        
+        
+        
     </div>
-
-    <div class="detail-card">
-
-        <div class="row g-0">
-
-            <!-- 이미지 -->
-            <div class="col-lg-4 p-4">
-
-                <img th:if="${book.bookCover != null}"
-                     th:src="@{/upload/{file}(file=${book.bookCover})}"
-                     class="book-cover"
-                     th:alt="${book.title}">
-
-                <img th:if="${book.bookCover == null}"
-                     src="https://via.placeholder.com/320x480?text=No+Image"
-                     class="book-cover"
-                     alt="No Image">
-
-            </div>
-
-            <!-- 정보 -->
-            <div class="col-lg-8">
-
-                <div class="p-4 p-lg-5">
-
-                    <h2 class="info-title" th:text="${book.title}"></h2>
-
-                    <div class="info-meta"
-                         th:text="${book.author + ' · ' + book.publisher}">
-                    </div>
-
-                    <span class="badge-category" th:text="${book.category}"></span>
-
-                    <div class="rating" th:if="${book.rating != null}">
-                        ⭐ <span th:text="${book.rating}"></span>
-                        <small class="text-secondary">
-                            (<span th:text="${book.reviewCount}"></span> Reviews)
-                        </small>
-                    </div>
-
-                    <table class="table info-table">
-
-                        <tr>
-                            <th>출판일</th>
-                            <td th:text="${book.publishDate}"></td>
-                        </tr>
-
-                        <tr>
-                            <th>페이지</th>
-                            <td><span th:text="${book.pages}"></span> Page</td>
-                        </tr>
-
-                        <tr>
-                            <th>가격</th>
-                            <td>
-                                <strong class="text-primary"
-                                        th:text="${#numbers.formatInteger(book.price, 3, 'COMMA')} + ' 원'">
-                                </strong>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>랭킹</th>
-                            <td th:text="${book.ranking}"></td>
-                        </tr>
-
-                        <tr>
-                            <th>등록일</th>
-                            <td th:text="${book.regDate}"></td>
-                        </tr>
-
-                    </table>
-
-                    <div class="description" th:text="${book.description}"></div>
-
-                    <div class="btn-area">
-
-                        <a th:href="@{/book/list}" class="btn btn-outline-secondary">목록</a>
-
-                        <a th:href="@{/book/edit(bookId=${book.bookId})}"
-                           class="btn btn-primary">수정</a>
-
-                        <a th:href="@{/book/delete(bookId=${book.bookId})}"
-                           class="btn btn-danger"
-                           onclick="return confirm('정말 삭제하시겠습니까?');">
-                            삭제
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-</div>
-
-<!-- AJAX SCRIPT -->
-<script>
-    const input = document.getElementById("searchInput");
-    const resultBox = document.getElementById("searchResult");
-
-    input.addEventListener("keyup", function() {
-        const keyword = this.value.trim();
-
-        if (keyword.length < 1) {
-            resultBox.style.display = "none";
-            resultBox.innerHTML = "";
-            return;
-        }
-
-        fetch(`/book/search?keyword=` + keyword)
-            .then(res => res.json())
-            .then(list => {
-                if (list.length === 0) {
-                    resultBox.innerHTML = "<div>검색 결과 없음</div>";
-                    resultBox.style.display = "block";
-                    return;
-                }
-
-                let html = "";
-                list.forEach(book => {
-                    html += `
-                        <div class="search-item"
-                             onclick="location.href='/book/detail?bookId=${book.bookId}'">
-                            ${book.title} - ${book.author}
-                        </div>
-                    `;
-                });
-
-                resultBox.innerHTML = html;
-                resultBox.style.display = "block";
-            });
-    });
-</script>
-
 </body>
 </html>

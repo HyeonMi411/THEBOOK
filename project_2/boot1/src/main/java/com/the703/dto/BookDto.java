@@ -5,21 +5,43 @@ import lombok.Data;
 @Data
 public class BookDto {
 
-    private Long bookId;            // NUMBER(10)
-    private String title;           // VARCHAR2(255)
-    private String author;          // VARCHAR2(100)
-    private String publisher;       // VARCHAR2(100)
-    private String publishDate;  // DATE
-    private String category;        // VARCHAR2(50)
-    private String ranking;         // VARCHAR2(100)
-    private Integer reviewCount;    // NUMBER(10)
-    private Double rating;          // NUMBER(10,2)
-    private String description;     // CLOB
-    private Integer pages;          // NUMBER(10)
-    private Integer price;          // NUMBER(10)
-    private String regDate;  // TIMESTAMP
-    private String bookCover;       // VARCHAR2(300)
+    // ------------------------------------
+    // 📘 BOOK 테이블 매핑 필드 (Oracle)
+    // ------------------------------------
+    private Integer bookId;        // book_id (PK)
+    private String title;          // title
+    private String author;         // author
+    private String publisher;      // publisher
+    private String publishDate;    // publish_date (String 처리)
+    private String category;       // category
+    private String ranking;        // ranking
+    private Integer reviewCount;   // review_count
+    private Double rating;         // rating
+    private String description;    // description
+    private Integer pages;         // pages
+    private Integer price;         // price
+    private String regDate;        // reg_date (String 처리)
+    private String bookCover;      // book_cover
+
+    // ------------------------------------
+    // 🔍 검색(AJAX) 기능용 필드
+    // ------------------------------------
+    private String keyword;        // 검색 키워드
+    private String searchType;     // 검색 기준(title, author, category 등)
+    private String orderBy;        // 정렬 기준(rating, reviewCount 등)
+
+    // ------------------------------------
+    // ⚠️ 도서명 중복검사(AJAX) 필드
+    // ------------------------------------
+    private boolean duplicate;     // true = 중복, false = 사용 가능
+
+    // ------------------------------------
+    // 📡 AJAX 응답 상태 필드
+    // ------------------------------------
+    private boolean success;       // 요청 성공 여부
+    private String message;        // 응답 메시지
 }
+
 
 /*
 SQL> desc book;
@@ -33,7 +55,7 @@ SQL> desc book;
  CATEGORY                                  NOT NULL VARCHAR2(50)
  RANKING                                            VARCHAR2(100)
  REVIEW_COUNT                                       NUMBER(10)
- RATING                                             NUMBER(10,2)
+ RATING                                             NUMBER(5,2)
  DESCRIPTION                                        CLOB
  PAGES                                              NUMBER(10)
  PRICE                                              NUMBER(10)

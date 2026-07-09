@@ -1,59 +1,20 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{fragments/layout}">
+   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+   layout:decorate="~{fragments/layout}">
+<!--    #1. layout 렌더링    -->
 <head lang="ko">
-    <meta charset="UTF-8">
-    <title>BookStore</title>
-
-    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
-
-    <style>
-        body{ background:#f5f7fb; }
-        .book-wrap{ max-width:1300px; margin:60px auto; }
-        .page-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:35px; }
-        .page-title{ font-size:34px; font-weight:700; color:#222; }
-        .page-title span{ color:#2563eb; }
-        .btn-write{ border-radius:10px; padding:10px 24px; font-weight:600; }
-
-        /* 검색창 */
-        .search-box{ margin-bottom:25px; }
-        .search-input{ width:350px; padding:10px 15px; border-radius:10px; border:1px solid #ccc; }
-
-        /* 검색 결과 */
-        .search-result{ background:#fff; border-radius:10px; margin-top:10px; padding:15px; box-shadow:0 4px 12px rgba(0,0,0,.08); }
-        .search-item{ padding:8px 0; cursor:pointer; }
-        .search-item:hover{ color:#2563eb; }
-
-        .book-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:28px; }
-        .book-card{ background:#fff; border-radius:18px; overflow:hidden; cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,.08); transition:.25s; }
-        .book-card:hover{ transform:translateY(-8px); box-shadow:0 18px 35px rgba(0,0,0,.15); }
-        .book-cover{ height:360px; overflow:hidden; }
-        .book-cover img{ width:100%; height:100%; object-fit:cover; transition:.3s; }
-        .book-card:hover .book-cover img{ transform:scale(1.05); }
-        .book-body{ padding:18px; }
-        .book-title{ font-size:20px; font-weight:700; color:#222; margin-bottom:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .book-author{ color:#666; margin-bottom:10px; }
-        .book-category{ display:inline-block; background:#eef4ff; color:#2563eb; padding:4px 10px; border-radius:30px; font-size:13px; margin-bottom:15px; }
-        .book-rating{ display:flex; justify-content:space-between; align-items:center; }
-        .star{ color:#f59e0b; font-weight:700; }
-        .review{ color:#888; font-size:14px; }
-
-        .pagination-area{ margin-top:50px; }
-        .page-link{ border-radius:8px !important; margin:0 4px; }
-        .page-item.active .page-link{ background:#2563eb; border-color:#2563eb; }
-    </style>
+<meta charset="UTF-8">
+<title>Insert title here</title>
 </head>
-
 <body>
-<div layout:fragment="content">
-<div class="container">
-
+    <div  layout:fragment="content">
+    
+ 
     <div class="book-wrap">
 
         <!-- Header -->
         <div class="page-header">
-
             <div class="page-title">
                 📚 <span>BookStore</span>
             </div>
@@ -61,14 +22,6 @@
             <a th:href="@{/book/write}" class="btn btn-primary btn-write">
                 + 도서 등록
             </a>
-
-        </div>
-
-        <!-- 검색창 -->
-        <div class="search-box">
-            <input type="text" id="searchInput" class="search-input"
-                   placeholder="도서명 검색 (자동완성)">
-            <div id="searchResult" class="search-result" style="display:none;"></div>
         </div>
 
         <!-- Book Grid -->
@@ -76,10 +29,10 @@
 
             <div class="book-card"
                  th:each="book : ${list}"
-                 th:onclick="'location.href=\'/book/detail?bookId=' + ${book.bookId} + '\';'">
+                 th:onclick="|location.href='/book/detail?bookId=${book.bookId}'|">
 
                 <div class="book-cover">
-                    <img th:src="@{/upload/{file}(file=${book.bookCover})}"
+                    <img th:src="@{'/upload/' + ${book.bookCover}}"
                          th:alt="${book.title}">
                 </div>
 
@@ -88,7 +41,7 @@
                     <div class="book-title" th:text="${book.title}"></div>
 
                     <div class="book-author"
-                         th:text="${book.author + ' · ' + book.publisher}">
+                         th:text="${book.author} + ' · ' + ${book.publisher}">
                     </div>
 
                     <div class="book-category" th:text="${book.category}"></div>
@@ -106,86 +59,36 @@
 
         <!-- Pagination -->
         <div class="pagination-area">
-
             <ul class="pagination justify-content-center">
 
-                <!-- 이전 -->
-                <li class="page-item"
-                    th:if="${paging.start > paging.bottomlist}">
-                    <a class="page-link"
-                       th:href="@{/book/list(pstartno=${paging.start - 1})}">
+                <li class="page-item" th:if="${paging.start > paging.bottomlist}">
+                    <a class="page-link" th:href="@{|/book/list?pstartno=${paging.start-1}|}">
                         이전
                     </a>
                 </li>
 
-                <!-- 페이지 번호 -->
-                <li class="page-item"
-                    th:each="i : ${#numbers.sequence(paging.start, paging.end)}"
-                    th:classappend="${i == paging.current} ? 'active'">
+                <li th:each="i : ${#numbers.sequence(paging.start, paging.end)}"
+                    th:class="'page-item ' + (${i} == ${paging.current} ? 'active' : '')">
 
                     <a class="page-link"
-                       th:href="@{/book/list(pstartno=${i})}"
+                       th:href="@{|/book/list?pstartno=${i}|}"
                        th:text="${i}">
                     </a>
 
                 </li>
 
-                <!-- 다음 -->
-                <li class="page-item"
-                    th:if="${paging.pagetotal > paging.end}">
-                    <a class="page-link"
-                       th:href="@{/book/list(pstartno=${paging.end + 1})}">
+                <li class="page-item" th:if="${paging.pagetotal > paging.end}">
+                    <a class="page-link" th:href="@{|/book/list?pstartno=${paging.end+1}|}">
                         다음
                     </a>
                 </li>
 
             </ul>
-
         </div>
 
     </div>
 
-</div>
-</div>
-
-<!-- AJAX SCRIPT -->
-<script>
-    const input = document.getElementById("searchInput");
-    const resultBox = document.getElementById("searchResult");
-
-    input.addEventListener("keyup", function() {
-        const keyword = this.value.trim();
-
-        if (keyword.length < 1) {
-            resultBox.style.display = "none";
-            resultBox.innerHTML = "";
-            return;
-        }
-
-        fetch(`/book/search?keyword=` + keyword)
-            .then(res => res.json())
-            .then(list => {
-                if (list.length === 0) {
-                    resultBox.innerHTML = "<div>검색 결과 없음</div>";
-                    resultBox.style.display = "block";
-                    return;
-                }
-
-                let html = "";
-                list.forEach(book => {
-                    html += `
-                        <div class="search-item"
-                             onclick="location.href='/book/detail?bookId=${book.bookId}'">
-                            ${book.title} - ${book.author}
-                        </div>
-                    `;
-                });
-
-                resultBox.innerHTML = html;
-                resultBox.style.display = "block";
-            });
-    });
-</script>
-
+        
+    </div>
 </body>
 </html>

@@ -5,7 +5,9 @@
 
 <mapper namespace="com.the703.dao.BookDao">
 
-    <!-- 전체 조회 (Oracle 페이징: OFFSET/FETCH) -->
+    <!-- ========================================================= -->
+    <!-- 📘 전체 조회 (Oracle OFFSET/FETCH 페이징) -->
+    <!-- ========================================================= -->
     <select id="findAll" resultType="BookDto" parameterType="java.util.HashMap">
         SELECT *
         FROM BOOK
@@ -13,37 +15,31 @@
         OFFSET #{start} ROWS FETCH NEXT #{end} ROWS ONLY
     </select>
 
-    <!-- 전체 개수 -->
     <select id="findAllCnt" resultType="int">
         SELECT COUNT(*) FROM BOOK
     </select>
 
-    <!-- 단건 조회 -->
+
+    <!-- ========================================================= -->
+    <!-- 📘 단건 조회 -->
+    <!-- ========================================================= -->
     <select id="findById" resultType="BookDto" parameterType="BookDto">
         SELECT *
         FROM BOOK
         WHERE BOOK_ID = #{bookId}
     </select>
 
-    <!-- 등록 -->
+
+    <!-- ========================================================= -->
+    <!-- 📘 등록 (Oracle: 날짜 변환 필요) -->
+    <!-- ========================================================= -->
     <insert id="insert" parameterType="BookDto">
         INSERT INTO BOOK (
-            BOOK_ID,
-            TITLE,
-            AUTHOR,
-            PUBLISHER,
-            PUBLISH_DATE,
-            CATEGORY,
-            RANKING,
-            REVIEW_COUNT,
-            RATING,
-            DESCRIPTION,
-            PAGES,
-            PRICE,
-            BOOK_COVER,
-            REG_DATE
+            BOOK_ID, TITLE, AUTHOR, PUBLISHER, PUBLISH_DATE, CATEGORY,
+            RANKING, REVIEW_COUNT, RATING, DESCRIPTION, PAGES,
+            PRICE, BOOK_COVER
         ) VALUES (
-            seq_book_id.NEXTVAL,
+            SEQ_BOOK_ID.NEXTVAL,
             #{title},
             #{author},
             #{publisher},
@@ -55,57 +51,113 @@
             #{description},
             #{pages},
             #{price},
-            #{bookCover},
-            SYSTIMESTAMP
+            #{bookCover}
         )
     </insert>
 
-    <!-- 수정 -->
-    <update id="update" parameterType="BookDto">
-        UPDATE BOOK
-        SET
-            TITLE = #{title},
-            AUTHOR = #{author},
-            PUBLISHER = #{publisher},
-            PUBLISH_DATE = TO_DATE(#{publishDate}, 'YYYY-MM-DD'),
-            CATEGORY = #{category},
-            RANKING = #{ranking},
-            REVIEW_COUNT = #{reviewCount},
-            RATING = #{rating},
-            DESCRIPTION = #{description},
-            PAGES = #{pages},
-            PRICE = #{price},
-            BOOK_COVER = #{bookCover}
-        WHERE BOOK_ID = #{bookId}
-    </update>
 
-    <!-- 삭제 -->
-    <delete id="delete">
+    <!-- ========================================================= -->
+    <!-- 📘 수정 -->
+    <!-- ========================================================= -->
+	<update id="update" parameterType="BookDto">
+	    UPDATE BOOK
+	    <set>
+	        <if test="title != null">TITLE = #{title},</if>
+	        <if test="author != null">AUTHOR = #{author},</if>
+	        <if test="publisher != null">PUBLISHER = #{publisher},</if>
+	        <if test="publishDate != null">PUBLISH_DATE = TO_DATE(#{publishDate}, 'YYYY-MM-DD'),</if>
+	        <if test="category != null">CATEGORY = #{category},</if>
+	        <if test="ranking != null">RANKING = #{ranking},</if>
+	        <if test="reviewCount != null">REVIEW_COUNT = #{reviewCount},</if>
+	        <if test="rating != null">RATING = #{rating},</if>
+	        <if test="description != null">DESCRIPTION = #{description},</if>
+	        <if test="pages != null">PAGES = #{pages},</if>
+	        <if test="price != null">PRICE = #{price},</if>
+	        <if test="bookCover != null">BOOK_COVER = #{bookCover}</if>
+	    </set>
+	    WHERE BOOK_ID = #{bookId}
+	</update>
+
+
+    <!-- ========================================================= -->
+    <!-- 📘 삭제 -->
+    <!-- ========================================================= -->
+    <delete id="delete" parameterType="BookDto">
         DELETE FROM BOOK
         WHERE BOOK_ID = #{bookId}
     </delete>
 
-    <!-- 카테고리별 조회 -->
-    <select id="findByCategory" resultType="BookDto">
+
+    <!-- ========================================================= -->
+    <!-- 📘 카테고리별 조회 -->
+    <!-- ========================================================= -->
+<!--     <select id="findByCategory" resultType="BookDto" parameterType="BookDto">
         SELECT *
         FROM BOOK
         WHERE CATEGORY = #{category}
         ORDER BY BOOK_ID DESC
     </select>
+ -->
 
-    <!-- 제목 검색 -->
-    <select id="searchByTitle" resultType="BookDto">
+    <!-- ========================================================= -->
+    <!-- 🔍 제목 검색 (AJAX) -->
+    <!-- ========================================================= -->
+<!--     <select id="searchByTitle" resultType="BookDto" parameterType="BookDto">
         SELECT *
         FROM BOOK
         WHERE TITLE LIKE '%' || #{keyword} || '%'
         ORDER BY BOOK_ID DESC
-    </select>
+    </select> -->
 
-    <!-- 🔥 도서명 중복 검사 (AJAX) -->
-    <select id="checkTitleDuplicate" resultType="int">
+
+    <!-- ========================================================= -->
+    <!-- 🔍 통합 검색 (제목 + 저자 + 카테고리) -->
+    <!-- ========================================================= -->
+<!--     <select id="searchBooks" resultType="BookDto" parameterType="BookDto">
+        SELECT *
+        FROM BOOK
+        WHERE
+            (
+                (#{searchType} = 'title' AND TITLE LIKE '%' || #{keyword} || '%')
+                OR (#{searchType} = 'author' AND AUTHOR LIKE '%' || #{keyword} || '%')
+                OR (#{searchType} = 'category' AND CATEGORY LIKE '%' || #{keyword} || '%')
+            )
+        ORDER BY
+            CASE
+                WHEN #{orderBy} = 'rating' THEN RATING
+                WHEN #{orderBy} = 'reviewCount' THEN REVIEW_COUNT
+                ELSE BOOK_ID
+            END DESC
+    </select> -->
+	
+	<!-- 🔍 통합 검색 (정렬을 BOOK_ID 최신순으로 단일화) -->
+	<select id="searchBooks" resultType="BookDto" parameterType="BookDto">
+	    SELECT *
+	    FROM BOOK
+	    <where>
+	        <choose>
+	            <when test="searchType == 'title'">
+	                TITLE LIKE '%' || #{keyword} || '%'
+	            </when>
+	            <when test="searchType == 'author'">
+	                AUTHOR LIKE '%' || #{keyword} || '%'
+	            </when>
+	            <when test="searchType == 'category'">
+	                CATEGORY LIKE '%' || #{keyword} || '%'
+	            </when>
+	        </choose>
+	    </where>
+	    ORDER BY BOOK_ID DESC
+	</select>
+
+
+    <!-- ========================================================= -->
+    <!-- ⚠️ 도서명 중복검사 (AJAX) -->
+    <!-- ========================================================= -->
+<!--     <select id="checkTitleDuplicate" resultType="int" parameterType="BookDto">
         SELECT COUNT(*)
         FROM BOOK
         WHERE TITLE = #{title}
-    </select>
+    </select> -->
 
 </mapper>
