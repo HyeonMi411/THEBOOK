@@ -10,11 +10,106 @@
 <body>
     <div  layout:fragment="content">
     
-    
-    
-        템플릿
-        
-        
+    <div class="detail-card">
+
+        <div class="row g-0">
+
+            <!-- 이미지 -->
+            <div class="col-lg-4 p-4">
+
+                <img th:if="${book.bookCover != null}"
+                     th:src="@{'/upload/' + ${book.bookCover}}"
+                     th:alt="${book.title}"
+                     class="book-cover">
+
+                <img th:if="${book.bookCover == null}"
+                     src="https://via.placeholder.com/320x480?text=No+Image"
+                     alt="No Image"
+                     class="book-cover">
+
+            </div>
+
+            <!-- 정보 -->
+            <div class="col-lg-8">
+
+                <div class="p-4 p-lg-5">
+
+                    <h2 class="info-title" th:text="${book.title}"></h2>
+
+                    <div class="info-meta"
+                         th:text="${book.author} + ' · ' + ${book.publisher}">
+                    </div>
+
+                    <span class="badge-category" th:text="${book.category}"></span>
+
+                    <div class="rating" th:if="${book.rating != null}">
+                        ⭐ <span th:text="${book.rating}"></span>
+                        <small class="text-secondary">
+                            (<span th:text="${book.reviewCount}"></span> Reviews)
+                        </small>
+                    </div>
+
+                    <table class="table info-table">
+
+                        <tr>
+                            <th>출판일</th>
+                            <td th:text="${book.publishDate}"></td>
+                        </tr>
+
+                        <tr>
+                            <th>페이지</th>
+                            <td th:text="${book.pages + ' Page'}"></td>
+                        </tr>
+
+                        <tr>
+                            <th>가격</th>
+                            <td>
+                                <strong class="text-primary"
+                                        th:text="${#numbers.formatInteger(book.price, 3, 'COMMA')} + ' 원'">
+                                </strong>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>랭킹</th>
+                            <td th:text="${book.ranking}"></td>
+                        </tr>
+
+                        <tr>
+                            <th>등록일</th>
+                            <td th:text="${book.regDate}"></td>
+                        </tr>
+
+                    </table>
+
+                    <div class="description" th:text="${book.description}"></div>
+
+                    <div class="btn-area">
+
+                        <a th:href="@{/book/list}" class="btn btn-outline-secondary">
+                            목록
+                        </a>
+
+                        <a th:href="@{|/book/edit?bookId=${book.bookId}|}"
+                           class="btn btn-primary">
+                            수정
+                        </a>
+
+                        <a th:href="@{|/book/delete?bookId=${book.bookId}|}"
+                           class="btn btn-danger"
+                           onclick="return confirm('정말 삭제하시겠습니까?');">
+                            삭제
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
         
     </div>
 </body>
