@@ -5,7 +5,7 @@
       layout:decorate="~{fragments/layout}">
 <body>
 <div layout:fragment="content">
-	<!-- ¾Ë¸²¸Þ½ÃÁö --> 
+	<!-- ì•Œë¦¼ë©”ì‹œì§€ --> 
     <div th:if="${successMessage}" class="alert alert-info alert-dismissible fade show" role="alert">
         <span th:text="${successMessage}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -15,29 +15,29 @@
         <span th:text="${errorMessage}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>	
-    <h2 class="mb-4">·Î±×ÀÎ</h2> 
-    <!-- ·Î±×ÀÎ ÆûÀº ÀÍ¸í »ç¿ëÀÚ¸¸ -->
+    <h2 class="mb-4">ë¡œê·¸ì¸</h2> 
+    <!-- ë¡œê·¸ì¸ í¼ì€ ìµëª… ì‚¬ìš©ìžë§Œ -->
     <div sec:authorize="isAnonymous()">  
         <form  th:action="@{/users/loginProc}"   method="post"  class="needs-validation"   novalidate>
             <div class="mb-3">
-                <label for="username" class="form-label">ÀÌ¸ÞÀÏ</label>
+                <label for="username" class="form-label">ì´ë©”ì¼</label>
                 <input type="text" id="username" name="username" class="form-control" required>
             </div>
 
             <div class="mb-3">
-                <label for="password" class="form-label">ºñ¹Ð¹øÈ£</label>
+                <label for="password" class="form-label">ë¹„ë°€ë²ˆí˜¸</label>
                 <input type="password" id="password" name="password" class="form-control" required>
             </div> 
-            <button type="submit" class="btn btn-primary">·Î±×ÀÎ</button>
+            <button type="submit" class="btn btn-primary">ë¡œê·¸ì¸</button>
         </form> 
 	</div>
-    <!-- ·Î±×ÀÎÇÑ À¯Àú -->  
+    <!-- ë¡œê·¸ì¸í•œ ìœ ì € -->  
     <div sec:authorize="isAuthenticated()">
-    	<p class="alert alert-info">ÀÌ¹Ì ·Î±×ÀÎÇÑ »óÅÂÀÔ´Ï´Ù.</p>
-    	<a   class="btn btn-success">¸¶ÀÌÆäÀÌÁö·Î ÀÌµ¿</a>
+    	<p class="alert alert-info">ì´ë¯¸ ë¡œê·¸ì¸í•œ ìƒíƒœìž…ë‹ˆë‹¤.</p>
+    	<a   class="btn btn-success">ë§ˆì´íŽ˜ì´ì§€ë¡œ ì´ë™</a>
 	</div>    
 	
-    <!-- ¼Ò¼È À¯Àú -->  
+    <!-- ì†Œì…œ ìœ ì € -->  
    <div class="container my-5 text-center">
       <div class="row">
          <div class="col-sm-4">

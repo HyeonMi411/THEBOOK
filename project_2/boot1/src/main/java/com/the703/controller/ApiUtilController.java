@@ -19,11 +19,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.the703.api.ApiEmail;
+import com.the703.api.ApiKakaoBook;
 import com.the703.api.ApiKmaWeather;
 import com.the703.api.ApiNaverBook;
 import com.the703.api.ApiOcrService;
 import com.the703.api.ApiOpenAi;
 import com.the703.api.BookDto;
+import com.the703.api.BookKakaoDto;
 import com.the703.llmrag.AiService;
 
 @Controller
@@ -50,6 +52,15 @@ public class ApiUtilController {
 	@ResponseBody
 	public List<BookDto> books_json( @RequestParam String search) {		
 		return apibook.getBooks(search);
+	}
+	
+
+	// http://localhost:8080/api/util/books_kakao/json?search=spring
+	@Autowired ApiKakaoBook apikakaobook;
+	@GetMapping(value="/books_kakao/json" , produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public List<BookKakaoDto> books_kakao_json( @RequestParam String search) {		
+		return apikakaobook.getBooks(search);
 	}
 	
 	////////////4. openai

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.the703.api.BookKakaoDto;
 import com.the703.dao.BookDao;
 import com.the703.dto.BookDto;
 import com.the703.util.UtilUpload;
@@ -133,6 +134,12 @@ public class BookServiceImpl implements BookService {
     public List<BookDto> searchBooks(BookDto dto) {
         return bookDao.searchBooks(dto);
     }
+
+	@Override
+	public int apikakaoinsert(List<BookKakaoDto> api) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
 
 //    // ---------------------------------------------------------

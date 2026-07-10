@@ -22,7 +22,7 @@ public class Sboard2Controller {
    /*														*/
    /*														*/
    //1. 전체리스트   /board/list
-   @GetMapping("/list")//   view값넘기기     페이지번호   
+   @GetMapping("/list.do")//   view값넘기기     페이지번호   
    public String list(   Model   model  ,  @RequestParam(value="pageNo"  , defaultValue = "1")  int pageNo) {  
       model.addAttribute("paging" , new UtilPaging(     service.selectCnt() , pageNo  ));
       model.addAttribute("list"   , service.list10(pageNo));
@@ -34,7 +34,7 @@ public class Sboard2Controller {
    //2. 글쓰기 폼    GET: /board/write      
    //3. 글쓰기 기능   POST: /board/write   
    @GetMapping("/write")  public String write_get() {   return "board/write"; }
-   @PostMapping("/write") public String write_post(MultipartFile file, Sboard2Dto dto, RedirectAttributes rttr) {
+   @PostMapping("/write.do") public String write_post(MultipartFile file, Sboard2Dto dto, RedirectAttributes rttr) {
 	   String result ="글쓰기 실패";
 	   if(service.insert(file, dto) > 0) { result ="글쓰기 성공"; }
 	   rttr.addFlashAttribute("success", result);

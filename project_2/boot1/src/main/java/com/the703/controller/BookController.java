@@ -3,6 +3,7 @@ package com.the703.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.the703.api.ApiKakaoBook;
+import com.the703.api.BookKakaoDto;
 import com.the703.dto.BookDto;
 import com.the703.service.BookService;
 import com.the703.util.UtilPaging;
@@ -21,9 +24,31 @@ import com.the703.util.UtilPaging;
 @Controller
 public class BookController {
 
-    @Autowired
-    private BookService service;
+    @Autowired private BookService service;
 
+    @Autowired private ApiKakaoBook kakaobookService;
+
+    
+//	@Autowired ApiKakaoBook apikakaobook;
+//	@GetMapping(value="/books_kakao/json" , produces = MediaType.APPLICATION_JSON_VALUE)
+//	@ResponseBody
+//	public List<BookKakaoDto> books_kakao_json( @RequestParam String search) {		
+//		return apikakaobook.getBooks(search);
+//	}
+//	
+    
+    @GetMapping("/books/import")
+    public String importBooks(@RequestParam String query) {
+    	// 1) 카카오 API 불러오기
+    	List<BookKakaoDto> api = kakaobookService.getBooks(query);
+    	// 2) 내 DB 에 저장  
+    	service.apikakaoinsert(api);
+        return "redirect:/book/list";
+
+    }
+    
+    
+    
     // ---------------------------------------------------------
     // 📘 전체 리스트 (페이징)
     // ---------------------------------------------------------
@@ -154,10 +179,18 @@ public class BookController {
     // ---------------------------------------------------------
     // 🔍 통합 검색 (AJAX)
     // ---------------------------------------------------------
+//    @ResponseBody
+//    @GetMapping("/book/search/title")
+//    public List<BookDto> searchBooks(BookDto dto) {
+//        return service.searchBooks(dto);
+//    }
     @ResponseBody
     @GetMapping("/book/search")
-    public List<BookDto> searchBooks(BookDto dto) {
-        return service.searchBooks(dto);
+    public List<BookDto> searchBooks(@RequestParam String keyword) {
+        
+    	BookDto dto = new BookDto();
+    	dto.setSearchType(keyword);
+    	return service.searchBooks(dto);
     }
 
 

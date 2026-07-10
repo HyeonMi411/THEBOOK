@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.the703.api.BookKakaoDto;
 import com.the703.dto.BookDto;
 
 public interface BookService {
@@ -62,6 +63,7 @@ public interface BookService {
     // 🔍 통합 검색 (제목/저자/카테고리) — AJAX
     // ---------------------------------------------------------
     public List<BookDto> searchBooks(BookDto dto);
+	public int apikakaoinsert(List<BookKakaoDto> api);
 
 
     // ---------------------------------------------------------
