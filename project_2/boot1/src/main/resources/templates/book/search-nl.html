@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>국립중앙도서관 검색</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <h2>국립중앙도서관 도서 검색</h2>
+
+    <form th:action="@{/book/search/nl}" method="get" class="mb-3">
+        <input type="text" name="keyword" th:value="${keyword}" class="form-control" placeholder="검색어 입력">
+        <button class="btn btn-primary mt-2">검색</button>
+    </form>
+
+    <div th:if="${apiList}">
+
+        <form th:action="@{/book/import/nl}" method="post">
+            <input type="hidden" name="keyword" th:value="${keyword}">
+            <input type="hidden" name="page" th:value="${page}">
+            <button class="btn btn-success mb-3">현재 검색 결과 전체를 내 DB에 저장</button>
+        </form>
+
+        <table class="table table-striped">
+            <tr>
+                <th>제목</th>
+                <th>저자</th>
+                <th>출판사</th>
+                <th>발행년도</th>
+            </tr>
+
+            <tr th:each="b : ${apiList}">
+                <td th:text="${b['title_info']}"></td>
+                <td th:text="${b['author_info']}"></td>
+                <td th:text="${b['pub_info']}"></td>
+                <td th:text="${b['pub_year_info']}"></td>
+            </tr>
+        </table>
+
+    </div>
+
+</div>
+</body>
+</html>

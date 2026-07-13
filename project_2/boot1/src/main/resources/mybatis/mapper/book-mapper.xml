@@ -37,22 +37,22 @@
         INSERT INTO BOOK (
             BOOK_ID, TITLE, AUTHOR, PUBLISHER, PUBLISH_DATE, CATEGORY,
             RANKING, REVIEW_COUNT, RATING, DESCRIPTION, PAGES,
-            PRICE, BOOK_COVER
-        ) VALUES (
-            SEQ_BOOK_ID.NEXTVAL,
-            #{title},
-            #{author},
-            #{publisher},
-            TO_DATE(#{publishDate}, 'YYYY-MM-DD'),
-            #{category},
-            #{ranking},
-            #{reviewCount},
-            #{rating},
-            #{description},
-            #{pages},
-            #{price},
-            #{bookCover}
-        )
+            PRICE, BOOK_COVER)
+		VALUES (
+		    SEQ_BOOK_ID.NEXTVAL,
+		    #{title, jdbcType=VARCHAR},
+		    #{author, jdbcType=VARCHAR},
+		    #{publisher, jdbcType=VARCHAR},
+		    TO_DATE(#{publishDate, jdbcType=VARCHAR}, 'YYYY-MM-DD'),
+		    #{category, jdbcType=VARCHAR},
+		    #{ranking, jdbcType=VARCHAR},      <!-- 수정: VARCHAR로 명시 -->
+		    #{reviewCount, jdbcType=INTEGER},  <!-- 수정: INTEGER로 명시 -->
+		    #{rating, jdbcType=NUMERIC},       <!-- 수정: NUMERIC으로 명시 -->
+		    #{description, jdbcType=CLOB},     <!-- 수정: CLOB으로 명시 -->
+		    #{pages, jdbcType=INTEGER},
+		    #{price, jdbcType=INTEGER},
+		    #{bookCover, jdbcType=VARCHAR}
+		)
     </insert>
 
 
@@ -150,6 +150,9 @@
 	    ORDER BY BOOK_ID DESC
 	</select>
 
+	<select id="findByIsbn" resultType="BookDto">
+	    SELECT * FROM BOOK WHERE ISBN = #{isbn}
+	</select>
 
     <!-- ========================================================= -->
     <!-- ⚠️ 도서명 중복검사 (AJAX) -->

@@ -52,7 +52,7 @@ public class ApiKakaoBook {
             for (JsonNode item : documents) {
             	BookKakaoDto book = new BookKakaoDto();
                 book.setTitle(item.path("title").asText());
-                book.setThumbnail(item.path("thumbnail").asText()); //##### 추가
+                book.setThumbnail(item.path("thumbnail").asText()); //##### 추가    BookKakaoDto
                 result.add(book);
             }
 
@@ -62,6 +62,39 @@ public class ApiKakaoBook {
 
         return result;
     }
+    
+    public String getCoverByIsbn(String isbn) {
+
+        URI uri = UriComponentsBuilder
+                .fromUriString("https://dapi.kakao.com/v3/search/book")
+                .queryParam("target", "isbn")
+                .queryParam("query", isbn)
+                .build()
+                .toUri();
+
+        try {
+            String responseBody = restClient.get()
+                    .uri(uri)
+                    .header("Authorization", "KakaoAK " + restApiKey)
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode docs = root.path("documents");
+
+            if (docs.size() > 0) {
+                return docs.get(0).path("thumbnail").asText();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    
+    
 }
 	
 // title, author , image	

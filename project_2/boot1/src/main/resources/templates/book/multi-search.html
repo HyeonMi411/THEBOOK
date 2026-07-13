@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>멀티 도서 검색</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <h2>멀티 도서 검색 (국립중앙도서관 + 네이버 + 카카오)</h2>
+
+    <form th:action="@{/search/all}" method="get" class="mb-3">
+        <input type="text" name="keyword" th:value="${keyword}" class="form-control" placeholder="검색어 입력">
+        <button class="btn btn-primary mt-2">검색</button>
+    </form>
+
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-all">통합</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-nl">국립중앙도서관</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-naver">네이버</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-kakao">카카오</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <!-- 통합 -->
+        <div class="tab-pane fade show active" id="tab-all">
+            <div class="book-grid">
+                <div class="book-card" th:each="b : ${all}">
+                    <div class="book-body">
+                        <div class="book-title" th:text="${b.title}"></div>
+                        <div class="book-author" th:text="${b.author}"></div>
+                        <div class="book-category" th:text="${b.category}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 국립중앙도서관 -->
+        <div class="tab-pane fade" id="tab-nl">
+            <div class="book-grid">
+                <div class="book-card" th:each="b : ${nl}">
+                    <div class="book-body">
+                        <div class="book-title" th:text="${b.title_info}"></div>
+                        <div class="book-author" th:text="${b.author_info}"></div>
+                        <div class="book-category">국립중앙도서관</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 네이버 -->
+        <div class="tab-pane fade" id="tab-naver">
+            <div class="book-grid">
+                <div class="book-card" th:each="b : ${naver}">
+                    <div class="book-body">
+                        <div class="book-title" th:text="${b.title}"></div>
+                        <div class="book-author" th:text="${b.author}"></div>
+                        <div class="book-category">네이버</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 카카오 -->
+        <div class="tab-pane fade" id="tab-kakao">
+            <div class="book-grid">
+                <div class="book-card" th:each="b : ${kakao}">
+                    <div class="book-body">
+                        <div class="book-title" th:text="${b.title}"></div>
+                        <div class="book-author" th:text="${b.authors}"></div>
+                        <div class="book-category">카카오</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+		<div class="book-card" th:each="b : ${nl}">
+		    <div class="book-body">
+		        <div class="book-title" th:text="${b.title_info}"></div>
+		        <div class="book-author" th:text="${b.author_info}"></div>
+		        <div class="book-category">국립중앙도서관</div>
+		
+		        <button class="btn btn-sm btn-success mt-2"
+		                onclick="saveBook(
+		                    [[${b.title}]],
+		                    [[${b.author}]],
+		                    [[${b.publisher}]],
+		                    [[${b.publishDate}]],
+		                    '국립중앙도서관'
+		                )">
+		            DB 저장
+		        </button>
+		    </div>
+		</div>
+		
+		<script>
+		function saveBook(title, author, publisher, publishDate, category) {
+		
+		    const dto = {
+		        title: title,
+		        author: author,
+		        publisher: publisher,
+		        publishDate: publishDate,
+		        category: category,
+		        ranking: null,
+		        reviewCount: 0,
+		        rating: 0.0,
+		        description: "",
+		        pages: null,
+		        price: null,
+		        bookCover: "default.png"
+		    };
+		
+		    fetch("/book/save", {
+		        method: "POST",
+		        headers: { "Content-Type": "application/json" },
+		        body: JSON.stringify(dto)
+		    })
+		    .then(res => res.text())
+		    .then(result => {
+		        if(result === "SUCCESS"){
+		            alert("DB 저장 완료!");
+		        } else {
+		            alert("저장 실패!");
+		        }
+		    });
+		}
+		</script>
+		
+        
+
+    </div>
+
+</div>
+</body>
+</html>

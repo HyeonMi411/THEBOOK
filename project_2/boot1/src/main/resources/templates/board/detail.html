@@ -32,10 +32,19 @@
 			    <textarea class="form-control" id="content" placeholder="내용을 입력해주세요"   
 			    	readonly name="content"  th:text="${dto.bcontent}"></textarea>
 			  </div> 
-			  <div class="mb-3 mt-3">
-			    <label for="title" class="form-label">IMG:</label>
-			    <img  th:src="@{|/upload/${dto.bfile}|}"   alt=""/>
-			  </div>			   
+<div class="mb-3 mt-3">
+    <label for="title" class="form-label">IMG:</label>
+    
+    <!-- 카카오 이미지 URL인 경우: 그대로 출력 -->
+    <img th:if="${dto.bookCover != null && dto.bookCover.startsWith('http')}" 
+         th:src="${dto.bookCover}" 
+         alt="도서 이미지" style="max-width: 200px;"/>
+    
+    <!-- 로컬 파일인 경우: /upload/를 붙여서 출력 -->
+    <img th:unless="${dto.bookCover != null && dto.bookCover.startsWith('http')}" 
+         th:src="@{|/upload/${dto.bookCover}|}" 
+         alt="도서 이미지" style="max-width: 200px;"/>
+</div>		   
 				<div class="mb-3">
 				<a th:href="@{/board/edit(id=${dto.id})}" class="btn btn-success form-control">글수정</a>
 				</div>

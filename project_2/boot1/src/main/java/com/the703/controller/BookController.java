@@ -3,11 +3,12 @@ package com.the703.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.the703.api.ApiKakaoBook;
 import com.the703.api.BookKakaoDto;
+import com.the703.api.NlBookApiService;
 import com.the703.dto.BookDto;
 import com.the703.service.BookService;
 import com.the703.util.UtilPaging;
@@ -27,6 +29,8 @@ public class BookController {
     @Autowired private BookService service;
 
     @Autowired private ApiKakaoBook kakaobookService;
+    
+    @Autowired private NlBookApiService nlApi;
 
     
 //	@Autowired ApiKakaoBook apikakaobook;
@@ -36,7 +40,7 @@ public class BookController {
 //		return apikakaobook.getBooks(search);
 //	}
 //	
-    
+    //localhost:8080/books/import?query=java
     @GetMapping("/books/import")
     public String importBooks(@RequestParam String query) {
     	// 1) 카카오 API 불러오기
@@ -192,8 +196,60 @@ public class BookController {
     	dto.setSearchType(keyword);
     	return service.searchBooks(dto);
     }
+    
+    @PostMapping("/book/save")
+    @ResponseBody
+    public String saveFromApi(@RequestBody BookDto dto) {
 
+        // 파일 없음 → 기본 이미지
+        dto.setBookCover("default.png");
 
+        int result = service.insert(dto, null);
+
+        return (result > 0) ? "SUCCESS" : "FAIL";
+    }
+    
+//    @PostMapping("/book/save")
+//    @ResponseBody
+//    public String saveFromApi(@RequestBody BookDto dto) {
+//
+//        // 표지 URL 그대로 저장
+//        int result = service.insert(dto, null);
+//
+//        return result > 0 ? "SUCCESS" : "FAIL";
+//    }    
+
+    // 🔍 국립중앙도서관 API 검색 화면
+//    @GetMapping("/book/search/nl")
+//    public String searchNl(@RequestParam(required = false) String keyword,
+//                           @RequestParam(defaultValue = "1") int page,
+//                           Model model) {
+//
+//        if (keyword != null && !keyword.isBlank()) {
+//            List<java.util.Map<String, Object>> result = nlApi.search(keyword, page);
+//            model.addAttribute("apiList", result);
+//        }
+//
+//        model.addAttribute("keyword", keyword);
+//        model.addAttribute("page", page);
+//
+//        return "book/search-nl";
+//    }
+
+    // 🔽 국립중앙도서관 API 결과 → 내 DB 저장
+//    @PostMapping("/book/import/nl")
+//    public String importFromNl(@RequestParam String keyword,
+//                               @RequestParam(defaultValue = "1") int page,
+//                               RedirectAttributes rttr) {
+//
+//        List<java.util.Map<String, Object>> result = nlApi.search(keyword, page);
+//        int cnt = service.insertFromNlApi(result);
+//
+//        rttr.addFlashAttribute("result", cnt + "건 저장");
+//
+//        return "redirect:/book/list";
+//    }    
+    
     // ---------------------------------------------------------
     // ⚠️ 도서명 중복검사 (AJAX)
     // ---------------------------------------------------------

@@ -51,6 +51,7 @@ public interface BookDao {
     // ------------------------------------
     public List<BookDto> searchBooks(BookDto dto);
 
+    public List<BookDto> findByIsbn(String isbn);
 
     // ------------------------------------
     // ⚠️ 도서명 중복검사 (AJAX)

@@ -55,6 +55,38 @@ public class ApiNaverBook {
 		
 		return result;		
 	}
+	
+	public String getCoverByIsbn(String isbn) {
+
+	    URI uri = UriComponentsBuilder
+	            .fromUriString("https://openapi.naver.com/v1/search/book.json")
+	            .queryParam("query", isbn)
+	            .queryParam("display", 1)
+	            .build()
+	            .toUri();
+
+	    try {
+	        String responseBody = restClient.get()
+	                .uri(uri)
+	                .header("X-Naver-Client-Id", clientId)
+	                .header("X-Naver-Client-Secret", clientSecret)
+	                .retrieve()
+	                .body(String.class);
+
+	        JsonNode root = objectMapper.readTree(responseBody);
+	        JsonNode items = root.path("items");
+
+	        if (items.size() > 0) {
+	            return items.get(0).path("image").asText();  // ⭐ 네이버 표지 URL
+	        }
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+
+	    return null;
+	}
+	
 }
 
 

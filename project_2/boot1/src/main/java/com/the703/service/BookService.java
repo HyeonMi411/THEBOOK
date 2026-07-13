@@ -64,8 +64,23 @@ public interface BookService {
     // ---------------------------------------------------------
     public List<BookDto> searchBooks(BookDto dto);
 	public int apikakaoinsert(List<BookKakaoDto> api);
+    // 국립중앙도서관 API → DB 저장
+    int insertFromNlApi(List<java.util.Map<String, Object>> apiResult);
 
-
+    public boolean isDuplicate(BookDto dto);
+//    {
+//
+//        // 제목 또는 ISBN이 같은 책이 있으면 중복 처리
+//        List<BookDto> list = bookDao.searchBooks(dto);
+//
+//        for (BookDto b : list) {
+//            if (b.getTitle().equals(dto.getTitle())) return true;
+//            if (dto.getIsbn() != null && dto.getIsbn().equals(b.getIsbn())) return true;
+//        }
+//
+//        return false;
+//    }
+    
     // ---------------------------------------------------------
     // ⚠️ 도서명 중복검사 (AJAX)
     // ---------------------------------------------------------
