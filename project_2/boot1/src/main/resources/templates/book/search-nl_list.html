@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+
+<head>
+<meta charset="UTF-8">
+<title>국립중앙도서관 검색 결과</title>
+
+<style>
+
+.book-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+    gap:20px;
+}
+
+.book-card{
+    border:1px solid #ddd;
+    border-radius:10px;
+    overflow:hidden;
+    background:white;
+}
+
+.book-cover img{
+    width:100%;
+    height:320px;
+    object-fit:cover;
+}
+
+.book-body{
+    padding:15px;
+}
+
+.book-title{
+    font-size:16px;
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+.book-info{
+    margin-bottom:5px;
+}
+
+.book-kdc{
+    color:#0d6efd;
+    font-weight:bold;
+    margin-top:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div layout:fragment="content">
+
+<h2>국립중앙도서관 검색 결과</h2>
+
+<h4 th:text="'선택 분류 : ' + ${category}"></h4>
+
+<hr>
+
+<div th:if="${#lists.isEmpty(apiList)}">
+    검색 결과가 없습니다.
+</div>
+
+<div class="book-grid"
+     th:unless="${#lists.isEmpty(apiList)}">
+
+```
+<div class="book-card"
+     th:each="b : ${apiList}">
+
+    <div class="book-cover">
+        <img th:src="${b.bookCover}"
+             th:alt="${b.title_info}">
+    </div>
+
+    <div class="book-body">
+
+        <div class="book-title"
+             th:text="${b.title_info}">
+        </div>
+
+        <div class="book-info">
+            저자 :
+            <span th:text="${b.author_info}"></span>
+        </div>
+
+        <div class="book-info">
+            출판사 :
+            <span th:text="${b.pub_info}"></span>
+        </div>
+
+        <div class="book-info">
+            발행년도 :
+            <span th:text="${b.pub_year_info}"></span>
+        </div>
+
+        <div class="book-info">
+            ISBN :
+            <span th:text="${b.isbn}"></span>
+        </div>
+
+        <div class="book-kdc">
+            KDC :
+            <span th:text="${b.kdc_name_1s}"></span>
+        </div>
+
+    </div>
+
+</div>
+```
+
+</div>
+
+</div>
+
+</body>
+</html>

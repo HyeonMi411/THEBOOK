@@ -13,7 +13,6 @@
     <div class="write-wrap">
 
         <div class="card write-card">
-
             <div class="write-header">
                 <h2>📚 새 도서 등록</h2>
                 <p>BookStore에 새로운 도서를 등록합니다.</p>
@@ -146,10 +145,31 @@
 
             </div>
 
+
+    <hr/> 
+    <div class="page-header">
+            <h3>📚 도서 검색 및 등록</h3>
         </div>
 
-    </div>
-        
-    </div>
+        <div class="search-box" style="margin-bottom: 20px;">
+            <!-- 컨트롤러의 @RequestParam String search에 맞춰 name="search" 지정 -->
+            <form th:action="@{/book/kakaoinsert}" method="get">
+                <input type="text" name="search" placeholder="검색할 도서명을 입력하세요" required>
+                <button type="submit" class="btn btn-primary">검색 및 등록</button>
+            </form>
+        </div>
+
+        <div class="alert alert-info">
+            검색 버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후, 도서 목록 페이지로 이동합니다.
+        </div>
+   </div>    
+
+        </div>
+ 
+       
+  
+ 
+ </div>   
+         
 </body>
 </html>

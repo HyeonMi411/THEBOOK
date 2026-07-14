@@ -1,6 +1,7 @@
 package com.the703.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,7 @@ import com.the703.util.UtilUpload;
 public class BookServiceImpl implements BookService {
 
     @Autowired private BookDao bookDao;
-    @Autowired private UtilUpload  upload;
+    @Autowired private UtilUpload upload;
 
     // ---------------------------------------------------------
     // 📘 전체 조회 (Oracle OFFSET/FETCH 페이징)
@@ -27,8 +28,8 @@ public class BookServiceImpl implements BookService {
     public List<BookDto> findAll(int pstartno) {
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("start", (pstartno - 1) * 10);   // OFFSET
-        map.put("end", 10);                      // FETCH NEXT
+        map.put("start", (pstartno - 1) * 10);
+        map.put("end", 10);
 
         return bookDao.findAll(map);
     }
@@ -37,7 +38,6 @@ public class BookServiceImpl implements BookService {
     public int findAllCnt() {
         return bookDao.findAllCnt();
     }
-
 
     // ---------------------------------------------------------
     // 📘 등록 (파일 업로드 포함)
@@ -60,63 +60,6 @@ public class BookServiceImpl implements BookService {
         return bookDao.insert(dto);
     }
 
-
-    // 카카오 API로 받은 도서 목록 저장 (필요 시)
-//    @Override
-//    public int apikakaoinsert(List<BookKakaoDto> api) {
-//        int cnt = 0; 
-//        for (BookKakaoDto k : api) { 
-//            BookDto dto = new BookDto();
-//            dto.setTitle(k.getTitle());
-//            dto.setAuthors(k.getAuthors());  
-//       
-//            dto.setPublisher(k.getPublisher());
-//            dto.setPublishDate(k.getDatetime().substring(0, 10));
-//            dto.setCategory("API");
-//            dto.setPrice(k.getPrice());            
-//            dto.setDescription(k.getContents());
-//            cnt += bookDao.insert(dto);
-//        }
-//        return cnt;
-//    }
-    @Override
-    public int apikakaoinsert(List<BookKakaoDto> api) {
-    	
-    	System.out.println("................." + api);
-    	
-        int cnt = 0;
-        for (BookKakaoDto k : api) {
-            BookDto dto = new BookDto();
-            
-            // 1. 필수값 매핑 및 타입 처리
-            dto.setTitle(k.getTitle());
-            
-            // authors는 List<String>이므로 DB의 VARCHAR2(100)에 맞게 콤마로 연결
-            String authorStr = (k.getAuthors() != null) ? String.join(", ", k.getAuthors()) : "Unknown";
-            // 길이에 따른 자르기 (DB 컬럼이 100자이므로 제한 필요)
-            dto.setAuthor(authorStr.length() > 100 ? authorStr.substring(0, 97) + "..." : authorStr);
-            
-            dto.setPublisher(k.getPublisher() != null ? k.getPublisher() : "Unknown");
-            
-            // 2. 날짜 처리 (ISO 8601 문자열 -> DB Date)
-            // 카카오 API 날짜는 보통 "2023-01-01T00:00:00.000+09:00" 형태이므로 substring(0,10)으로 잘라 사용
-            String dateStr = (k.getDatetime() != null && k.getDatetime().length() >= 10) ? k.getDatetime().substring(0, 10) : "1900-01-01";
-            // dto.setPublishDate 타입이 String이라면 바로 넣고, Date 객체라면 SimpleDateFormat으로 변환 후 set
-            dto.setPublishDate(dateStr); 
-            
-            // 3. 기타 항목
-            dto.setCategory("API");
-            dto.setPrice(k.getPrice());
-            dto.setDescription(k.getContents());
-            dto.setBookCover(k.getThumbnail());
-            
-            // DB insert 호출
-            cnt += bookDao.insert(dto);
-        }
-        return cnt;
-    }
-    
-
     // ---------------------------------------------------------
     // 📘 수정 (파일 업로드 포함)
     // ---------------------------------------------------------
@@ -125,17 +68,18 @@ public class BookServiceImpl implements BookService {
 
         String fileName = dto.getBookCover();
 
-        if(!file.isEmpty()) {
-            try {fileName = upload.fileUpload(file)  ; } 
-            catch (IOException e) { e.printStackTrace(); }
-         }
-
+        if (file != null && !file.isEmpty()) {
+            try {
+                fileName = upload.fileUpload(file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         dto.setBookCover(fileName);
 
         return bookDao.update(dto);
     }
-
 
     // ---------------------------------------------------------
     // 📘 삭제
@@ -145,7 +89,6 @@ public class BookServiceImpl implements BookService {
         return bookDao.delete(dto);
     }
 
-
     // ---------------------------------------------------------
     // 📘 상세 조회
     // ---------------------------------------------------------
@@ -153,7 +96,6 @@ public class BookServiceImpl implements BookService {
     public BookDto detail(BookDto dto) {
         return bookDao.findById(dto);
     }
-
 
     // ---------------------------------------------------------
     // 📘 수정 화면 조회
@@ -163,38 +105,42 @@ public class BookServiceImpl implements BookService {
         return bookDao.findById(dto);
     }
 
+    // ---------------------------------------------------------
+    // ⭐ 카테고리별 조회 (핵심)
+    // ---------------------------------------------------------
+    @Override
+    public List<BookDto> findByCategory(String category, int pstartno) {
 
-//    // ---------------------------------------------------------
-//    // 🔍 카테고리별 조회
-//    // ---------------------------------------------------------
-//    @Override
-//    public List<BookDto> findByCategory(String category) {
-//        BookDto dto = new BookDto();
-//        dto.setCategory(category);
-//        return bookDao.findByCategory(dto);
-//    }
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("category", category);
+        map.put("start", (pstartno - 1) * 10);
+        map.put("end", 10);
 
+        return bookDao.findByCategory(map);
+    }
 
-//    // ---------------------------------------------------------
-//    // 🔍 제목 검색 (AJAX)
-//    // ---------------------------------------------------------
-//    @Override
-//    public List<BookDto> searchByTitle(String keyword) {
-//        BookDto dto = new BookDto();
-//        dto.setKeyword(keyword);
-//        return bookDao.searchByTitle(dto);
-//    }
-
+    @Override
+    public int findCategoryCnt(String category) {
+        return bookDao.findCategoryCnt(category);
+    }
 
     // ---------------------------------------------------------
-    // 🔍 통합 검색 (제목/저자/카테고리) — AJAX
+    // 🔍 통합 검색 (제목/저자/카테고리)
     // ---------------------------------------------------------
     @Override
     public List<BookDto> searchBooks(BookDto dto) {
         return bookDao.searchBooks(dto);
     }
 
-    // 국립중앙도서관 API 결과 → BOOK 테이블 저장
+    
+    
+  
+    
+    
+    
+    // ---------------------------------------------------------
+    // 국립중앙도서관 API → BOOK 테이블 저장
+    // ---------------------------------------------------------
     @Override
     public int insertFromNlApi(List<Map<String, Object>> apiResult) {
 
@@ -206,7 +152,7 @@ public class BookServiceImpl implements BookService {
             dto.setTitle((String) b.get("title_info"));
             dto.setAuthor((String) b.get("author_info"));
             dto.setPublisher((String) b.get("pub_info"));
-            dto.setPublishDate((String) b.get("pub_year_info")); // YYYY
+            dto.setPublishDate((String) b.get("pub_year_info"));
             dto.setCategory("국립중앙도서관");
             dto.setRanking(null);
             dto.setReviewCount(0);
@@ -216,33 +162,84 @@ public class BookServiceImpl implements BookService {
             dto.setPrice(null);
             dto.setBookCover(null);
 
-            cnt += bookDao.insert(dto);
+        //    cnt += bookDao.insert(dto);
         }
 
         return cnt;
     }
-    
+
+    // ---------------------------------------------------------
+    // ⚠️ 중복 검사
+    // ---------------------------------------------------------
+    @Override
     public boolean isDuplicate(BookDto dto) {
 
-        // 제목 또는 ISBN이 같은 책이 있으면 중복 처리
         List<BookDto> list = bookDao.searchBooks(dto);
 
         for (BookDto b : list) {
             if (b.getTitle().equals(dto.getTitle())) return true;
-          //  if (dto.getIsbn() != null && dto.getIsbn().equals(b.getIsbn())) return true;
         }
 
         return false;
     }
-    
+    // ---------------------------------------------------------
+    // ⚠️  Book Kakao
+    // ---------------------------------------------------------
+	@Override
+	public int insert(List<BookKakaoDto> result) {
+		int cnt = 0;
 
-//    // ---------------------------------------------------------
-//    // ⚠️ 도서명 중복검사 (AJAX)
-//    // ---------------------------------------------------------
-//    @Override
-//    public int checkTitleDuplicate(String title) {
-//        BookDto dto = new BookDto();
-//        dto.setTitle(title);
-//        return bookDao.checkTitleDuplicate(dto);
-//    }
+	    for (BookKakaoDto kakaoBook : result) {
+	        // 1. DTO 변환 (BookKakaoDto -> BookDto)
+	        BookDto bookDto = new BookDto();
+	        
+	        bookDto.setTitle(kakaoBook.getTitle());
+	        
+	        // authors 리스트를 쉼표로 연결하여 하나의 문자열로 변환
+	        if (kakaoBook.getAuthors() != null && !kakaoBook.getAuthors().isEmpty()) {
+	            bookDto.setAuthor(String.join(", ", kakaoBook.getAuthors()));
+	        } else {
+	            bookDto.setAuthor("미상");
+	        }
+	        
+	        bookDto.setPublisher(kakaoBook.getPublisher());
+	        
+	        // 날짜 형식 가공 (ISO8601의 앞 10자리 YYYY-MM-DD만 추출)
+	        String date = kakaoBook.getDatetime();
+	        if (date != null && date.length() >= 10) {
+	            bookDto.setPublishDate(date.substring(0, 10));
+	        } else {
+	            bookDto.setPublishDate("1900-01-01"); // 기본값 설정
+	        }
+	        
+	        // 핵심: 출판사 정보가 null이거나 비어있으면 기본값 "미상" 처리
+	        String publisher = kakaoBook.getPublisher();
+	        if (publisher == null || publisher.trim().isEmpty()) {
+	            bookDto.setPublisher("미상");
+	        } else {
+	            bookDto.setPublisher(publisher);
+	        }
+	        
+	        // 저자도 NOT NULL이라면 동일하게 처리
+	        String author = (kakaoBook.getAuthors() != null && !kakaoBook.getAuthors().isEmpty()) 
+	                        ? String.join(", ", kakaoBook.getAuthors()) 
+	                        : "미상";
+	        bookDto.setAuthor(author);
+	        
+	        
+	        bookDto.setCategory("카카오검색"); // 또는 적절한 기본값
+	        bookDto.setRanking(kakaoBook.getRanking());
+	        bookDto.setReviewCount(kakaoBook.getReviewCount() != null ? kakaoBook.getReviewCount() : 0);
+	        bookDto.setRating(kakaoBook.getRating() != null ? kakaoBook.getRating() : 0.0);
+	        bookDto.setDescription(kakaoBook.getContents());
+	        bookDto.setPages(kakaoBook.getPages());
+	        bookDto.setPrice(kakaoBook.getPrice());
+	        bookDto.setBookCover(kakaoBook.getThumbnail());
+
+	        // 2. DAO를 통해 DB 저장
+	        cnt += bookDao.insert(bookDto);
+	    }
+
+	    return cnt;
+	}
 }

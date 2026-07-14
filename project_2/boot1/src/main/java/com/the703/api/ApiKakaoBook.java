@@ -1,5 +1,5 @@
 package com.the703.api;
-
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,8 +51,25 @@ public class ApiKakaoBook {
 
             for (JsonNode item : documents) {
             	BookKakaoDto book = new BookKakaoDto();
+            	// 기본 매핑
                 book.setTitle(item.path("title").asText());
-                book.setThumbnail(item.path("thumbnail").asText()); //##### 추가    BookKakaoDto
+                book.setContents(item.path("contents").asText());
+                book.setUrl(item.path("url").asText());
+                book.setIsbn(item.path("isbn").asText());
+                book.setDatetime(item.path("datetime").asText());
+                book.setPublisher(item.path("publisher").asText());
+                book.setPrice(item.path("price").asInt());
+                book.setThumbnail(item.path("thumbnail").asText());
+                
+                // List 타입 처리 (authors)
+                List<String> authors = objectMapper.convertValue(
+                        item.path("authors"), 
+                        new TypeReference<List<String>>() {}
+                );
+                book.setAuthors(authors);
+
+                // DTO에 정의된 나머지 필드들은 카카오 API 응답에 기본적으로 포함되지 않으므로
+                // 필요 시 별도 로직으로 설정하거나 초기값 상태로 둡니다.
                 result.add(book);
             }
 
@@ -75,7 +92,7 @@ public class ApiKakaoBook {
         try {
             String responseBody = restClient.get()
                     .uri(uri)
-                    .header("Authorization", "KakaoAK " + restApiKey)
+                    .header("Authorization", "KakaoAK " + kakaoRestApi)
                     .retrieve()
                     .body(String.class);
 

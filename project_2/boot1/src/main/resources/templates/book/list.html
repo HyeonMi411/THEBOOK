@@ -2,15 +2,15 @@
 <html xmlns:th="http://www.thymeleaf.org"
    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
    layout:decorate="~{fragments/layout}">
-<!--    #1. layout 렌더링    -->
+
 <head lang="ko">
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>BookStore</title>
 </head>
+
 <body>
-    <div  layout:fragment="content">
-    
- 
+<div layout:fragment="content">
+
     <div class="book-wrap">
 
         <!-- Header -->
@@ -24,6 +24,12 @@
             </a>
         </div>
 
+        <!-- ⭐ 선택한 분류명 표시 (국립중앙도서관 API에서 넘어온 category) -->
+        <div th:if="${selectedCategory != null}" class="mb-3">
+            <strong>선택한 분류명:</strong>
+            <span th:text="${selectedCategory}"></span>
+        </div>
+
         <!-- Book Grid -->
         <div class="book-grid">
 
@@ -31,17 +37,20 @@
                  th:each="book : ${list}"
                  th:onclick="|location.href='/book/detail?bookId=${book.bookId}'|">
 
-                <div class="book-cover">
-                    <img th:src="@{'/upload/' + ${book.bookCover}}"
-                         th:alt="${book.title}">
-                </div>
-
-                <div class="book-body">
+				<div class="book-cover">
+				    <!-- bookCover가 http로 시작하면 그대로, 아니면 /upload/ 붙여서 출력 -->
+				    <img th:src="${book.bookCover != null && book.bookCover.startsWith('http')} 
+				                 ? ${book.bookCover} 
+				                 : '/upload/' + ${book.bookCover}"
+				         th:alt="${book.title}">
+				</div>
+				                
+				<div class="book-body">
 
                     <div class="book-title" th:text="${book.title}"></div>
 
                     <div class="book-author"
-                         th:text="${book.authors} + ' · ' + ${book.publisher}">
+                         th:text="${book.author} + ' · ' + ${book.publisher}">
                     </div>
 
                     <div class="book-category" th:text="${book.category}"></div>
@@ -88,7 +97,6 @@
 
     </div>
 
-        
-    </div>
+</div>
 </body>
 </html>

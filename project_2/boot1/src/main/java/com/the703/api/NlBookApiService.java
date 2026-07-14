@@ -10,8 +10,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.the703.dto.BookDto;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 @Service
 public class NlBookApiService {
@@ -20,25 +19,21 @@ public class NlBookApiService {
     private String apiKey;
 
     private final RestClient restClient;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final XmlMapper xmlMapper = new XmlMapper(); // XML 파싱용
 
     public NlBookApiService(RestClient.Builder builder) {
         this.restClient = builder.build();
     }
 
     /**
-     * 국립중앙도서관 API 검색
-     * @param keyword 검색어
-     * @param page 페이지 번호
-     * @return List<BookDto>
+     * ⭐ 국립중앙도서관 API 검색 (XML)
      */
-    public List<BookDto> search(String keyword, int page) {
-    	
-        // 1) URL 생성 (자동 인코딩)
+    public List<BookNlDto> search(String keyword, int page) {
+
         URI uri = UriComponentsBuilder
                 .fromUriString("https://www.nl.go.kr/NL/search/openApi/search.do")
                 .queryParam("key", apiKey)
-                .queryParam("apiType", "json")
+                .queryParam("apiType", "xml")
                 .queryParam("srchTarget", "total")
                 .queryParam("kwd", keyword)
                 .queryParam("pageSize", 10)
@@ -46,31 +41,36 @@ public class NlBookApiService {
                 .build()
                 .toUri();
 
-        List<BookDto> result = new ArrayList<>();
+        List<BookNlDto> result = new ArrayList<>();
 
         try {
-            // 2) API 호출        	
+            // API 호출
             String responseBody = restClient.get()
                     .uri(uri)
                     .retrieve()
                     .body(String.class);
-            
-            // 3) JSON 파싱
-            JsonNode root = objectMapper.readTree(responseBody);
-            JsonNode docs = root.path("result").path("docs");
 
-            for (JsonNode item : docs) {
+            // XML → JSON 변환
+            JsonNode root = xmlMapper.readTree(responseBody);
+            JsonNode items = root.path("result").path("item");
 
-                BookDto dto = new BookDto();
+            for (JsonNode item : items) {
+                BookNlDto dto = new BookNlDto();
 
-                dto.setTitle(item.path("title_info").asText());
-                dto.setAuthor(item.path("author_info").asText());
-                dto.setPublisher(item.path("pub_info").asText());
-                dto.setPublishDate(item.path("pub_year_info").asText());
-                dto.setCategory("국립중앙도서관");
-
-                // ⭐ ISBN 추출
+                dto.setTitle_info(item.path("title_info").asText());
+                dto.setAuthor_info(item.path("author_info").asText());
+                dto.setPub_info(item.path("pub_info").asText());
+                dto.setPub_year_info(item.path("pub_year_info").asText());
                 dto.setIsbn(item.path("isbn").asText());
+                dto.setId(item.path("id").asText());
+                dto.setImage_url(item.path("image_url").asText());
+                dto.setReg_date(item.path("reg_date").asText());
+                dto.setKdc_name_1s(item.path("kdc_name_1s").asText());
+
+                // 상세조회 API를 사용하면 아래 필드도 채울 수 있음
+                // dto.setSubject_info(item.path("subject_info").asText());
+                // dto.setPage_info(item.path("page_info").asText());
+                // dto.setPrice_info(item.path("price_info").asText());
 
                 result.add(dto);
             }
@@ -81,5 +81,4 @@ public class NlBookApiService {
 
         return result;
     }
-
 }

@@ -17,15 +17,13 @@
             <!-- 이미지 -->
             <div class="col-lg-4 p-4">
 
-                <img th:if="${book.bookCover != null}"
-                     th:src="@{'/upload/' + ${book.bookCover}}"
-                     th:alt="${book.title}"
-                     class="book-cover">
-
-                <img th:if="${book.bookCover == null}"
-                     src="https://via.placeholder.com/320x480?text=No+Image"
-                     alt="No Image"
-                     class="book-cover">
+				<div class="book-cover">
+				    <!-- bookCover가 http로 시작하면 그대로, 아니면 /upload/ 붙여서 출력 -->
+				    <img th:src="${book.bookCover != null && book.bookCover.startsWith('http')} 
+				                 ? ${book.bookCover} 
+				                 : '/upload/' + ${book.bookCover}"
+				         th:alt="${book.title}">
+				</div>
 
             </div>
 
