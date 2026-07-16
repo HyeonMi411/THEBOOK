@@ -49,6 +49,22 @@ public class BookController {
 	//    	// 1. 국립중앙박물관 가져오기 serach  관심사 자바 list 반복문 
 	//    	// 2. 북 insert 
 	//	}
+    
+//    @GetMapping("/book/search/nl/category")
+//    public String searchNlByCategory(@RequestParam String category,
+//                                     @RequestParam(defaultValue="1") int page,
+//                                     Model model) {
+//
+//        // 국립중앙도서관 API 검색 실행
+//        List<BookNlDto> result = nlApi.search(category, page);
+//
+//        model.addAttribute("apiList", result);
+//        model.addAttribute("keyword", category);
+//        model.addAttribute("page", page);
+//
+//        return "book/search-nl";
+//    }
+    
 
     @GetMapping("/book/search/nl/category")
     public String searchNlCategory(

@@ -5,183 +5,307 @@
       layout:decorate="~{fragments/layout}">
 
 <head>
-<meta charset="UTF-8">
-<title>국립중앙도서관 검색</title>
+    <meta charset="UTF-8">
+    <title>국립중앙도서관 검색</title>
 
-<style>
-.kdc-wrap h4{
-    margin-top:20px;
-    font-weight:bold;
-}
-.kdc-wrap ul{
-    margin-left:20px;
-}
-.kdc-wrap li{
-    list-style:square;
-    margin-bottom:4px;
-}
-.kdc-wrap a{
-    text-decoration:none;
-}
-.kdc-wrap a:hover{
-    color:#0d6efd;
-}
-</style>
-
+    <style>
+        .category-link {
+            text-decoration: none;
+            color: #333;
+        }
+        .category-link:hover {
+            color: #0d6efd;
+        }
+        .accordion-button {
+            font-weight: bold;
+        }
+        ul {
+            margin-left: 1rem;
+        }
+        ul li {
+            margin-bottom: 4px;
+        }
+    </style>
 </head>
 
 <body>
 <div layout:fragment="content">
 
-<h2>국립중앙도서관 도서 검색</h2>
+    <h2 class="mb-4">📚 국립중앙도서관 도서 검색</h2>
 
-<form th:action="@{/book/search/nl}" method="get" class="mb-3">
-    <input type="text"
-           name="keyword"
-           th:value="${keyword}"
-           class="form-control"
-           placeholder="검색어 입력">
+    <!-- 검색 카드 -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form th:action="@{/book/search/nl}" method="get">
+                <label class="form-label fw-bold">검색어 입력</label>
+                <div class="input-group">
+                    <input type="text"
+                           name="keyword"
+                           th:value="${keyword}"
+                           class="form-control"
+                           placeholder="예: 인공지능, 역사, 철학">
 
-```
-<button class="btn btn-primary mt-2">
-    검색
-</button>
-```
+                    <button class="btn btn-primary">
+                        검색
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-</form>
+    <hr>
 
-<hr>
+    <h3 class="mb-3">📖 KDC 전체 분류 체계</h3>
 
-<h3>📚 KDC 전체 분류 체계</h3>
+    <!-- 아코디언 UI -->
+    <div class="accordion" id="kdcAccordion">
 
-<div class="kdc-wrap">
+        <!-- 000 총류 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading000">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse000">
+                    000 총류
+                </button>
+            </h2>
+            <div id="collapse000" class="accordion-collapse collapse show">
+                <div class="accordion-body">
+                    <ul>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='001 지식, 학문 일반')}">001 지식, 학문 일반</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='003 사전')}">003 사전</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='004 컴퓨터과학')}">004 컴퓨터과학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='005 프로그래밍, 소프트웨어')}">005 프로그래밍, 소프트웨어</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='006 특허, 표준')}">006 특허, 표준</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='007 정보학')}">007 정보학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='008 총서')}">008 총서</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='009 기타 총류')}">009 기타 총류</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-<h4>000 총류</h4>
-<ul>
-<li><a th:href="@{/book/search/nl/category(category='001 지식, 학문 일반')}">001 지식, 학문 일반</a></li>
-<li><a th:href="@{/book/search/nl/category(category='003 사전')}">003 사전</a></li>
-<li><a th:href="@{/book/search/nl/category(category='004 컴퓨터과학')}">004 컴퓨터과학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='005 프로그래밍, 소프트웨어')}">005 프로그래밍, 소프트웨어</a></li>
-<li><a th:href="@{/book/search/nl/category(category='006 특허, 표준')}">006 특허, 표준</a></li>
-<li><a th:href="@{/book/search/nl/category(category='007 정보학')}">007 정보학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='008 총서')}">008 총서</a></li>
-<li><a th:href="@{/book/search/nl/category(category='009 기타 총류')}">009 기타 총류</a></li>
-</ul>
+        <!-- 100 철학 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading100">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse100">
+                    100 철학
+                </button>
+            </h2>
+            <div id="collapse100" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <ul>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='110 형이상학')}">110 형이상학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='120 인식론')}">120 인식론</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='130 논리학')}">130 논리학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='140 윤리학')}">140 윤리학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='150 심리학')}">150 심리학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='160 미학')}">160 미학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='170 동양철학')}">170 동양철학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='180 서양철학')}">180 서양철학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='190 기타 철학')}">190 기타 철학</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-<h4>100 철학</h4>
-<ul>
-<li><a th:href="@{/book/search/nl/category(category='110 형이상학')}">110 형이상학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='120 인식론')}">120 인식론</a></li>
-<li><a th:href="@{/book/search/nl/category(category='130 논리학')}">130 논리학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='140 윤리학')}">140 윤리학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='150 심리학')}">150 심리학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='160 미학')}">160 미학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='170 동양철학')}">170 동양철학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='180 서양철학')}">180 서양철학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='190 기타 철학')}">190 기타 철학</a></li>
-</ul>
+        <!-- 200 종교 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading200">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse200">
+                    200 종교
+                </button>
+            </h2>
+            <div id="collapse200" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <ul>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='210 비교종교')}">210 비교종교</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='220 불교')}">220 불교</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='230 기독교')}">230 기독교</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='240 천주교')}">240 천주교</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='250 도교')}">250 도교</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='260 이슬람교')}">260 이슬람교</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='270 힌두교')}">270 힌두교</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='280 기타 종교')}">280 기타 종교</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-<h4>200 종교</h4>
-<ul>
-<li><a th:href="@{/book/search/nl/category(category='210 비교종교')}">210 비교종교</a></li>
-<li><a th:href="@{/book/search/nl/category(category='220 불교')}">220 불교</a></li>
-<li><a th:href="@{/book/search/nl/category(category='230 기독교')}">230 기독교</a></li>
-<li><a th:href="@{/book/search/nl/category(category='240 천주교')}">240 천주교</a></li>
-<li><a th:href="@{/book/search/nl/category(category='250 도교')}">250 도교</a></li>
-<li><a th:href="@{/book/search/nl/category(category='260 이슬람교')}">260 이슬람교</a></li>
-<li><a th:href="@{/book/search/nl/category(category='270 힌두교')}">270 힌두교</a></li>
-<li><a th:href="@{/book/search/nl/category(category='280 기타 종교')}">280 기타 종교</a></li>
-</ul>
+        <!-- 300 사회과학 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading300">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse300">
+                    300 사회과학
+                </button>
+            </h2>
+            <div id="collapse300" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <ul>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='310 통계학')}">310 통계학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='320 경제학')}">320 경제학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='330 경영학')}">330 경영학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='340 법학')}">340 법학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='350 행정학')}">350 행정학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='360 사회학')}">360 사회학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='370 교육학')}">370 교육학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='380 풍속, 민속학')}">380 풍속, 민속학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='390 정치학')}">390 정치학</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-<h4>300 사회과학</h4>
-<ul>
-<li><a th:href="@{/book/search/nl/category(category='310 통계학')}">310 통계학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='320 경제학')}">320 경제학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='330 경영학')}">330 경영학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='340 법학')}">340 법학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='350 행정학')}">350 행정학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='360 사회학')}">360 사회학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='370 교육학')}">370 교육학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='380 풍속, 민속학')}">380 풍속, 민속학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='390 정치학')}">390 정치학</a></li>
-</ul>
+        <!-- 400 자연과학 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading400">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse400">
+                    400 자연과학
+                </button>
+            </h2>
+            <div id="collapse400" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <ul>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='410 수학')}">410 수학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='420 물리학')}">420 물리학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='430 화학')}">430 화학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='440 천문학')}">440 천문학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='450 지학')}">450 지학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='460 생물학')}">460 생물학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='470 식물학')}">470 식물학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='480 동물학')}">480 동물학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='490 기타 자연과학')}">490 기타 자연과학</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-<h4>400 자연과학</h4>
-<ul>
-<li><a th:href="@{/book/search/nl/category(category='410 수학')}">410 수학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='420 물리학')}">420 물리학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='430 화학')}">430 화학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='440 천문학')}">440 천문학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='450 지학')}">450 지학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='460 생물학')}">460 생물학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='470 식물학')}">470 식물학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='480 동물학')}">480 동물학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='490 기타 자연과학')}">490 기타 자연과학</a></li>
-</ul>
+        <!-- 500 기술과학 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading500">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse500">
+                    500 기술과학
+                </button>
+            </h2>
+            <div id="collapse500" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <ul>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='510 의학')}">510 의학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='520 공학일반')}">520 공학일반</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='530 건축공학')}">530 건축공학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='540 기계공학')}">540 기계공학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='550 전기전자공학')}">550 전기전자공학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='560 화학공학')}">560 화학공학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='570 제조업')}">570 제조업</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='580 생활과학')}">580 생활과학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='590 농업, 축산업')}">590 농업, 축산업</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-<h4>500 기술과학</h4>
-<ul>
-<li><a th:href="@{/book/search/nl/category(category='510 의학')}">510 의학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='520 공학일반')}">520 공학일반</a></li>
-<li><a th:href="@{/book/search/nl/category(category='530 건축공학')}">530 건축공학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='540 기계공학')}">540 기계공학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='550 전기전자공학')}">550 전기전자공학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='560 화학공학')}">560 화학공학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='570 제조업')}">570 제조업</a></li>
-<li><a th:href="@{/book/search/nl/category(category='580 생활과학')}">580 생활과학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='590 농업, 축산업')}">590 농업, 축산업</a></li>
-</ul>
+        <!-- 600 예술 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading600">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse600">
+                    600 예술
+                </button>
+            </h2>
+            <div id="collapse600" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <ul>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='610 건축예술')}">610 건축예술</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='620 조각')}">620 조각</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='630 회화')}">630 회화</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='640 사진')}">640 사진</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='650 음악')}">650 음악</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='660 연극')}">660 연극</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='670 영화')}">670 영화</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='680 오락, 스포츠')}">680 오락, 스포츠</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-<h4>600 예술</h4>
-<ul>
-<li><a th:href="@{/book/search/nl/category(category='610 건축예술')}">610 건축예술</a></li>
-<li><a th:href="@{/book/search/nl/category(category='620 조각')}">620 조각</a></li>
-<li><a th:href="@{/book/search/nl/category(category='630 회화')}">630 회화</a></li>
-<li><a th:href="@{/book/search/nl/category(category='640 사진')}">640 사진</a></li>
-<li><a th:href="@{/book/search/nl/category(category='650 음악')}">650 음악</a></li>
-<li><a th:href="@{/book/search/nl/category(category='660 연극')}">660 연극</a></li>
-<li><a th:href="@{/book/search/nl/category(category='670 영화')}">670 영화</a></li>
-<li><a th:href="@{/book/search/nl/category(category='680 오락, 스포츠')}">680 오락, 스포츠</a></li>
-</ul>
+        <!-- 700 언어 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading700">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse700">
+                    700 언어
+                </button>
+            </h2>
+            <div id="collapse700" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <ul>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='710 한국어')}">710 한국어</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='720 중국어')}">720 중국어</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='730 일본어')}">730 일본어</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='740 영어')}">740 영어</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='750 독일어')}">750 독일어</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='760 프랑스어')}">760 프랑스어</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='770 스페인어')}">770 스페인어</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='780 기타 언어')}">780 기타 언어</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-<h4>700 언어</h4>
-<ul>
-<li><a th:href="@{/book/search/nl/category(category='710 한국어')}">710 한국어</a></li>
-<li><a th:href="@{/book/search/nl/category(category='720 중국어')}">720 중국어</a></li>
-<li><a th:href="@{/book/search/nl/category(category='730 일본어')}">730 일본어</a></li>
-<li><a th:href="@{/book/search/nl/category(category='740 영어')}">740 영어</a></li>
-<li><a th:href="@{/book/search/nl/category(category='750 독일어')}">750 독일어</a></li>
-<li><a th:href="@{/book/search/nl/category(category='760 프랑스어')}">760 프랑스어</a></li>
-<li><a th:href="@{/book/search/nl/category(category='770 스페인어')}">770 스페인어</a></li>
-<li><a th:href="@{/book/search/nl/category(category='780 기타 언어')}">780 기타 언어</a></li>
-</ul>
+        <!-- 800 문학 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading800">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse800">
+                    800 문학
+                </button>
+            </h2>
+            <div id="collapse800" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <ul>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='810 한국문학')}">810 한국문학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='820 중국문학')}">820 중국문학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='830 일본문학')}">830 일본문학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='840 영어문학')}">840 영어문학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='850 독일문학')}">850 독일문학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='860 프랑스문학')}">860 프랑스문학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='870 스페인문학')}">870 스페인문학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='880 기타 문학')}">880 기타 문학</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-<h4>800 문학</h4>
-<ul>
-<li><a th:href="@{/book/search/nl/category(category='810 한국문학')}">810 한국문학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='820 중국문학')}">820 중국문학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='830 일본문학')}">830 일본문학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='840 영어문학')}">840 영어문학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='850 독일문학')}">850 독일문학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='860 프랑스문학')}">860 프랑스문학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='870 스페인문학')}">870 스페인문학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='880 기타 문학')}">880 기타 문학</a></li>
-</ul>
+        <!-- 900 역사 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading900">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse900">
+                    900 역사
+                </button>
+            </h2>
+            <div id="collapse900" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <ul>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='910 한국사')}">910 한국사</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='920 아시아사')}">920 아시아사</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='930 유럽사')}">930 유럽사</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='940 아메리카사')}">940 아메리카사</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='950 아프리카사')}">950 아프리카사</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='960 오세아니아사')}">960 오세아니아사</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='970 고고학')}">970 고고학</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='980 전기')}">980 전기</a></li>
+                        <li><a class="category-link" th:href="@{/book/search/nl/category(category='990 기타 역사')}">990 기타 역사</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-<h4>900 역사</h4>
-<ul>
-<li><a th:href="@{/book/search/nl/category(category='910 한국사')}">910 한국사</a></li>
-<li><a th:href="@{/book/search/nl/category(category='920 아시아사')}">920 아시아사</a></li>
-<li><a th:href="@{/book/search/nl/category(category='930 유럽사')}">930 유럽사</a></li>
-<li><a th:href="@{/book/search/nl/category(category='940 아메리카사')}">940 아메리카사</a></li>
-<li><a th:href="@{/book/search/nl/category(category='950 아프리카사')}">950 아프리카사</a></li>
-<li><a th:href="@{/book/search/nl/category(category='960 오세아니아사')}">960 오세아니아사</a></li>
-<li><a th:href="@{/book/search/nl/category(category='970 고고학')}">970 고고학</a></li>
-<li><a th:href="@{/book/search/nl/category(category='980 전기')}">980 전기</a></li>
-<li><a th:href="@{/book/search/nl/category(category='990 기타 역사')}">990 기타 역사</a></li>
-</ul>
-
-</div>
+    </div>
 
 </div>
 </body>
