@@ -3,97 +3,112 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{fragments/layout}">
 
-<head lang="ko">
-    <meta charset="UTF-8">
-    <title>공지사항 상세보기</title>
-
-    <style>
-        .detail-wrap{
-            max-width:900px;
-            margin:60px auto;
-        }
-        .detail-card{
-            border:none;
-            border-radius:18px;
-            overflow:hidden;
-            box-shadow:0 10px 30px rgba(0,0,0,.08);
-        }
-        .detail-header{
-            padding:35px;
-            border-bottom:1px solid #eee;
-        }
-        .detail-title{
-            font-size:30px;
-            font-weight:700;
-            margin-bottom:15px;
-        }
-        .detail-info{
-            display:flex;
-            gap:30px;
-            color:#666;
-            font-size:15px;
-        }
-        .detail-image{
-            padding:30px;
-            text-align:center;
-        }
-        .detail-image img{
-            max-width:100%;
-            max-height:450px;
-            border-radius:12px;
-            box-shadow:0 8px 20px rgba(0,0,0,.1);
-        }
-        .detail-content{
-            padding:35px;
-            border-top:1px solid #eee;
-            white-space:pre-wrap;
-            line-height:1.9;
-            font-size:17px;
-            min-height:220px;
-        }
-        .detail-footer{
-            padding:25px 35px;
-            border-top:1px solid #eee;
-        }
-        .btn{
-            min-width:110px;
-            border-radius:10px;
-        }
-    </style>
-</head>
-
-<body>
 <div layout:fragment="content">
+
+<style>
+
+.detail-wrap{
+    max-width:900px;
+    margin:60px auto;
+}
+
+.detail-card{
+    border:none;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+.detail-header{
+    padding:35px;
+    border-bottom:1px solid #eee;
+}
+
+.detail-title{
+    font-size:30px;
+    font-weight:700;
+}
+
+.detail-info{
+    margin-top:15px;
+    display:flex;
+    gap:30px;
+    color:#666;
+}
+
+.detail-image{
+    text-align:center;
+    padding:30px;
+}
+
+.detail-image img{
+    max-width:100%;
+    max-height:450px;
+    border-radius:10px;
+}
+
+.detail-content{
+    padding:35px;
+    border-top:1px solid #eee;
+    white-space:pre-wrap;
+    line-height:1.8;
+}
+
+.detail-footer{
+    padding:25px 35px;
+    border-top:1px solid #eee;
+}
+
+</style>
+
+<div class="container">
+
+    <div th:if="${success!=null}"
+         class="alert alert-success alert-dismissible fade show">
+
+        <span th:text="${success}"></span>
+
+        <button class="btn-close"
+                data-bs-dismiss="alert">
+        </button>
+
+    </div>
 
     <div class="detail-wrap">
 
         <div class="card detail-card">
 
-            <!-- 제목 + 작성자 -->
             <div class="detail-header">
-                <div class="detail-title" th:text="${dto.btitle}"></div>
+
+                <div class="detail-title"
+                     th:text="${dto.btitle}">
+                    제목
+                </div>
 
                 <div class="detail-info">
+
                     <div>
-                        👤 <strong th:text="${dto.bname}"></strong>
+                        조회수 :
+                        <span th:text="${dto.bhit}">0</span>
                     </div>
-                    <div>
-                        📌 공지사항
-                    </div>
+
                 </div>
+
             </div>
 
-            <!-- 이미지가 있을 때만 출력 -->
-            <div class="detail-image" th:if="${dto.bfile != null}">
-                <img th:src="@{|/upload/${dto.bfile}|}"
-                     th:alt="${dto.btitle}">
+            <div class="detail-image"
+                 th:if="${dto.bfile != null}">
+
+                <img th:src="@{|/upload/${dto.bfile}|}" alt="">
+
             </div>
 
-            <!-- 내용 -->
-            <div class="detail-content" th:text="${dto.bcontent}"></div>
+            <div class="detail-content"
+                 th:text="${dto.bcontent}">
+            </div>
 
-            <!-- 버튼 -->
             <div class="detail-footer">
+
                 <div class="d-flex justify-content-end gap-2">
 
                     <a th:href="@{/board/edit(id=${dto.id})}"
@@ -101,10 +116,10 @@
                         수정
                     </a>
 
-                    <a th:href="@{/board/delete(id=${dto.id})}"
-                       class="btn btn-outline-danger">
-                        삭제
-                    </a>
+					<a th:href="@{/board/delete(id=${dto.id})}"
+					   class="btn btn-outline-danger">
+					    삭제
+					</a>
 
                     <a th:href="@{/board/list}"
                        class="btn btn-primary">
@@ -112,6 +127,7 @@
                     </a>
 
                 </div>
+
             </div>
 
         </div>
@@ -119,5 +135,7 @@
     </div>
 
 </div>
-</body>
+
+</div>
+
 </html>

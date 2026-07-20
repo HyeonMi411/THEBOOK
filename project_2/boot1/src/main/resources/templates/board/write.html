@@ -1,43 +1,241 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-   layout:decorate="~{fragments/layout}">
-<!--    #1. layout 렌더링    -->
-<head lang="ko">
-<meta charset="UTF-8">
-<title>Insert title here</title>
-</head>
-<body>
-    <div  layout:fragment="content">
-	   <div class="container card  my-5 p-4">
-	      <h3 class="card-header"> MBTI 글쓰기</h3>
-		  <form th:action="@{/board/write}"  method="post"   enctype="multipart/form-data"> 
-		     <!--  <input type="hidden"   name="app_user_id"  value="">  -->
-			  <div class="mb-3 mt-3">
-			    <label for="title" class="form-label">TITLE:</label>
-			    <input type="text" class="form-control" id="title" 
-			    	placeholder="내용을 입력해주세요" name="btitle">
-			  </div>
-			  <div class="mb-3">
-			    <label for="pass" class="form-label">PASS:</label>
-			    <input type="password" class="form-control" id="pass" 
-			    	placeholder="비밀번호를 입력해주세요" name="bpass">
-			  </div>
-			  <div class="mb-3">
-			    <label for="content" class="form-label">CONTENT:</label>
-			    <textarea class="form-control" id="content" 
-			    	placeholder="내용을 입력해주세요" name="bcontent"></textarea>
-			  </div> 
-			  <div class="mb-3">
-			    <label for="file" class="form-label">FILE:</label>
-			    <input type="file" class="form-control" id="file" placeholder="비밀번호를 입력해주세요" name="file">
-			  </div>			  
-			  <div class="mb-3  text-end">
-			  	<button type="submit" class="btn btn-primary">글쓰기</button>  
-			  	<a th:href="@{/board/list}"  class="btn btn-primary">목록보기</a>			  	
-			  </div>
-		 </form> 
-	   </div>
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+
+<div layout:fragment="content">
+
+<style>
+
+body{
+    background:#f5f7fb;
+}
+
+.write-wrap{
+    max-width:900px;
+    margin:60px auto;
+}
+
+.write-card{
+    border:none;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+.write-header{
+    background:linear-gradient(135deg,#0d6efd,#2563eb);
+    color:#fff;
+    padding:28px 35px;
+}
+
+.write-header h3{
+    margin:0;
+    font-size:30px;
+    font-weight:700;
+}
+
+.write-header p{
+    margin-top:8px;
+    opacity:.9;
+}
+
+.write-body{
+    padding:35px;
+}
+
+.form-label{
+    font-weight:700;
+}
+
+.form-control{
+    border-radius:10px;
+    min-height:48px;
+}
+
+.form-control:focus{
+    border-color:#0d6efd;
+    box-shadow:0 0 0 .2rem rgba(13,110,253,.15);
+}
+
+textarea.form-control{
+    min-height:220px;
+    resize:vertical;
+}
+
+.upload-box{
+    border:2px dashed #ced4da;
+    border-radius:12px;
+    padding:18px;
+    background:#fafafa;
+}
+
+.button-area{
+    margin-top:35px;
+    padding-top:25px;
+    border-top:1px solid #eee;
+}
+
+.btn{
+    min-width:120px;
+    border-radius:10px;
+}
+
+</style>
+
+<div class="container">
+
+    <div class="write-wrap">
+
+        <div class="card write-card">
+
+            <div class="write-header">
+
+                <h3>📝 공지사항 등록</h3>
+
+                <p>
+                    새로운 게시글을 작성해보세요.
+                </p>
+
+            </div>
+
+            <div class="write-body">
+
+                <form th:action="@{/board/write}"
+                      method="post"
+                      enctype="multipart/form-data"
+                      onsubmit="return checkForm();">
+
+                    <!-- 제목 -->
+                    <div class="mb-4">
+
+                        <label for="btitle" class="form-label">
+                            제목
+                        </label>
+
+                        <input type="text"
+                               id="btitle"
+                               name="btitle"
+                               class="form-control"
+                               placeholder="제목을 입력하세요">
+
+                    </div>
+
+                    <!-- 비밀번호 -->
+                    <div class="mb-4">
+
+                        <label for="bpass" class="form-label">
+                            비밀번호
+                        </label>
+
+                        <input type="password"
+                               id="bpass"
+                               name="bpass"
+                               class="form-control"
+                               placeholder="비밀번호를 입력하세요">
+
+                    </div>
+
+                    <!-- 내용 -->
+                    <div class="mb-4">
+
+                        <label for="bcontent" class="form-label">
+                            내용
+                        </label>
+
+                        <textarea id="bcontent"
+                                  name="bcontent"
+                                  class="form-control"
+                                  placeholder="내용을 입력하세요"></textarea>
+
+                    </div>
+
+                    <!-- 첨부파일 -->
+                    <div class="mb-4">
+
+                        <label for="file" class="form-label">
+                            첨부파일
+                        </label>
+
+                        <div class="upload-box">
+
+                            <input type="file"
+                                   id="file"
+                                   name="file"
+                                   class="form-control">
+
+                        </div>
+
+                        <div class="form-text mt-2">
+                            이미지 또는 첨부파일을 업로드할 수 있습니다.
+                        </div>
+
+                    </div>
+
+                    <div class="button-area">
+
+                        <div class="d-flex justify-content-end gap-2">
+
+                            <button type="reset"
+                                    class="btn btn-outline-secondary">
+                                초기화
+                            </button>
+
+                            <a th:href="@{/board/list}"
+                               class="btn btn-outline-dark">
+                                목록
+                            </a>
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+                                등록하기
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
     </div>
-</body>
+
+</div>
+
+<script>
+
+function checkForm(){
+
+    const btitle=document.getElementById("btitle");
+    const bpass=document.getElementById("bpass");
+    const bcontent=document.getElementById("bcontent");
+
+    if(btitle.value.trim()===""){
+        alert("제목을 입력해주세요.");
+        btitle.focus();
+        return false;
+    }
+
+    if(bpass.value.trim()===""){
+        alert("비밀번호를 입력해주세요.");
+        bpass.focus();
+        return false;
+    }
+
+    if(bcontent.value.trim()===""){
+        alert("내용을 입력해주세요.");
+        bcontent.focus();
+        return false;
+    }
+
+    return confirm("게시글을 등록하시겠습니까?");
+}
+
+</script>
+
+</div>
+
 </html>

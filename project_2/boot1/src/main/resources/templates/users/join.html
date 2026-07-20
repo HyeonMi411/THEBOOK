@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      layout:decorate="~{fragments/layout}">
-<body>
+   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+   layout:decorate="~{fragments/layout}">
 <div layout:fragment="content">
+
    <!-- 알림메시지 -->
     <div th:if="${successMessage}" class="alert alert-info alert-dismissible fade show" role="alert">
         <span th:text="${successMessage}"></span>

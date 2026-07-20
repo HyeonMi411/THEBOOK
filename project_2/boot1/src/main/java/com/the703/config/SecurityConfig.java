@@ -23,7 +23,7 @@ public class SecurityConfig {
    @Bean public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
       http//1. 허용경로
          .authorizeHttpRequests(  auth ->  auth
-               .requestMatchers("users/join"   , "users/login" ,"/users/iddouble", "api/**", "api/util/**").permitAll()
+               .requestMatchers("users/join"   , "users/login" ,"/users/iddouble", "/board/**","api/**", "api/util/**").permitAll()
                .requestMatchers("users/mypage" , "users/update", "users/delete"  ).authenticated()
                .anyRequest().permitAll()
          )

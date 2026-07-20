@@ -34,11 +34,13 @@ public class Sboard2Controller {
    //2. 글쓰기 폼    GET: /board/write      
    //3. 글쓰기 기능   POST: /board/write   
    @GetMapping("/write")  public String write_get() {   return "board/write"; }
-   @PostMapping("/write.do") public String write_post(MultipartFile file, Sboard2Dto dto, RedirectAttributes rttr) {
+   
+   
+   @PostMapping("/write") public String write_post(MultipartFile file, Sboard2Dto dto, RedirectAttributes rttr) {
 	   String result ="글쓰기 실패";
 	   if(service.insert(file, dto) > 0) { result ="글쓰기 성공"; }
 	   rttr.addFlashAttribute("success", result);
-	   return "redirect:/board/list";
+	   return "redirect:/board/list.do";
    }
    
    //4. 상세보기     GET: /board/detail    

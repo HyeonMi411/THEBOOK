@@ -1,45 +1,265 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-   layout:decorate="~{fragments/layout}">
-<!--    #1. layout 렌더링    -->
-<head lang="ko">
-<meta charset="UTF-8">
-<title>Insert title here</title>
-</head>
-<body>
-    <div  layout:fragment="content">
-	  <div class="container card  my-5 p-4">
-	     <h3 class="card-header"> MBTI QUEST 글수정</h3>
-	  <form th:action="@{/board/edit}"  method="post"   enctype="multipart/form-data">	   
-	     <!--  <input type="hidden"   name="app_user_id"  value="">  -->
-	     <input type="hidden"   name="id"  th:value="${dto.id}">
-		  <div class="mb-3 mt-3">
-		    <label for="title" class="form-label">TITLE:</label>
-		    <input type="text" class="form-control" id="title" 
-		    	  placeholder="내용을 입력해주세요" name="btitle"  th:value="${dto.btitle}">
-		  </div>
-		  <div class="mb-3">
-		    <label for="pass" class="form-label">PASS:</label>
-		    <input type="password" class="form-control" id="pass" 
-		    	placeholder="비밀번호를 입력해주세요" name="bpass">
-		  </div>
-		  <div class="mb-3">
-		    <label for="content" class="form-label">CONTENT:</label>
-		    <textarea class="form-control" id="content" 
-		    	placeholder="내용을 입력해주세요" name="bcontent"  th:text="${dto.bcontent}"></textarea>
-		  </div> 
-		  <div class="mb-3">
-		    <label for="file" class="form-label">FILE:</label>
-		    <input type="file" class="form-control" id="file" placeholder="비밀번호를 입력해주세요" name="file">
-		    <input type="text" class="form-control" th:value="${dto.bfile}" name="bfile">
-		  </div>			  
-		  <div class="mb-3  text-end">
-		  	<button type="submit" class="btn btn-primary">글수정</button>
-		  	<a href="javascript:history.go(-1)"  class="btn btn-danger">BACK</a>
-		  </div>
-	 </form>
-	  </div>
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+
+<div layout:fragment="content">
+
+<style>
+
+.edit-wrap{
+    max-width:900px;
+    margin:60px auto;
+}
+
+.edit-card{
+    border:none;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+.edit-header{
+    background:#0d6efd;
+    color:#fff;
+    padding:24px 30px;
+}
+
+.edit-header h3{
+    margin:0;
+    font-weight:700;
+}
+
+.edit-body{
+    padding:35px;
+}
+
+.form-label{
+    font-weight:700;
+}
+
+.form-control{
+    border-radius:10px;
+}
+
+textarea.form-control{
+    min-height:220px;
+    resize:vertical;
+}
+
+.file-box{
+    background:#f8f9fa;
+    border:1px solid #dee2e6;
+    border-radius:10px;
+    padding:12px 15px;
+}
+
+.preview{
+    margin-top:20px;
+    text-align:center;
+}
+
+.preview img{
+    max-width:250px;
+    max-height:320px;
+    border-radius:12px;
+    border:1px solid #ddd;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+}
+
+.button-area{
+    border-top:1px solid #eee;
+    padding-top:25px;
+}
+
+.btn{
+    min-width:120px;
+    border-radius:10px;
+}
+
+</style>
+
+<div class="container">
+
+    <div class="edit-wrap">
+
+        <div class="card edit-card">
+
+            <div class="edit-header">
+                <h3>✏️ 공지사항 수정</h3>
+            </div>
+
+            <div class="edit-body">
+
+                <form th:action="@{/board/edit}"
+                      method="post"
+                      enctype="multipart/form-data"
+                      onsubmit="return checkForm();">
+
+                    <!-- 게시글 번호 -->
+                    <input type="hidden"
+                           name="id"
+                           th:value="${dto.id}">
+
+                    <!-- 제목 -->
+                    <div class="mb-4">
+
+                        <label for="btitle" class="form-label">
+                            제목
+                        </label>
+
+                        <input type="text"
+                               id="btitle"
+                               name="btitle"
+                               class="form-control"
+                               th:value="${dto.btitle}"
+                               placeholder="제목을 입력하세요">
+
+                    </div>
+
+                    <!-- 비밀번호 -->
+                    <div class="mb-4">
+
+                        <label for="bpass" class="form-label">
+                            비밀번호
+                        </label>
+
+                        <input type="password"
+                               id="bpass"
+                               name="bpass"
+                               class="form-control"
+                               placeholder="비밀번호를 입력하세요">
+
+                    </div>
+
+                    <!-- 내용 -->
+                    <div class="mb-4">
+
+                        <label for="bcontent" class="form-label">
+                            내용
+                        </label>
+
+                        <textarea id="bcontent"
+                                  name="bcontent"
+                                  class="form-control"
+                                  th:text="${dto.bcontent}">
+                        </textarea>
+
+                    </div>
+
+                    <!-- 현재 파일 -->
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            현재 첨부파일
+                        </label>
+
+                        <div class="file-box">
+
+                            <span th:if="${dto.bfile != null and !#strings.isEmpty(dto.bfile)}"
+                                  th:text="${dto.bfile}">
+                            </span>
+
+                            <span th:if="${dto.bfile == null or #strings.isEmpty(dto.bfile)}">
+                                첨부파일이 없습니다.
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <!-- 이미지 -->
+                    <div class="preview"
+                         th:if="${dto.bfile != null and !#strings.isEmpty(dto.bfile)}">
+
+                        <img th:src="@{|/upload/${dto.bfile}|}"
+                             alt="preview">
+
+                    </div>
+
+                    <!-- 기존 파일명 유지 -->
+                    <input type="hidden"
+                           name="bfile"
+                           th:value="${dto.bfile}">
+
+                    <!-- 새 파일 -->
+                    <div class="mt-4 mb-4">
+
+                        <label for="file" class="form-label">
+                            새 첨부파일
+                        </label>
+
+                        <input type="file"
+                               id="file"
+                               name="file"
+                               class="form-control">
+
+                    </div>
+
+                    <div class="button-area">
+
+                        <div class="d-flex justify-content-end gap-2">
+
+                            <button type="reset"
+                                    class="btn btn-outline-secondary">
+                                초기화
+                            </button>
+
+                            <a th:href="@{/board/list}"
+                               class="btn btn-outline-dark">
+                                목록
+                            </a>
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+                                수정완료
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
     </div>
-</body>
+
+</div>
+
+<script>
+
+function checkForm(){
+
+    const bpass=document.getElementById("bpass");
+    const btitle=document.getElementById("btitle");
+    const bcontent=document.getElementById("bcontent");
+
+    if(bpass.value.trim()===""){
+        alert("비밀번호를 입력해주세요.");
+        bpass.focus();
+        return false;
+    }
+
+    if(btitle.value.trim()===""){
+        alert("제목을 입력해주세요.");
+        btitle.focus();
+        return false;
+    }
+
+    if(bcontent.value.trim()===""){
+        alert("내용을 입력해주세요.");
+        bcontent.focus();
+        return false;
+    }
+
+    return confirm("수정한 내용을 저장하시겠습니까?");
+}
+
+</script>
+
+</div>
+
 </html>

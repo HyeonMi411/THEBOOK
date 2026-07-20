@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-   layout:decorate="~{fragments/layout}">
-<!--    #1. layout 렌더링    -->
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
 <head lang="ko">
-<meta charset="UTF-8">
-<title>Insert title here</title>
+    <meta charset="UTF-8">
+    <title>Insert title here</title>
 </head>
+
 <body>
-    <div  layout:fragment="content">
-    
+<div layout:fragment="content">
+
     <div class="write-wrap">
 
         <div class="card write-card">
@@ -91,14 +91,13 @@
                         <!-- 이미지 영역 -->
                         <div class="col-lg-4">
 
-                            <div class="preview-box">
+                            <div class="preview-box mb-3">
                                 <img id="previewImg"
                                      src="https://via.placeholder.com/180x240?text=Book"
                                      alt="Preview">
                             </div>
 
                             <div class="upload-box">
-
                                 <label class="form-label">표지 이미지</label>
 
                                 <input type="file"
@@ -110,7 +109,6 @@
                                 <div class="form-text mt-2">
                                     JPG, PNG 파일 업로드
                                 </div>
-
                             </div>
 
                         </div>
@@ -123,53 +121,58 @@
                                   class="form-control"></textarea>
                     </div>
 
-                    <div class="button-area">
-
+                    <div class="button-area mt-4">
                         <div class="d-flex justify-content-end gap-2">
-
-                            <a href="javascript:history.back();"
-                               class="btn btn-outline-secondary">
+                            <a href="javascript:history.back();" class="btn btn-outline-secondary">
                                 취소
                             </a>
 
-                            <button type="submit"
-                                    class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary">
                                 📚 도서 등록
                             </button>
-
                         </div>
-
                     </div>
 
                 </form>
 
             </div>
-
-
-    <hr/> 
-    <div class="page-header">
-            <h3>📚 도서 검색 및 등록</h3>
         </div>
 
-        <div class="search-box" style="margin-bottom: 20px;">
-            <!-- 컨트롤러의 @RequestParam String search에 맞춰 name="search" 지정 -->
-            <form th:action="@{/book/kakaoinsert}" method="get">
-                <input type="text" name="search" placeholder="검색할 도서명을 입력하세요" required>
-                <button type="submit" class="btn btn-primary">검색 및 등록</button>
-            </form>
+        <!-- ============================= -->
+        <!-- 📚 도서 검색 및 등록 영역     -->
+        <!-- ============================= -->
+
+        <hr class="mt-5 mb-4"/>
+
+        <div class="search-section">
+
+            <div class="page-header mb-3">
+                <h3>📚 도서 검색 및 등록</h3>
+            </div>
+
+            <div class="search-box p-3 mb-4"
+                 style="background: #f8f9fa; border-radius: 8px;">
+                <form th:action="@{/book/kakaoinsert}" method="get" class="d-flex gap-2">
+                    <input type="text"
+                           name="search"
+                           class="form-control"
+                           placeholder="검색할 도서명을 입력하세요"
+                           required>
+                    <button type="submit" class="btn btn-primary">
+                        검색 및 등록
+                    </button>
+                </form>
+            </div>
+
+            <div class="alert alert-info">
+                검색 버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후,
+                도서 목록 페이지로 이동합니다.
+            </div>
+
         </div>
 
-        <div class="alert alert-info">
-            검색 버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후, 도서 목록 페이지로 이동합니다.
-        </div>
-   </div>    
+    </div>
 
-        </div>
- 
-       
-  
- 
- </div>   
-         
+</div>
 </body>
 </html>

@@ -1,30 +1,164 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-   layout:decorate="~{fragments/layout}">
-<!--    #1. layout 렌더링    -->
-<head lang="ko">
-<meta charset="UTF-8">
-<title>Insert title here</title>
-</head>
-<body>
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
 
-    <div  layout:fragment="content">
-	   <div class="container card  my-5 p-4 ">
-	      <h3 class="card-header"> MBTI 글삭제</h3>		   
-		  <form th:action="@{/board/delete}"  method="post">		  		  
-		      <input type="hidden"   name="id"  th:value="${param.id}"> 
-			  <div class="my-3">
-			    <label for="pass" class="form-label">PASS:</label>
-			    <input type="password" class="form-control" 
-			    	id="pass"  placeholder="비밀번호를 입력해주세요" name="bpass">
-			  </div> 
-			  <div class="my-3  text-end">
-			  	<button type="submit" class="btn btn-primary">글삭제</button>
-			  	<a href="javascript:history.go(-1)"  class="btn btn-danger">BACK</a>
-			  </div>
-		 </form>
-	   </div>
+<div layout:fragment="content">
+
+<style>
+
+.delete-wrap{
+    max-width:650px;
+    margin:70px auto;
+}
+
+.delete-card{
+    border:none;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+.delete-header{
+    background:#dc3545;
+    color:#fff;
+    padding:22px 28px;
+}
+
+.delete-header h3{
+    margin:0;
+    font-weight:700;
+}
+
+.delete-body{
+    padding:35px;
+}
+
+.delete-icon{
+    font-size:60px;
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.form-control{
+    height:50px;
+    border-radius:10px;
+}
+
+.btn{
+    min-width:120px;
+    border-radius:10px;
+}
+
+</style>
+
+<div class="container">
+
+    <div class="delete-wrap">
+
+        <div class="card delete-card">
+
+            <div class="delete-header">
+
+                <h3>🗑 게시글 삭제</h3>
+
+            </div>
+
+            <div class="delete-body">
+
+                <div class="delete-icon">
+                    ⚠️
+                </div>
+
+                <div class="alert alert-warning">
+
+                    <strong>삭제된 게시글은 복구할 수 없습니다.</strong><br>
+                    삭제하려면 비밀번호를 입력해주세요.
+
+                </div>
+
+                <form th:action="@{/board/delete}"
+                      method="post"
+                      onsubmit="return checkForm();">
+
+                    <!-- Controller에서 id를 넘긴 경우 -->
+                    <input type="hidden"
+                           name="id"
+                           th:if="${id != null}"
+                           th:value="${id}"/>
+
+                    <!-- URL ?id=1 인 경우 -->
+                    <input type="hidden"
+                           name="id"
+                           th:if="${id == null}"
+                           th:value="${param.id}"/>
+
+                    <div class="mb-4">
+
+                        <label for="bpass" class="form-label fw-bold">
+                            비밀번호
+                        </label>
+
+                        <input
+                                type="password"
+                                id="bpass"
+                                name="bpass"
+                                class="form-control"
+                                placeholder="비밀번호를 입력하세요">
+
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3">
+
+                        <a th:href="@{/board/list}"
+                           class="btn btn-outline-secondary">
+                            목록
+                        </a>
+
+                        <button
+                                type="reset"
+                                class="btn btn-outline-dark">
+                            다시입력
+                        </button>
+
+                        <button
+                                type="submit"
+                                class="btn btn-danger">
+                            삭제하기
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
     </div>
-</body>
+
+</div>
+
+<script>
+
+function checkForm(){
+
+    const pass = document.getElementById("bpass");
+
+    if(pass.value.trim()===""){
+
+        alert("비밀번호를 입력해주세요.");
+
+        pass.focus();
+
+        return false;
+    }
+
+    return confirm("정말 삭제하시겠습니까?");
+}
+
+</script>
+
+</div>
+
 </html>
