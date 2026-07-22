@@ -64,18 +64,18 @@
              .then( data=>{
             	 if(data.exists){
 	                 target.textContent="이미 사용중인 email입니다.";
-	                 target.className  ="my-3 alert alert-danger  iddouble_result"            		 
+	                 target.style.color = "red";
             	 }else{
 	                 target.textContent="사용가능한 email입니다.";
-	                 target.className  ="my-3 alert alert-success  iddouble_result"            		 
+	                 target.style.color = "green";            		 
             	 }
              }).catch(err =>{
                  target.textContent="서버오류 입니다.";
-                 target.className  ="my-3 alert alert-info  iddouble_result"
+                 target.style.color = "blue";
              })
           }else{
              target.textContent="이메일 중복검사는 필수입니다.";
-             target.className  ="my-3 alert alert-danger  iddouble_result"
+             target.style.color = "orange";
           }
        });
     });    
