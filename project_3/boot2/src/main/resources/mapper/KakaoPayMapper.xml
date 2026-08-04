@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.KakaoPayMapper">
+
+    <resultMap id="KakaoPayResultMap" type="com.thejoa703.entity.KakaoPay">
+        <id property="kakaoPayId" column="KAKAO_PAY_ID"/>
+        <result property="tid" column="TID"/>
+        <result property="partnerOrderId" column="PARTNER_ORDER_ID"/>
+        <result property="quantity" column="QUANTITY"/>
+        <result property="totalAmount" column="TOTAL_AMOUNT"/>
+        <result property="taxFreeAmount" column="TAX_FREE_AMOUNT"/>
+        <result property="vatAmount" column="VAT_AMOUNT"/>
+        <result property="paymentMethodType" column="PAYMENT_METHOD_TYPE"/>
+        <result property="paymentStatus" column="PAYMENT_STATUS"/>
+        <result property="cid" column="CID"/>
+        <result property="pgToken" column="PG_TOKEN"/>
+        <result property="approvedAt" column="APPROVED_AT"/>
+        <result property="canceledAt" column="CANCELED_AT"/>
+        <result property="cancelAmount" column="CANCEL_AMOUNT"/>
+        <result property="failReason" column="FAIL_REASON"/>
+        <result property="cardInfo" column="CARD_INFO"/>
+        <result property="regDate" column="REG_DATE"/>
+        <result property="modDate" column="MOD_DATE"/>
+        <!-- 연관관계(user, book)는 JPA 조회시 사용, Mapper 에서는 매핑하지 않음 -->
+    </resultMap>
+
+    <select id="findByTid" parameterType="string" resultMap="KakaoPayResultMap">
+        SELECT * FROM KAKAO_PAY WHERE TID = #{tid}
+    </select>
+
+    <select id="findByPartnerOrderId" parameterType="string" resultMap="KakaoPayResultMap">
+        SELECT * FROM KAKAO_PAY WHERE PARTNER_ORDER_ID = #{partnerOrderId}
+    </select>
+
+    <select id="findByUserId" parameterType="long" resultMap="KakaoPayResultMap">
+        SELECT * FROM KAKAO_PAY
+        WHERE APP_USER_ID = #{appUserId}
+        ORDER BY REG_DATE DESC
+    </select>
+
+    <select id="findByBookId" parameterType="long" resultMap="KakaoPayResultMap">
+        SELECT * FROM KAKAO_PAY
+        WHERE BOOK_ID = #{bookId}
+        ORDER BY REG_DATE DESC
+    </select>
+
+    <select id="findByPaymentStatus" parameterType="string" resultMap="KakaoPayResultMap">
+        SELECT * FROM KAKAO_PAY
+        WHERE PAYMENT_STATUS = #{paymentStatus}
+        ORDER BY REG_DATE DESC
+    </select>
+
+    <!-- 특정회원 결제내역 페이징 (Oracle ROWNUM) -->
+    <select id="findMyPaymentsWithPaging" parameterType="map" resultMap="KakaoPayResultMap">
+        SELECT * FROM (
+            SELECT k.*, ROWNUM AS rnum
+            FROM (SELECT * FROM KAKAO_PAY WHERE APP_USER_ID = #{userId} ORDER BY REG_DATE DESC) k
+        )
+        WHERE rnum BETWEEN #{start} AND #{end}
+    </select>
+
+    <!-- 등록 (결제 준비/ready 단계) -->
+    <insert id="insertKakaoPay" parameterType="com.thejoa703.entity.KakaoPay">
+        <selectKey keyProperty="kakaoPayId" resultType="long" order="BEFORE">
+            SELECT KAKAO_PAY_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO KAKAO_PAY (
+            KAKAO_PAY_ID, APP_USER_ID, BOOK_ID, TID, PARTNER_ORDER_ID,
+            QUANTITY, TOTAL_AMOUNT, TAX_FREE_AMOUNT, VAT_AMOUNT,
+            PAYMENT_METHOD_TYPE, PAYMENT_STATUS, CID, REG_DATE, MOD_DATE
+        ) VALUES (
+            #{kakaoPayId}, #{user.id}, #{book.bookId}, #{tid}, #{partnerOrderId},
+            #{quantity}, #{totalAmount}, #{taxFreeAmount}, #{vatAmount},
+            #{paymentMethodType}, #{paymentStatus}, #{cid}, SYSDATE, SYSDATE
+        )
+    </insert>
+
+    <!-- 결제승인 처리 -->
+    <update id="approvePayment" parameterType="map">
+        UPDATE KAKAO_PAY SET
+            PAYMENT_STATUS = 'APPROVED',
+            APPROVED_AT = #{approvedAt},
+            MOD_DATE = SYSDATE
+        WHERE TID = #{tid}
+    </update>
+
+    <!-- 결제취소 처리 -->
+    <update id="cancelPayment" parameterType="map">
+        UPDATE KAKAO_PAY SET
+            PAYMENT_STATUS = 'CANCELED',
+            CANCELED_AT = #{canceledAt},
+            CANCEL_AMOUNT = #{cancelAmount},
+            MOD_DATE = SYSDATE
+        WHERE TID = #{tid}
+    </update>
+
+    <!-- 전체 수정 -->
+    <update id="updateKakaoPay" parameterType="com.thejoa703.entity.KakaoPay">
+        UPDATE KAKAO_PAY SET
+            TID = #{tid},
+            PARTNER_ORDER_ID = #{partnerOrderId},
+            QUANTITY = #{quantity},
+            TOTAL_AMOUNT = #{totalAmount},
+            TAX_FREE_AMOUNT = #{taxFreeAmount},
+            VAT_AMOUNT = #{vatAmount},
+            PAYMENT_METHOD_TYPE = #{paymentMethodType},
+            PAYMENT_STATUS = #{paymentStatus},
+            CID = #{cid},
+            PG_TOKEN = #{pgToken},
+            APPROVED_AT = #{approvedAt},
+            CANCELED_AT = #{canceledAt},
+            CANCEL_AMOUNT = #{cancelAmount},
+            FAIL_REASON = #{failReason},
+            CARD_INFO = #{cardInfo},
+            MOD_DATE = SYSDATE
+        WHERE KAKAO_PAY_ID = #{kakaoPayId}
+    </update>
+
+    <!-- 삭제 -->
+    <delete id="deleteKakaoPay" parameterType="long">
+        DELETE FROM KAKAO_PAY WHERE KAKAO_PAY_ID = #{kakaoPayId}
+    </delete>
+
+</mapper>

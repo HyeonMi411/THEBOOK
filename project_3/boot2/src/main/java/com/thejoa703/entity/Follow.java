@@ -41,19 +41,20 @@ public class Follow {
 		this.followee = followee;
 	}
 
-	@ManyToOne(fetch = FetchType.LAZY)	// 연관된 엔티티(AppUser) 당장가져오는게 아니고
+	@ManyToOne(fetch = FetchType.LAZY)	//1. 연관된 엔티티(AppUser) 당장가져오는게 아니고
 	@JoinColumn(name="FOLLOWR_ID" , nullable = false)
 	AppUser follower;	//@ManyToOne  보는사람
 	
-	@ManyToOne(fetch = FetchType.LAZY)	// 실제 객체사용하는 시점에서 쿼리 실행 , 불필요한 join 줄이기
+	@ManyToOne(fetch = FetchType.LAZY)	//2. 실제 객체사용하는 시점에서 쿼리 실행 , 불필요한 join 줄이기
 	@JoinColumn(name="FOLLOWW_ID" , nullable = false)
-	AppUser followee;	//@ManyToOne  보여지는사람	
+	AppUser followee;	//@ManyToOne  보여지는사람
+	
 }
-
-
 /* 팔로워 :  나를 구독하는 사람들  ,내팬		/ 팔로잉 :  내가 한 구둑             ,김우빈/신민아/카리나
 		follower		followee
 		1(나)			2(김우빈)
 		1(나)			3(신민아)
 		2(김우빈)			3(신민아)
+		
+		1 나	2 김우빈	3신민아	4카리나	 			
 */

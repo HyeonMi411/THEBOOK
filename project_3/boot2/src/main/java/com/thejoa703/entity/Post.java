@@ -67,18 +67,15 @@ public class Post {
 	private List<Image>  images = new ArrayList<>();
 	
 	@OneToMany( mappedBy= "post",  cascade = CascadeType.ALL , orphanRemoval = true)
-	private List<PostLike>  likes = new ArrayList<>();
-	
+	private List<PostLike>  likes = new ArrayList<>();	
 	
 	@OneToMany( mappedBy= "post",  cascade = CascadeType.ALL , orphanRemoval = true)
 	private List<Comment>  comments = new ArrayList<>();
 	
 	@OneToMany( mappedBy= "originalPost",  cascade = CascadeType.ALL , orphanRemoval = true)
 	private List<Retweet>  retweets = new ArrayList<>();
-	
-	
-	
-	
+		
+		
 	@ManyToMany
 	@JoinTable(name="POST_HASHTAG" ,
 		joinColumns = @JoinColumn(name="POST_ID") ,

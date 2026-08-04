@@ -3,13 +3,21 @@ package com.thejoa703.entity;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.SequenceGenerator;
@@ -31,6 +39,11 @@ public class Book {
 	@SequenceGenerator(name = "book_seq", sequenceName = "BOOK_SEQ", allocationSize = 1)
 	@Column(name = "BOOK_ID")
 	Long bookId;
+
+	// ★한 회원(관리자)이 여러권의 책을 등록할 수 있다.  (Book : AppUser = N : 1)
+	@ManyToOne
+	@JoinColumn(name = "APP_USER_ID", nullable = false)
+	AppUser user;			// 등록자(관리자)		@ManyToOne		AppUser
 
 	@Column(name = "TITLE", nullable = false, length = 255)
 	String title;			// 도서명
@@ -83,4 +96,21 @@ public class Book {
 	void onUpdate() {
 		// REG_DATE 는 최초 등록일시를 유지 (수정시 변경하지 않음)
 	}
+
+	// ★한권의 책은 여러번 결제(구매)될수 있다.	(Book : KakaoPay = 1 : N)
+	// 1. mappedBy = "book"          KakaoPay 엔티티의 book 필드와 연결 - 읽기만 가능 / 수정 x
+	// 2. cascade = CascadeType.ALL  Book 변화(생성,수정,삭제 등)와 연결된 KakaoPay 에 반영
+	// 3. orphanRemoval = true       도서 삭제시 결제내역도 함께 정리
+	@Builder.Default
+	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+	List<KakaoPay> payments = new ArrayList<>();	// 이 책의 결제(구매) 내역들
+
+	// ★여러 회원이 여러 도서를 찜(위시리스트) 할 수 있다.	(Book : AppUser = N : N)
+	@Builder.Default
+	@ManyToMany
+	@JoinTable(name = "BOOK_WISH",
+		joinColumns = @JoinColumn(name = "BOOK_ID"),
+		inverseJoinColumns = @JoinColumn(name = "APP_USER_ID")
+	)
+	List<AppUser> wishUsers = new ArrayList<>();	// 이 책을 찜한 회원들
 }

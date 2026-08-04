@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.BookMapper">
+
+    <resultMap id="BookResultMap" type="com.thejoa703.entity.Book">
+        <id property="bookId" column="BOOK_ID"/>
+        <result property="title" column="TITLE"/>
+        <result property="author" column="AUTHOR"/>
+        <result property="publisher" column="PUBLISHER"/>
+        <result property="publishDate" column="PUBLISH_DATE"/>
+        <result property="category" column="CATEGORY"/>
+        <result property="ranking" column="RANKING"/>
+        <result property="reviewCount" column="REVIEW_COUNT"/>
+        <result property="rating" column="RATING"/>
+        <result property="description" column="DESCRIPTION"/>
+        <result property="pages" column="PAGES"/>
+        <result property="price" column="PRICE"/>
+        <result property="regDate" column="REG_DATE"/>
+        <result property="bookCover" column="BOOK_COVER"/>
+        <!-- 연관관계(user, payments, wishUsers)는 JPA 조회시 사용, Mapper 에서는 매핑하지 않음 -->
+    </resultMap>
+
+    <select id="findByTitleKeyword" parameterType="string" resultMap="BookResultMap">
+        SELECT * FROM BOOK
+        WHERE TITLE LIKE '%' || #{keyword} || '%'
+        ORDER BY REG_DATE DESC
+    </select>
+
+    <select id="findByCategory" parameterType="string" resultMap="BookResultMap">
+        SELECT * FROM BOOK
+        WHERE CATEGORY = #{category}
+        ORDER BY REG_DATE DESC
+    </select>
+
+    <select id="findByAuthorKeyword" parameterType="string" resultMap="BookResultMap">
+        SELECT * FROM BOOK
+        WHERE AUTHOR LIKE '%' || #{author} || '%'
+        ORDER BY REG_DATE DESC
+    </select>
+
+    <select id="findById" parameterType="long" resultMap="BookResultMap">
+        SELECT * FROM BOOK WHERE BOOK_ID = #{bookId}
+    </select>
+
+    <!-- 페이징 (Oracle ROWNUM) -->
+    <select id="findBooksWithPaging" parameterType="map" resultMap="BookResultMap">
+        SELECT * FROM (
+            SELECT b.*, ROWNUM AS rnum
+            FROM (SELECT * FROM BOOK ORDER BY REG_DATE DESC) b
+        )
+        WHERE rnum BETWEEN #{start} AND #{end}
+    </select>
+
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*) FROM BOOK
+    </select>
+
+    <!-- 등록 -->
+    <insert id="insertBook" parameterType="com.thejoa703.entity.Book">
+        <selectKey keyProperty="bookId" resultType="long" order="BEFORE">
+            SELECT BOOK_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BOOK (
+            BOOK_ID, APP_USER_ID, TITLE, AUTHOR, PUBLISHER, PUBLISH_DATE,
+            CATEGORY, RANKING, REVIEW_COUNT, RATING, DESCRIPTION,
+            PAGES, PRICE, REG_DATE, BOOK_COVER
+        ) VALUES (
+            #{bookId}, #{user.id}, #{title}, #{author}, #{publisher}, #{publishDate},
+            #{category}, #{ranking}, #{reviewCount}, #{rating}, #{description},
+            #{pages}, #{price}, SYSDATE, #{bookCover}
+        )
+    </insert>
+
+    <!-- 수정 -->
+    <update id="updateBook" parameterType="com.thejoa703.entity.Book">
+        UPDATE BOOK SET
+            TITLE = #{title},
+            AUTHOR = #{author},
+            PUBLISHER = #{publisher},
+            PUBLISH_DATE = #{publishDate},
+            CATEGORY = #{category},
+            RANKING = #{ranking},
+            REVIEW_COUNT = #{reviewCount},
+            RATING = #{rating},
+            DESCRIPTION = #{description},
+            PAGES = #{pages},
+            PRICE = #{price},
+            BOOK_COVER = #{bookCover}
+        WHERE BOOK_ID = #{bookId}
+    </update>
+
+    <!-- 삭제 -->
+    <delete id="deleteBook" parameterType="long">
+        DELETE FROM BOOK WHERE BOOK_ID = #{bookId}
+    </delete>
+
+    <!-- 리뷰수 증가 -->
+    <update id="increaseReviewCount" parameterType="long">
+        UPDATE BOOK SET REVIEW_COUNT = REVIEW_COUNT + 1 WHERE BOOK_ID = #{bookId}
+    </update>
+
+</mapper>

@@ -18,7 +18,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name="IMAGES")
-@Getter @Setter @NoArgsConstructor
+@Getter @Setter
 public class Image {
 	@Id
 	@GeneratedValue( strategy = GenerationType.SEQUENCE , generator = "image_seq" )

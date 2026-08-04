@@ -23,8 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 @CrossOrigin(origins="*")
-public class UserController {
-	
+public class UserController {	
 	private final UserService  userService;
 	
 	// 사용자 등록 (회원가입)
@@ -45,7 +44,7 @@ public class UserController {
 		// return ResponseEntity.status(HttpStatus.OK).body(response);	// 위랑 동일 간단하게 		
 	}
 }
-
+//
 //1. User Api    - 사용자 관련 API
-//- POST      /api/users      회원가입
-//- GET      /api/users/{id}      사용자 단건조회
+//- POST	/api/users		    회원가입       ※ 기능 : createUser
+//- GET		/api/users/{id}		사용자 단건조회  ※ 기능 :  getUser

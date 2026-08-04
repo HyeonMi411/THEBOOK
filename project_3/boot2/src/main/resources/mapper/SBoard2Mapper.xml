@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.SBoard2Mapper">
+
+    <resultMap id="SBoard2ResultMap" type="com.thejoa703.entity.SBoard2">
+        <id property="id" column="ID"/>
+        <result property="btitle" column="BTITLE"/>
+        <result property="bcontent" column="BCONTENT"/>
+        <result property="bpass" column="BPASS"/>
+        <result property="bfile" column="BFILE"/>
+        <result property="bhit" column="BHIT"/>
+        <result property="bip" column="BIP"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <!-- 연관관계(user, parent, children, hashtags)는 JPA 조회시 사용, Mapper 에서는 매핑하지 않음 -->
+    </resultMap>
+
+    <select id="findParents" resultMap="SBoard2ResultMap">
+        SELECT * FROM SBOARD2
+        WHERE PARENT_ID IS NULL
+        ORDER BY ID DESC
+    </select>
+
+    <select id="findChildren" parameterType="long" resultMap="SBoard2ResultMap">
+        SELECT * FROM SBOARD2
+        WHERE PARENT_ID = #{parentId}
+        ORDER BY ID ASC
+    </select>
+
+    <select id="findByTitleKeyword" parameterType="string" resultMap="SBoard2ResultMap">
+        SELECT * FROM SBOARD2
+        WHERE BTITLE LIKE '%' || #{keyword} || '%'
+        ORDER BY ID DESC
+    </select>
+
+    <select id="findById" parameterType="long" resultMap="SBoard2ResultMap">
+        SELECT * FROM SBOARD2 WHERE ID = #{id}
+    </select>
+
+    <!-- 원글목록 페이징 (Oracle ROWNUM) -->
+    <select id="findBoardsWithPaging" parameterType="map" resultMap="SBoard2ResultMap">
+        SELECT * FROM (
+            SELECT b.*, ROWNUM AS rnum
+            FROM (SELECT * FROM SBOARD2 WHERE PARENT_ID IS NULL ORDER BY ID DESC) b
+        )
+        WHERE rnum BETWEEN #{start} AND #{end}
+    </select>
+
+    <select id="countParents" resultType="long">
+        SELECT COUNT(*) FROM SBOARD2 WHERE PARENT_ID IS NULL
+    </select>
+
+    <!-- 등록 (원글/답글 공통, 답글이면 parent.id 세팅해서 넘김) -->
+    <insert id="insertBoard" parameterType="com.thejoa703.entity.SBoard2">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT SBOARD2_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO SBOARD2 (
+            ID, APP_USER_ID, BTITLE, BCONTENT, BPASS, BFILE, BHIT, BIP, CREATED_AT, PARENT_ID
+        ) VALUES (
+            #{id}, #{user.id}, #{btitle}, #{bcontent}, #{bpass}, #{bfile}, 0, #{bip}, SYSDATE,
+            #{parent.id}
+        )
+    </insert>
+
+    <!-- 수정 -->
+    <update id="updateBoard" parameterType="com.thejoa703.entity.SBoard2">
+        UPDATE SBOARD2 SET
+            BTITLE = #{btitle},
+            BCONTENT = #{bcontent},
+            BFILE = #{bfile}
+        WHERE ID = #{id}
+    </update>
+
+    <!-- 삭제 -->
+    <delete id="deleteBoard" parameterType="long">
+        DELETE FROM SBOARD2 WHERE ID = #{id}
+    </delete>
+
+    <!-- 조회수 증가 -->
+    <update id="increaseHit" parameterType="long">
+        UPDATE SBOARD2 SET BHIT = BHIT + 1 WHERE ID = #{id}
+    </update>
+
+    <!-- 비밀번호 확인 (일치건수 반환, 0 이면 불일치) -->
+    <select id="checkPassword" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM SBOARD2
+        WHERE ID = #{id} AND BPASS = #{bpass}
+    </select>
+
+</mapper>

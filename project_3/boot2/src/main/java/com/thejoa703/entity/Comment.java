@@ -22,7 +22,7 @@ import lombok.Setter;
 
 @Entity
 @Table( name="COMMENTS" )
-@Getter @Setter @Builder
+@Getter @Setter
 public class Comment {	
 	@Id		// jakarta.persistence.Id;
 	@GeneratedValue(strategy = GenerationType.SEQUENCE , generator = "comment_seq")	
