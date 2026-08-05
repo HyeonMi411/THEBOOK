@@ -10,7 +10,7 @@ import lombok.Setter;
 @Table(name="DEPTUSER")
 @Getter  @Setter
 public class DeptUser {
-	
+
 	@Id
 	private Long deptno;
 	

@@ -18,17 +18,17 @@ import lombok.Setter;
 
 @Entity
 @Table(name="IMAGES")
-@Getter @Setter
+@Getter @Setter 
 public class Image {
 	@Id
 	@GeneratedValue( strategy = GenerationType.SEQUENCE , generator = "image_seq" )
 	@SequenceGenerator(name="image_seq" , sequenceName = "IMAGE_SEQ" , allocationSize = 1)
 	private Long id;
 	
-	@Column(length=200, nullable = false)	
+	@Column(length=200, nullable = false)
 	private String src;
-		
+	 
 	@ManyToOne // 한 글은 여러 이미지를 갖는다
-	@JoinColumn(name="POST_ID" , nullable = false)		// POST_ID 외래키 (FK)	POST엔티티의 PK(ID) 참조
+	@JoinColumn(name="POST_ID" , nullable = false)   // POST_ID 외래키 (FK)   POST엔티티의 PK(ID) 참조
 	private Post post;
 }

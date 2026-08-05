@@ -18,31 +18,31 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-@Tag( name="User Api" , description="사용자 관련 API"  )	//swagger
-@RestController			// @Controller + @ResponseBody
+@Tag( name="User Api" , description="사용자 관련 API"  )   //swagger
+@RestController       // @Controller + @ResponseBody
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins="*")
-public class UserController {	
+@CrossOrigin(origins="*") 
+public class UserController { 
 	private final UserService  userService;
 	
 	// 사용자 등록 (회원가입)
 	// ResponseEntity - 상태코드 전달  - /api/users
 	@Operation( summary="회원가입" , description = "새로운 사용자를 등록합니다.")
-	@PostMapping
+	@PostMapping 
 	public    ResponseEntity<UserResponseDto>  createUser(@RequestBody UserRequestDto  requestDto){
-		UserResponseDto response    = userService.createUser(requestDto);
-		return ResponseEntity.status(HttpStatus.CREATED).body(response);	// HttpStatus.CREATED 201 		
+		UserResponseDto  response	 = userService.createUser(requestDto);
+		return  ResponseEntity.status(HttpStatus.CREATED).body(response);   // HttpStatus.CREATED 201
 	}
-			
-	// 사용자 단건조회					- /api/users/1		해당번호
-	@Operation( summary="사용자 단건조회" , description = "사용자 ID로 특정회원정보를 조회합니다.")	
-	@GetMapping("/{id}")
+	
+	// 사용자 단건조회                 -  /api/users/1    해당번호
+	@Operation( summary="사용자 단건조회" , description = "사용자 ID로 특정회원정보를 조회합니다.")
+	@GetMapping("/{id}") 
 	public    ResponseEntity<UserResponseDto>  getUser( @PathVariable("id")  Long id ){
-		UserResponseDto response    = userService.getUser(id);
-		   return ResponseEntity.ok(response);	// ok 200 		
-		// return ResponseEntity.status(HttpStatus.OK).body(response);	// 위랑 동일 간단하게 		
-	}
+		UserResponseDto  response	 = userService.getUser(id);
+		   return  ResponseEntity.ok(response);   // ok  200
+		// return  ResponseEntity.status(HttpStatus.OK).body(response); 
+	} 
 }
 //
 //1. User Api    - 사용자 관련 API

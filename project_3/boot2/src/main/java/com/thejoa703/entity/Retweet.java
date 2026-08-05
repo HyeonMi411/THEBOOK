@@ -24,28 +24,34 @@ import lombok.Setter;
 			name="UK_RETWEET_USER_ORIG" ,  columnNames = {"APP_USER_ID" , "ORIGINAL_POST_ID"}
 	)
 )
-@Getter @Setter @NoArgsConstructor
+@Getter @Setter @NoArgsConstructor 
 public class Retweet {
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE , generator = "retweet_seq")	
-	@SequenceGenerator(name = "retweet_seq" , sequenceName ="RETWEET_SEQ" , allocationSize = 1)		
+	@GeneratedValue(strategy = GenerationType.SEQUENCE , generator = "retweet_seq")
+	@SequenceGenerator(name = "retweet_seq" , sequenceName ="RETWEET_SEQ" , allocationSize = 1)
 	Long id;
 	
 	@Column(name="CREATED_AT" , nullable = false)
-	LocalDateTime createdAt;
+	LocalDateTime  createdAt;
 	
 	@PrePersist
-	void onCreate() { this.createdAt = LocalDateTime.now(); }	
+	void onCreate() {  this.createdAt = LocalDateTime.now();  }
 	public Retweet(AppUser user, Post originalPost) {
 		super();
 		this.user = user;
 		this.originalPost = originalPost;
-	}
+	} 
 	@ManyToOne
 	@JoinColumn(name="APP_USER_ID"  ,  nullable = false )
-	AppUser user;	//리트윗한 사람   @ManyToOne
-	
+	AppUser  user;      //리트윗한 사람    @ManyToOne
+
 	@ManyToOne
-	@JoinColumn(name="ORIGINAL_POST_ID"  ,  nullable = false ) // ORIGINAL_POST_ID  라는 외래키 (FK)
-	Post originalPost;	//리트윗한글번호 @ManyToOne
+	@JoinColumn(name="ORIGINAL_POST_ID"  ,  nullable = false )  // ORIGINAL_POST_ID  라는 외래키 (FK)
+	Post  originalPost;  //리트윗한글번호 @ManyToOne
 }
+ 
+
+
+
+
+

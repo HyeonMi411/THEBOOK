@@ -45,7 +45,8 @@ public class AppUser {
 	private String provider="local";
 
 	@Column(name="PROVIDER_ID" ,  length = 150 )
-	private String providerId="local";   //  kakao_id, naver_id
+	private String providerId="local";   
+	//  kakao_id, naver_id
 	
 	@Column(length = 255)
 	private String ufile;
@@ -88,29 +89,24 @@ public class AppUser {
 		this.role     = "ROLE_USER";
 	}
 	
-	// ★한 사람이 여러 글을 쓸수 있다.   (AppUser)
-	// 1. mappedBy = "user"          Post 엔티티에 이쓴 ㄴuser 필드와 연결 - 읽기만 가능 / 수정 x 
+	// ★한 사람이 여러 글을 쓸수 있다.  (AppUser)
+	// 1. mappedBy = "user"          Post 엔티티에 있는 user 필드와 연결 - 읽기만 가능 / 수정 x
 	// 2. cascade = CascadeType.ALL  AppUser 변화 (생성, 수정, 삭제 등)와 연결된 Post 에 반영
-	// 3. orphanRemoval = true       유저탈퇴시 글들이 깔끔하게 삭제 
+	// 3. orphanRemoval = true       유저탈퇴시 글들이 깔끔하게 삭제
 	@OneToMany( mappedBy = "user" ,cascade = CascadeType.ALL, orphanRemoval = true )
-	private List<Post> posts = new ArrayList<>();
-	
-	@OneToMany( mappedBy = "user" ,cascade = CascadeType.ALL, orphanRemoval = true )
-	private List<PostLike> likes = new ArrayList<>();
+	private List<Post> posts = new ArrayList<>(); 
 	
 	@OneToMany( mappedBy = "user" ,cascade = CascadeType.ALL, orphanRemoval = true )
-	private List<Comment> comments = new ArrayList<>();
+	private List<PostLike> likes = new ArrayList<>(); 
 	
-	@OneToMany( mappedBy = "follower" ,cascade = CascadeType.ALL, orphanRemoval = true )
-	private List<Follow> following = new ArrayList<>();  //내가 팔로우한 사람들
+	@OneToMany( mappedBy = "user" ,cascade = CascadeType.ALL, orphanRemoval = true )
+	private List<Comment> comments = new ArrayList<>(); 
 	
-	@OneToMany( mappedBy = "followee" ,cascade = CascadeType.ALL, orphanRemoval = true )
-	private List<Follow> followers = new ArrayList<>(); // 팔로우를 당했어요
+	@OneToMany( mappedBy= "follower",   cascade = CascadeType.ALL , orphanRemoval = true)
+	private List<Follow>  following = new ArrayList<>();  //내가 팔로우한 사람들
 	
-	/*
-	 * @OneToMany( mappedBy = "user" ,cascade = CascadeType.ALL, orphanRemoval =
-	 * true ) private List<Retweet> retweets = new ArrayList<>();
-	 */
+	@OneToMany( mappedBy= "followee",   cascade = CascadeType.ALL , orphanRemoval = true)
+	private List<Follow>  followers = new ArrayList<>(); // 팔로우를 당했어요 
 	
 }
 

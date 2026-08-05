@@ -30,54 +30,54 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin(origins="*") 
 public class PostController {
 
-   private final PostService postService;
-   
-   @Operation(summary = "게시글작성" , description = "특정유저 ID와 내용을 받아 게시글을 작성합니다.")
-   @PostMapping
-   public ResponseEntity<PostResponseDto>  createPost(@RequestBody  PostRequestDto requestDto){
-      Post createdPost =postService.createPost(requestDto.getUserId(), requestDto.getContent());
-      return  ResponseEntity.ok( new PostResponseDto(createdPost));	// 201
-   }
-   
-   @Operation(summary = "전체게시" , description = "전체게시글")
-   @GetMapping	//ctrl + shift + o
-   public ResponseEntity<List<PostResponseDto>>  getPost(){
-	   List<Post> posts =postService.getAllPosts();
-	   List<PostResponseDto>  lists =   posts.stream()
-			                                 .map(PostResponseDto::new)	//PostResponseDto
-			                                 .collect(Collectors.toList());		// list로 변경
-	   return  ResponseEntity.ok( lists );	// 200
-   }
-   
-   @Operation(summary = "단건게시" , description = "단건게시")
-   @GetMapping("/{id}")		//ctrl + shift + o
-   public ResponseEntity<PostResponseDto>  getPost(@PathVariable("id")  Long id){
-	   Post post = postService.getPostById(id);
-	   return  ResponseEntity.ok( new  PostResponseDto(post) );	// 200
-   }
-   
-   @Operation(summary = "게시글 수정" , description = "게시글 수정시")		// 수정 put(전체데이트 수정) , patch( 데이터 일부분수정)
-   @PutMapping("/{id}")		//ctrl + shift + o
-   public ResponseEntity<PostResponseDto>  getUpdatePost(
-		   @PathVariable("id")  Long id , 
-		   @RequestBody PostRequestDto requestDto){
-	   
-	   Post post = postService.updatePost(id, requestDto.getContent());
-	   return  ResponseEntity.ok( new  PostResponseDto(post) );	// 200
-   }
-   
-   @Operation(summary = "게시글 삭제" , description = "게시글 삭제시")		// 수정 put(전체데이트 수정) , patch( 데이터 일부분수정)
-   @DeleteMapping("/{id}")   //ctrl + shift + o
-   public ResponseEntity<Long>  deletePost( @PathVariable("id")  Long id ){
-	   postService.deletePost(id);	   	   
-	   return  ResponseEntity.ok(id);	// 200
-   }
-   
-}
-// 요청 : PostRequestDto ,  응답: PostResponseDto 
-//- DELETE   /api/posts/{id}    게시글 삭제     ※기능:  postService.deletePost
-//- PUT      /api/posts/{id}    게시글 수정     ※기능:  postService.updatePost
+	private final PostService postService;
+	
+	@Operation(summary = "게시글작성" , description = "특정유저 ID와 내용을 받아 게시글을 작성합니다.")
+	@PostMapping
+	public ResponseEntity<PostResponseDto>  createPost(@RequestBody  PostRequestDto requestDto){
+		Post createdPost =postService.createPost(requestDto.getUserId(), requestDto.getContent());
+		return  ResponseEntity.ok( new PostResponseDto(createdPost));  // 201
+	}
+ 
+	@Operation(summary = "전체게시" , description = "전체게시글")
+	@GetMapping   //ctrl + shift + o
+	public ResponseEntity<List<PostResponseDto>>  getPosts(){
+		List<Post> posts =postService.getAllPosts();
+		List<PostResponseDto>  lists =   posts.stream()
+											  .map(PostResponseDto::new)  //PostResponseDto
+											  .collect(Collectors.toList());   // list로 변경
+		return  ResponseEntity.ok( lists );  // 200
+	} 
+	
+	@Operation(summary = "단건게시" , description = "단건게시")
+	@GetMapping("/{id}")   //ctrl + shift + o
+	public ResponseEntity<PostResponseDto>  getPost(@PathVariable("id")  Long id){
+		Post post = postService.getPostById(id);
+		return  ResponseEntity.ok(  new  PostResponseDto(post) );  // 200
+	} 
+	
+	@Operation(summary = "게시글 수정" , description = "게시글 수정시")   // 수정 put(전체데이트 수정) , patch( 데이터 일부분수정)
+	@PutMapping("/{id}")   //ctrl + shift + o
+	public ResponseEntity<PostResponseDto>  getUpdatePost(
+			@PathVariable("id")  Long id , 
+			@RequestBody PostRequestDto requestDto){
+		
+		Post post = postService.updatePost(id, requestDto.getContent());
+		return  ResponseEntity.ok(  new  PostResponseDto(post) );  // 200
+	} 
+	
+	@Operation(summary = "게시글 삭제" , description = "게시글 삭제시")   // 수정 put(전체데이트 수정) , patch( 데이터 일부분수정)
+	@DeleteMapping("/{id}")   //ctrl + shift + o
+	public ResponseEntity<Long>  deletePost( @PathVariable("id")  Long id ){
+		postService.deletePost(id);
+		return  ResponseEntity.ok(id);  // 200
+	} 
+	 
+} 
+// 요청 : PostRequestDto ,  응답: PostResponseDto
+//- DELETE	/api/posts/{id}		게시글 삭제 	  ※기능:  postService.deletePost 
+//- PUT		/api/posts/{id}		게시글 수정     ※기능:  postService.updatePost
 
-//- GET      /api/posts/{id}    게시글 단건 조회 ※기능:  postService.getPostById 
-//- GET      /api/posts         전체 게시글 조회 ※기능:  postService.getAllPosts (선택)         , getPostPaged
-//- POST     /api/posts         게시글 작성     ※기능:  postService.createPost
+//- GET		/api/posts/{id}		게시글 단건 조회 ※기능:  postService.getPostById   
+//- GET		/api/posts			전체 게시글 조회 ※기능:  postService.getAllPosts (선택)         , getPostPaged
+//- POST	/api/posts			게시글 작성     ※기능:  postService.createPost 
