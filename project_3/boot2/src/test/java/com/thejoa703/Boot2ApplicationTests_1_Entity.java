@@ -32,7 +32,7 @@ import com.thejoa703.repository.PostRepository;
 
 @SpringBootTest
 @Transactional   // org.springframework.transaction.annotation.Transactional
-class Boot2ApplicationTests {
+class Boot2ApplicationTests_1_Entity {
 	@Autowired  private  AppUserRepository  appUserRepository;
 	@Autowired  private  PostRepository     postRepository;
 	@Autowired  private  ImageRepository    imageRepository;

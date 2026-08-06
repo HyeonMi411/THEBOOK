@@ -1,24 +1,18 @@
 package com.thejoa703.entity;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,68 +20,52 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "SBOARD2")
-@Getter @Setter @Builder
-@NoArgsConstructor @AllArgsConstructor
+@Getter @Setter @NoArgsConstructor
+@AllArgsConstructor @Builder
 public class SBoard2 {
 
-	@Id		// jakarta.persistence.Id;
+	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sboard2_seq")
 	@SequenceGenerator(name = "sboard2_seq", sequenceName = "SBOARD2_SEQ", allocationSize = 1)
 	@Column(name = "ID")
-	Long id;
+	private Long id;
 
-	// ★한 회원이 여러개의 글을 쓸수 있다.	(SBoard2 : AppUser = N : 1)
-	@ManyToOne
+	// ★ 게시글 여러개는 한 명의 회원에 속한다. (N:1)
+	// FetchType.LAZY : 게시글 조회할 때 회원 정보를 즉시 안 가져오고, 필요할 때만 가져옴 (성능↑)
+	// JoinColumn     : SBOARD2 테이블의 실제 FK 컬럼명 지정
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "APP_USER_ID", nullable = false)
-	AppUser user;			// 작성자		@ManyToOne		AppUser
+	private AppUser user;
 
-	@Column(name = "BTITLE", nullable = false, length = 1000)
-	String btitle;			// 게시글 제목
+	@Column(length = 1000, nullable = false)
+	private String btitle;
 
 	@Lob
-	@Column(name = "BCONTENT", nullable = false)
-	String bcontent;		// 게시글 내용 ( 긴텍스트 )
+	@Column(nullable = false)
+	private String bcontent;   // CLOB
 
-	@Column(name = "BPASS", nullable = false, length = 255)
-	String bpass;			// 게시글 비밀번호
+	@Column(length = 255, nullable = false)
+	private String bpass;
 
-	@Column(name = "BFILE", length = 255)
-	String bfile;			// 첨부파일 경로
+	@Column(length = 255)
+	private String bfile;
 
-	@Column(name = "BHIT")
-	Long bhit;				// 조회수
+	@Column
+	private Integer bhit;
 
-	@Column(name = "BIP", nullable = false, length = 255)
-	String bip;				// 작성자 IP
+	@Column(length = 255, nullable = false)
+	private String bip;
 
 	@Column(name = "CREATED_AT")
-	LocalDateTime createdAt;
+	private LocalDateTime createdAt;
 
 	@PrePersist
 	void onCreate() {
-		this.createdAt = LocalDateTime.now();
-		if (this.bhit == null) this.bhit = 0L;
+		if (this.createdAt == null) {
+			this.createdAt = LocalDateTime.now();
+		}
+		if (this.bhit == null) {
+			this.bhit = 0;
+		}
 	}
-
-	// ★답글형 게시판 : 한 게시글(원글)은 여러개의 답글을 가질 수 있다.  (SBoard2 : SBoard2 = 1 : N, 자기참조)
-	@ManyToOne
-	@JoinColumn(name = "PARENT_ID")
-	SBoard2 parent;			// 부모글(원글) - null 이면 원글, 값이 있으면 답글		@ManyToOne
-
-	// 1. mappedBy = "parent"        하위 SBoard2(답글) 의 parent 필드와 연결 - 읽기만 가능 / 수정 x
-	// 2. cascade = CascadeType.ALL  원글 변화(생성,수정,삭제 등)와 연결된 답글에 반영
-	// 3. orphanRemoval = true       원글 삭제시 답글들도 깔끔하게 삭제
-	@Builder.Default
-	@OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
-	List<SBoard2> children = new ArrayList<>();	// 답글목록
-
-	// ★한 게시글은 여러개의 해시태그(꼬리표)를 가질 수 있고, 하나의 해시태그는 여러 게시글에 쓰일 수 있다.  (SBoard2 : Hashtag = N : N)
-	@Builder.Default
-	@ManyToMany
-	@JoinTable(name = "SBOARD2_HASHTAG",
-		joinColumns = @JoinColumn(name = "SBOARD2_ID"),
-		inverseJoinColumns = @JoinColumn(name = "HASHTAG_ID")
-	)
-	List<Hashtag> hashtags = new ArrayList<>();
 }
