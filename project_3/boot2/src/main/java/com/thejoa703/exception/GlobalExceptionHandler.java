@@ -13,19 +13,19 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 // 컨트롤러에서 발생하는 예외를 한곳에서 가로채서 통일된 응답형태로 내려줍니다.
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-	
-	//1. 데이터가 없을때 ( 404 Not Found) 
+
+	//1. 데이터가 없을때 ( 404 Not Found)
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleResourceNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(createErrorBody(ex.getMessage()));
     }
- 
-    //2. 잘못된 요청 / 비즈니스 로직오류		( 400  Bad Request) 
+
+	//2. 잘못된 요청 / 비즈니스 로직오류   ( 400  Bad Request)
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<Map<String, String>> handleBadRequest(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createErrorBody(ex.getMessage()));
-    } 
-    //3. @Valid 유효성 검사 실패시 
+    }
+    //3. @Valid 유효성 검사 실패시
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();

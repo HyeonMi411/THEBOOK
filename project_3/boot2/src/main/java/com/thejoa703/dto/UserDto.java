@@ -16,11 +16,11 @@ import lombok.Setter;
 
 public class UserDto { 
     // 회원가입 요청 DTO
-	@NoArgsConstructor	
+	@NoArgsConstructor
 	@AllArgsConstructor
     @Getter @Setter
     public static class UserRequestDto {
-		@Email		
+		@Email
 		@NotBlank
         private String email;
 		
@@ -30,7 +30,7 @@ public class UserDto {
 		@NotBlank
         private String nickname;
 		
-		private String provider;  // local 기본
+        private String provider;  // local 기본
         private String mobile;
         private Integer mbtitype;
     }
@@ -44,21 +44,21 @@ public class UserDto {
         private String mobile;    // 나중에 확장용도
         private Integer mbtitype; // 나중에 확장용도
         private String role;
-        private String provider;
-        private String ufile;
+        private String provider; 
+        private String ufile; 
         private LocalDateTime  createdAt;
-
-        public static UserResponseDto  fromEntity(AppUser user) {	// repository 처리해준값
-        	return  UserResponseDto.builder()
+         
+        public static UserResponseDto  fromEntity(AppUser user) {   // repository 처리해준값
+        	return   UserResponseDto.builder()
         				.id(user.getId())
         				.email(user.getEmail())
         				.nickname(user.getNickname())
-        				.role(user.getRole())
         				.provider(user.getProvider())
+        				.role(user.getRole())
         				.createdAt(user.getCreatedAt())
         				.ufile(user.getUfile())
         				.build();
-        }
+        } 
         public AppUser toEntity() {
             AppUser user = new AppUser();
             user.setId(this.id);
@@ -72,9 +72,9 @@ public class UserDto {
     }
 }
 
-//1) UserDto :  UserRequestDto   /  UserResponseDto 
+//1) UserDto :  UserRequestDto   /  UserResponseDto  
 //UserRequestDto  < email , password, nickname,  ☆image (ufile: Multipart 빠짐)   /  provider , mobile, mbtitype  >
-//UserResponseDto < email , role    , nickname,   ufile   / provider , mobile , mbtitype >
+//UserResponseDto < id, email , role    , nickname,   ufile     / provider , mobile , mbtitype >
 //
-//2) LoginRequest  < email, password , provider >
+
 
