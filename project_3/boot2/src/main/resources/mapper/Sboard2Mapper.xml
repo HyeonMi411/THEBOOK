@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.Sboard2Mapper">
+
+    <resultMap id="Sboard2ResultMap" type="com.thejoa703.entity.Sboard2">
+        <id     property="id"        column="ID"/>
+        <result property="btitle"    column="BTITLE"/>
+        <result property="bcontent"  column="BCONTENT"/>
+        <result property="bpass"     column="BPASS"/>
+        <result property="bfile"     column="BFILE"/>
+        <result property="bhit"      column="BHIT"/>
+        <result property="bip"       column="BIP"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <!-- user(AppUser) 는 ManyToOne 연관필드라 MyBatis 단순매핑에서는 제외, 필요시 association 추가 -->
+    </resultMap>
+
+    <select id="findByKeyword" parameterType="string" resultMap="Sboard2ResultMap">
+        SELECT * FROM SBOARD2 WHERE BTITLE LIKE '%' || #{keyword} || '%'
+    </select>
+
+    <select id="countByAppUserId" parameterType="long" resultType="int">
+        SELECT COUNT(*) FROM SBOARD2 WHERE APP_USER_ID = #{appUserId}
+    </select>
+</mapper>

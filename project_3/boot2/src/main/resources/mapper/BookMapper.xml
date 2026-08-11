@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.BookMapper">
+
+    <resultMap id="BookResultMap" type="com.thejoa703.entity.Book">
+        <id     property="bookId"      column="BOOK_ID"/>
+        <result property="title"       column="TITLE"/>
+        <result property="author"      column="AUTHOR"/>
+        <result property="publisher"   column="PUBLISHER"/>
+        <result property="publishDate" column="PUBLISH_DATE"/>
+        <result property="category"    column="CATEGORY"/>
+        <result property="ranking"     column="RANKING"/>
+        <result property="reviewCount" column="REVIEW_COUNT"/>
+        <result property="rating"      column="RATING"/>
+        <result property="description" column="DESCRIPTION"/>
+        <result property="pages"       column="PAGES"/>
+        <result property="price"       column="PRICE"/>
+        <result property="regDate"     column="REG_DATE"/>
+        <result property="bookCover"   column="BOOK_COVER"/>
+    </resultMap>
+
+    <select id="findByKeyword" parameterType="string" resultMap="BookResultMap">
+        SELECT * FROM BOOK WHERE TITLE LIKE '%' || #{keyword} || '%'
+    </select>
+
+    <resultMap id="BookCategoryStatResultMap" type="com.thejoa703.mapper.BookCategoryStat">
+        <result property="category"  column="CATEGORY"/>
+        <result property="bookCount" column="BOOK_COUNT"/>
+        <result property="avgRating" column="AVG_RATING"/>
+    </resultMap>
+
+    <select id="findCategoryStats" resultMap="BookCategoryStatResultMap">
+        SELECT CATEGORY, COUNT(*) AS BOOK_COUNT, ROUND(AVG(RATING), 2) AS AVG_RATING
+        FROM BOOK
+        GROUP BY CATEGORY
+        ORDER BY BOOK_COUNT DESC
+    </select>
+</mapper>
