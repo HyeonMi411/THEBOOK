@@ -5,97 +5,137 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.thejoa703.dto.Sboard2Dto.Sboard2RequestDto;
 import com.thejoa703.dto.Sboard2Dto.Sboard2ResponseDto;
 import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Sboard2;
+import com.thejoa703.exception.ResourceNotFoundException;
 import com.thejoa703.repository.AppUserRepository;
 import com.thejoa703.repository.Sboard2Repository;
+import com.thejoa703.util.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(readOnly = true)  // 조회는 읽기전용 / 등록·수정·삭제·조회수증가는 메서드에 @Transactional 재선언
 public class Sboard2Service {
 
-	private final Sboard2Repository sboard2Repository;
-	private final AppUserRepository appUserRepository;
+	private final Sboard2Repository  sboard2Repository;
+	private final AppUserRepository  appUserRepository;
+	private final FileStorageService fileStorageService;   // 첨부파일 업로드처리
 
-	// 1. 오라클 네이티브 페이징 - 전체글목록
-	public List<Sboard2ResponseDto> getBoardsPaged(int start, int end) {
-		return sboard2Repository.findBoardsWithPaging(start, end).stream()
-				.map(Sboard2ResponseDto::from)
+	// ------------------------------------------------------------
+	// ★관리자 권한 검증 공통 메서드 - 공지글 작성/수정/삭제는 관리자만 가능
+	// ------------------------------------------------------------
+	private AppUser validateAdmin(Long adminUserId) {
+		AppUser user = appUserRepository.findById(adminUserId)
+				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 사용자입니다. ID:" + adminUserId));
+
+		if (!"ROLE_ADMIN".equals(user.getRole())) {
+			throw new IllegalArgumentException("공지사항 작성/수정/삭제는 관리자만 가능합니다.");
+		}
+		return user;
+	}
+
+	// 1. 목록조회 (오라클 네이티브 페이징)
+	public List<Sboard2ResponseDto> getNoticesPaged(int start, int end) {
+		return sboard2Repository.findNoticesWithPaging(start, end).stream()
+				.map(Sboard2ResponseDto::fromEntity)
 				.collect(Collectors.toList());
 	}
 
-	// 2. 특정유저(AppUser)가 작성한 글목록 - ManyToOne user 로 조회
-	public List<Sboard2ResponseDto> getBoardsByUser(Long userId) {
-		return sboard2Repository.findByUser_Id(userId).stream()
-				.map(Sboard2ResponseDto::from)
+	// 2. 전체 갯수
+	public long getNoticeCount() {
+		return sboard2Repository.count();
+	}
+
+	// 3. 단건조회 (상세보기 - 조회수 +1 증가 포함)
+	@Transactional
+	public Sboard2ResponseDto getNoticeDetail(Long id) {
+		sboard2Repository.increaseHit(id);   // 조회수 증가 (JPQL 벌크쿼리)
+
+		Sboard2 board = sboard2Repository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 공지글입니다. ID:" + id));
+		return Sboard2ResponseDto.fromEntity(board);
+	}
+
+	// 4. 제목검색
+	public List<Sboard2ResponseDto> searchByTitle(String keyword) {
+		return sboard2Repository.findByBtitleContaining(keyword).stream()
+				.map(Sboard2ResponseDto::fromEntity)
 				.collect(Collectors.toList());
 	}
 
-	// 3. 단건조회 + 조회수 증가
-	@Transactional
-	public Sboard2ResponseDto getBoardById(Long boardId) {
-		Sboard2 board = sboard2Repository.findById(boardId)
-				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다. ID:" + boardId));
-		sboard2Repository.increaseHit(boardId);   // 조회수 +1
-		return Sboard2ResponseDto.from(board);
+	// 5. 제목검색 + 페이징
+	public List<Sboard2ResponseDto> searchByTitlePaged(String keyword, int start, int end) {
+		return sboard2Repository.searchNoticesWithPaging(keyword, start, end).stream()
+				.map(Sboard2ResponseDto::fromEntity)
+				.collect(Collectors.toList());
 	}
 
-	// 4. 게시글작성 ( AppUser - ManyToOne 연결 )
+	// 6. ★관리자가 작성한 공지글 목록
+	public List<Sboard2ResponseDto> getNoticesByAdmin(Long adminUserId) {
+		return sboard2Repository.findByUser_Id(adminUserId).stream()
+				.map(Sboard2ResponseDto::fromEntity)
+				.collect(Collectors.toList());
+	}
+
+	// ------------------------------------------------------------
+	// 7. 작성 (관리자 전용)
+	// ------------------------------------------------------------
 	@Transactional
-	public Sboard2ResponseDto createBoard(Long userId, Sboard2RequestDto dto, String clientIp) {
-		AppUser user = appUserRepository.findById(userId)
-				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. ID:" + userId));
+	public Sboard2ResponseDto createNotice(Long adminUserId, Sboard2RequestDto dto,
+	                                        MultipartFile file, String clientIp) {
+		AppUser admin = validateAdmin(adminUserId);
 
 		Sboard2 board = new Sboard2();
-		board.setUser(user);
+		board.setUser(admin);   // ★작성한 관리자와 연결
 		board.setBtitle(dto.getBtitle());
 		board.setBcontent(dto.getBcontent());
-		board.setBpass(dto.getBpass());
-		board.setBfile(dto.getBfile());
+		board.setBpass(dto.getBpass() != null ? dto.getBpass() : "");   // BPASS NOT NULL 컬럼 대응
 		board.setBip(clientIp);
 
-		return Sboard2ResponseDto.from(sboard2Repository.save(board));
+		if (file != null && !file.isEmpty()) {
+			board.setBfile(fileStorageService.upload(file));
+		}
+		return Sboard2ResponseDto.fromEntity(sboard2Repository.save(board));
 	}
 
-	// 5. 게시글수정 ( 본인글 + 비밀번호 확인, 더티체킹 )
+	// ------------------------------------------------------------
+	// 8. 수정 (관리자 전용, 더티체킹)
+	// ------------------------------------------------------------
 	@Transactional
-	public Sboard2ResponseDto updateBoard(Long userId, Long boardId, Sboard2RequestDto dto) {
-		Sboard2 board = sboard2Repository.findById(boardId)
-				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다. ID:" + boardId));
+	public Sboard2ResponseDto updateNotice(Long adminUserId, Long noticeId,
+	                                        Sboard2RequestDto dto, MultipartFile file) {
+		validateAdmin(adminUserId);
 
-		if (!board.getUser().getId().equals(userId)) {
-			throw new IllegalArgumentException("본인 글만 수정할 수 있습니다.");
-		}
-		if (!board.getBpass().equals(dto.getBpass())) {
-			throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-		}
+		Sboard2 board = sboard2Repository.findById(noticeId)
+				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 공지글입니다. ID:" + noticeId));
 
 		board.setBtitle(dto.getBtitle());
 		board.setBcontent(dto.getBcontent());
-		if (dto.getBfile() != null) {
-			board.setBfile(dto.getBfile());
+		if (dto.getBpass() != null && !dto.getBpass().isBlank()) {
+			board.setBpass(dto.getBpass());
 		}
-		return Sboard2ResponseDto.from(board);  // save() 없이 update 쿼리 반영
+		if (file != null && !file.isEmpty()) {
+			board.setBfile(fileStorageService.upload(file));
+		}
+		return Sboard2ResponseDto.fromEntity(board);   // 저장메서드를 따로 호출하지 않아도 update 쿼리 반영(더티체킹)
 	}
 
-	// 6. 게시글삭제 ( 본인글 + 비밀번호 확인 )
+	// ------------------------------------------------------------
+	// 9. 삭제 (관리자 전용)
+	// ------------------------------------------------------------
 	@Transactional
-	public void deleteBoard(Long userId, Long boardId, String bpass) {
-		Sboard2 board = sboard2Repository.findById(boardId)
-				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다. ID:" + boardId));
+	public void deleteNotice(Long adminUserId, Long noticeId) {
+		validateAdmin(adminUserId);
 
-		if (!board.getUser().getId().equals(userId)) {
-			throw new IllegalArgumentException("본인 글만 삭제할 수 있습니다.");
+		if (!sboard2Repository.existsById(noticeId)) {
+			throw new ResourceNotFoundException("존재하지 않는 공지글입니다. ID:" + noticeId);
 		}
-		if (!board.getBpass().equals(bpass)) {
-			throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-		}
-		sboard2Repository.delete(board);
+		sboard2Repository.deleteById(noticeId);
 	}
 }

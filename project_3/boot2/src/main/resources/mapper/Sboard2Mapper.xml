@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.thejoa703.mapper.Sboard2Mapper">
 
+    <!--
+        SBOARD2 테이블 <-> Sboard2 엔티티 매핑
+        작성자는 APP_USER_ID 로 참조 (공지글 작성은 관리자만 가능)
+        ※ MyBatis resultMap 의 자식요소는 DTD상  id* -> result* -> association*  순서를 지켜야 한다.
+          (association 을 result 보다 앞에 두면 SAXParseException 발생)
+    -->
     <resultMap id="Sboard2ResultMap" type="com.thejoa703.entity.Sboard2">
         <id     property="id"        column="ID"/>
         <result property="btitle"    column="BTITLE"/>
@@ -13,14 +20,131 @@
         <result property="bhit"      column="BHIT"/>
         <result property="bip"       column="BIP"/>
         <result property="createdAt" column="CREATED_AT"/>
-        <!-- user(AppUser) 는 ManyToOne 연관필드라 MyBatis 단순매핑에서는 제외, 필요시 association 추가 -->
+        <!-- ★공지글을 작성한 관리자(AppUser) - APP_USER_ID FK -->
+        <association property="user" javaType="com.thejoa703.entity.AppUser">
+            <id property="id" column="APP_USER_ID"/>
+        </association>
     </resultMap>
 
-    <select id="findByKeyword" parameterType="string" resultMap="Sboard2ResultMap">
-        SELECT * FROM SBOARD2 WHERE BTITLE LIKE '%' || #{keyword} || '%'
+
+    <!-- ============================================================ -->
+    <!-- 📢 기본 CRUD -->
+    <!-- ============================================================ -->
+
+    <!-- 목록조회 (페이징) -->
+    <select id="findAll" resultMap="Sboard2ResultMap" parameterType="java.util.Map">
+        SELECT *
+        FROM SBOARD2
+        ORDER BY ID DESC
+        OFFSET #{start} ROWS FETCH NEXT #{end} ROWS ONLY
     </select>
 
-    <select id="countByAppUserId" parameterType="long" resultType="int">
-        SELECT COUNT(*) FROM SBOARD2 WHERE APP_USER_ID = #{appUserId}
+    <!-- 전체 갯수 -->
+    <select id="findAllCnt" resultType="int">
+        SELECT COUNT(*) FROM SBOARD2
     </select>
+
+    <!-- 단건조회 -->
+    <select id="findById" parameterType="long" resultMap="Sboard2ResultMap">
+        SELECT *
+        FROM SBOARD2
+        WHERE ID = #{id}
+    </select>
+
+    <!--
+        등록 (관리자 전용)
+        VALUES 순서 : ID, APP_USER_ID(작성한 관리자 PK), BTITLE, BCONTENT, BPASS, BFILE, BHIT(0 고정), BIP, CREATED_AT(SYSDATE 고정)
+    -->
+    <insert id="insert" parameterType="com.thejoa703.entity.Sboard2">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT SBOARD2_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO SBOARD2 (
+            ID, APP_USER_ID, BTITLE, BCONTENT, BPASS, BFILE, BHIT, BIP, CREATED_AT
+        )
+        VALUES (
+            #{id},
+            #{user.id},
+            #{btitle},
+            #{bcontent, jdbcType=CLOB},
+            #{bpass},
+            #{bfile, jdbcType=VARCHAR},
+            0,
+            #{bip},
+            SYSDATE
+        )
+    </insert>
+
+    <!-- 수정 -->
+    <update id="update" parameterType="com.thejoa703.entity.Sboard2">
+        UPDATE SBOARD2
+        <set>
+            <if test="btitle != null">BTITLE = #{btitle},</if>
+            <if test="bcontent != null">BCONTENT = #{bcontent},</if>
+            <if test="bpass != null">BPASS = #{bpass},</if>
+            <if test="bfile != null">BFILE = #{bfile}</if>
+        </set>
+        WHERE ID = #{id}
+    </update>
+
+    <!-- 삭제 -->
+    <delete id="delete" parameterType="long">
+        DELETE FROM SBOARD2
+        WHERE ID = #{id}
+    </delete>
+
+
+    <!-- ============================================================ -->
+    <!-- 👁 조회수 증가 (상세보기시 호출) -->
+    <!-- ============================================================ -->
+
+    <update id="updateHit" parameterType="long">
+        UPDATE SBOARD2
+        SET BHIT = BHIT + 1
+        WHERE ID = #{id}
+    </update>
+
+
+    <!-- ============================================================ -->
+    <!-- 🔍 제목검색 (페이징) -->
+    <!-- ============================================================ -->
+
+    <select id="searchByTitle" resultMap="Sboard2ResultMap" parameterType="java.util.Map">
+        SELECT *
+        FROM SBOARD2
+        WHERE BTITLE LIKE '%' || #{keyword} || '%'
+        ORDER BY ID DESC
+        OFFSET #{start} ROWS FETCH NEXT #{end} ROWS ONLY
+    </select>
+
+    <select id="searchByTitleCnt" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM SBOARD2
+        WHERE BTITLE LIKE '%' || #{keyword} || '%'
+    </select>
+
+
+    <!-- ============================================================ -->
+    <!-- ⭐ 비밀번호 확인 (수정/삭제시 검증) -->
+    <!-- ============================================================ -->
+
+    <select id="checkPassword" parameterType="java.util.Map" resultType="int">
+        SELECT COUNT(*)
+        FROM SBOARD2
+        WHERE ID = #{id}
+          AND BPASS = #{bpass}
+    </select>
+
+
+    <!-- ============================================================ -->
+    <!-- ★특정 관리자(AppUser)가 작성한 공지글 목록 -->
+    <!-- ============================================================ -->
+
+    <select id="findByUserId" parameterType="long" resultMap="Sboard2ResultMap">
+        SELECT *
+        FROM SBOARD2
+        WHERE APP_USER_ID = #{userId}
+        ORDER BY ID DESC
+    </select>
+
 </mapper>
