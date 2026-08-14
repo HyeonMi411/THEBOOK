@@ -21,3 +21,10 @@ track006_spring/Servers/
 # OS별 임시파일
 *.DS_Store
 Thumbs.db
+
+# Next.js
+.next/
+
+.env
+**/env
+**/.env

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.BookMapper">
+
+    <!-- BOOK_ID 컬럼 → id 필드 로 매핑해야 하므로(자동 camelCase 매핑은 bookId 로 변환되어 매칭 실패)
+         resultMap 을 명시적으로 선언합니다. user(AppUser) 연관관계는 이 매퍼에서는 매핑하지 않습니다. -->
+    <resultMap id="BookResultMap" type="Book">
+        <id     property="id"          column="BOOK_ID"/>
+        <result property="title"       column="TITLE"/>
+        <result property="author"      column="AUTHOR"/>
+        <result property="publisher"   column="PUBLISHER"/>
+        <result property="publishDate" column="PUBLISH_DATE"/>
+        <result property="category"    column="CATEGORY"/>
+        <result property="ranking"     column="RANKING"/>
+        <result property="reviewCount" column="REVIEW_COUNT"/>
+        <result property="rating"      column="RATING"/>
+        <result property="description" column="DESCRIPTION"/>
+        <result property="pages"       column="PAGES"/>
+        <result property="price"       column="PRICE"/>
+        <result property="regDate"     column="REG_DATE"/>
+        <result property="bookCover"   column="BOOK_COVER"/>
+    </resultMap>
+
+    <!-- ==================== 조회 ==================== -->
+
+    <!-- 📘 전체조회 (오라클 네이티브 페이징) -->
+    <select id="findAll" parameterType="java.util.Map" resultMap="BookResultMap">
+        SELECT *
+        FROM BOOK
+        ORDER BY BOOK_ID DESC
+        OFFSET #{start} ROWS FETCH NEXT #{end} ROWS ONLY
+    </select>
+
+    <select id="findAllCnt" resultType="int">
+        SELECT COUNT(*) FROM BOOK
+    </select>
+
+    <!-- 📘 단건조회 -->
+    <select id="findById" parameterType="long" resultMap="BookResultMap">
+        SELECT *
+        FROM BOOK
+        WHERE BOOK_ID = #{bookId}
+    </select>
+
+    <!-- 📘 카테고리별 조회 (페이징) -->
+    <select id="findByCategory" parameterType="java.util.Map" resultMap="BookResultMap">
+        SELECT *
+        FROM BOOK
+        WHERE CATEGORY LIKE '%' || #{category} || '%'
+        ORDER BY BOOK_ID DESC
+        OFFSET #{start} ROWS FETCH NEXT #{end} ROWS ONLY
+    </select>
+
+    <select id="findCategoryCnt" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM BOOK
+        WHERE CATEGORY LIKE '%' || #{category} || '%'
+    </select>
+
+    <!-- 🔍 제목/저자/카테고리 통합검색 -->
+    <select id="searchBooks" parameterType="java.util.Map" resultMap="BookResultMap">
+        SELECT *
+        FROM BOOK
+        <where>
+            <choose>
+                <when test="searchType == 'title'">
+                    TITLE LIKE '%' || #{keyword} || '%'
+                </when>
+                <when test="searchType == 'author'">
+                    AUTHOR LIKE '%' || #{keyword} || '%'
+                </when>
+                <when test="searchType == 'category'">
+                    CATEGORY LIKE '%' || #{keyword} || '%'
+                </when>
+                <otherwise>
+                    TITLE LIKE '%' || #{keyword} || '%'
+                </otherwise>
+            </choose>
+        </where>
+        ORDER BY BOOK_ID DESC
+    </select>
+
+    <!-- 제목중복확인(AJAX) -->
+    <select id="existsByTitle" parameterType="string" resultType="boolean">
+        SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+        FROM BOOK
+        WHERE TITLE = #{title}
+    </select>
+
+    <!-- 특정 관리자가 등록한 도서목록 -->
+    <select id="findByAppUserId" parameterType="long" resultMap="BookResultMap">
+        SELECT *
+        FROM BOOK
+        WHERE APP_USER_ID = #{appUserId}
+        ORDER BY BOOK_ID DESC
+    </select>
+
+    <!-- ==================== 등록 / 수정 / 삭제 ==================== -->
+    <!-- ★도서등록은 관리자(ROLE_ADMIN)만 가능해야 하므로, 아래 insert/update/delete 는
+         컨트롤러에서 바로 사용하지 말고 BookService(JPA, @PreAuthorize) 경로를 사용하세요. -->
+
+    <!-- 📘 등록 -->
+    <insert id="insert" parameterType="java.util.Map">
+        INSERT INTO BOOK (
+            BOOK_ID, TITLE, AUTHOR, PUBLISHER, PUBLISH_DATE, CATEGORY,
+            RANKING, REVIEW_COUNT, RATING, DESCRIPTION, PAGES, PRICE,
+            REG_DATE, BOOK_COVER, APP_USER_ID
+        )
+        VALUES (
+            BOOK_SEQ.NEXTVAL,
+            #{title},
+            #{author},
+            #{publisher},
+            #{publishDate},
+            #{category},
+            #{ranking, jdbcType=VARCHAR},
+            #{reviewCount, jdbcType=INTEGER},
+            #{rating, jdbcType=DOUBLE},
+            #{description, jdbcType=CLOB},
+            #{pages, jdbcType=INTEGER},
+            #{price, jdbcType=INTEGER},
+            SYSTIMESTAMP,
+            #{bookCover, jdbcType=VARCHAR},
+            #{appUserId}
+        )
+    </insert>
+
+    <!-- 📘 수정 (null 인 항목은 미반영) -->
+    <update id="update" parameterType="java.util.Map">
+        UPDATE BOOK
+        <set>
+            <if test="title != null">TITLE = #{title},</if>
+            <if test="author != null">AUTHOR = #{author},</if>
+            <if test="publisher != null">PUBLISHER = #{publisher},</if>
+            <if test="publishDate != null">PUBLISH_DATE = #{publishDate},</if>
+            <if test="category != null">CATEGORY = #{category},</if>
+            <if test="ranking != null">RANKING = #{ranking},</if>
+            <if test="reviewCount != null">REVIEW_COUNT = #{reviewCount},</if>
+            <if test="rating != null">RATING = #{rating},</if>
+            <if test="description != null">DESCRIPTION = #{description},</if>
+            <if test="pages != null">PAGES = #{pages},</if>
+            <if test="price != null">PRICE = #{price},</if>
+            <if test="bookCover != null">BOOK_COVER = #{bookCover}</if>
+        </set>
+        WHERE BOOK_ID = #{bookId}
+    </update>
+
+    <!-- 📘 삭제 -->
+    <delete id="delete" parameterType="long">
+        DELETE FROM BOOK
+        WHERE BOOK_ID = #{bookId}
+    </delete>
+
+</mapper>

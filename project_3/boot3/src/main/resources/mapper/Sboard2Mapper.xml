@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.Sboard2Mapper">
+
+    <!-- ID, BTITLE 등은 자동 camelCase 매핑(mapUnderscoreToCamelCase=true)으로 문제없지만
+         명시적으로 선언해서 컬럼 누락/오타를 방지합니다. user(AppUser) 연관관계는
+         이 매퍼에서는 매핑하지 않습니다. -->
+    <resultMap id="Sboard2ResultMap" type="Sboard2">
+        <id     property="id"        column="ID"/>
+        <result property="btitle"    column="BTITLE"/>
+        <result property="bcontent"  column="BCONTENT"/>
+        <result property="bpass"     column="BPASS"/>
+        <result property="bfile"     column="BFILE"/>
+        <result property="bhit"      column="BHIT"/>
+        <result property="bip"       column="BIP"/>
+        <result property="createdAt" column="CREATED_AT"/>
+    </resultMap>
+
+    <!-- ==================== 조회 ==================== -->
+
+    <!-- 전체조회 (최신순) -->
+    <select id="selectAll" resultMap="Sboard2ResultMap">
+        SELECT * FROM SBOARD2 ORDER BY ID DESC
+    </select>
+
+    <!-- 페이징 조회 -->
+    <select id="selectPaging" parameterType="java.util.Map" resultMap="Sboard2ResultMap">
+        SELECT * FROM SBOARD2
+        ORDER BY ID DESC
+        OFFSET #{start} ROWS FETCH NEXT #{end} ROWS ONLY
+    </select>
+    <!--   OFFSET 0 ROWS: 건너뛸 행의 개수 (0부터 시작)
+           FETCH NEXT 10 ROWS ONLY: 가져올 행의 개수 -->
+
+    <select id="selectCnt" resultType="int">
+        SELECT COUNT(*) FROM SBOARD2
+    </select>
+
+    <select id="selectById" parameterType="long" resultMap="Sboard2ResultMap">
+        SELECT * FROM SBOARD2 WHERE ID = #{id}
+    </select>
+
+    <!-- 제목검색(부분일치) -->
+    <select id="searchByTitle" parameterType="string" resultMap="Sboard2ResultMap">
+        SELECT * FROM SBOARD2
+        WHERE BTITLE LIKE '%' || #{keyword} || '%'
+        ORDER BY ID DESC
+    </select>
+
+    <!-- 특정 관리자가 작성한 공지사항목록 -->
+    <select id="findByAppUserId" parameterType="long" resultMap="Sboard2ResultMap">
+        SELECT * FROM SBOARD2
+        WHERE APP_USER_ID = #{appUserId}
+        ORDER BY ID DESC
+    </select>
+
+    <!-- ==================== 등록 / 수정 / 삭제 / 조회수 ==================== -->
+    <!-- ★공지사항 작성은 관리자(ROLE_ADMIN)만 가능해야 하므로, 아래 insert/update/delete 는
+         컨트롤러에서 바로 사용하지 말고 Sboard2Service(JPA, @PreAuthorize) 경로를 사용하세요. -->
+
+    <!-- 등록 -->
+    <insert id="insert" parameterType="java.util.Map">
+        INSERT INTO SBOARD2
+        ( ID, APP_USER_ID, BTITLE, BCONTENT, BFILE, BHIT, BIP, CREATED_AT )
+        VALUES
+        ( SBOARD2_SEQ.NEXTVAL,
+          #{appUserId},
+          #{btitle},
+          #{bcontent, jdbcType=CLOB},
+          #{bfile, jdbcType=VARCHAR},
+          0,
+          #{bip},
+          SYSTIMESTAMP )
+    </insert>
+
+    <!-- 조회수 +1 -->
+    <update id="updateHit" parameterType="long">
+        UPDATE SBOARD2 SET BHIT = BHIT + 1 WHERE ID = #{id}
+    </update>
+
+    <!-- 수정 (null 인 항목은 미반영) -->
+    <update id="update" parameterType="java.util.Map">
+        UPDATE SBOARD2
+        <set>
+            <if test="btitle != null">BTITLE = #{btitle},</if>
+            <if test="bcontent != null">BCONTENT = #{bcontent, jdbcType=CLOB},</if>
+            <if test="bfile != null">BFILE = #{bfile, jdbcType=VARCHAR},</if>
+        </set>
+        WHERE ID = #{id}
+    </update>
+
+    <!-- 삭제 -->
+    <delete id="delete" parameterType="long">
+        DELETE FROM SBOARD2 WHERE ID = #{id}
+    </delete>
+
+</mapper>
