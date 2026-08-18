@@ -46,3 +46,8 @@ app:
     redirect-url: http://localhost:3000/oauth2/callback
 
  
+# ★카카오 도서검색 API(dapi.kakao.com) 용 REST API 키
+#   카카오 개발자센터의 REST API 키 하나로 로그인/도서검색 둘 다 사용 가능합니다.
+#   KAKAO_REST_API_KEY 를 별도로 안 정해주셨다면, 위에서 쓰고 계신 KAKAO_CLIENT_ID 를 그대로 재사용합니다.
+kakao:
+  rest-api-key: ${KAKAO_REST_API_KEY:${KAKAO_CLIENT_ID:}}

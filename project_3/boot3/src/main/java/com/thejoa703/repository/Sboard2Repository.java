@@ -2,6 +2,8 @@ package com.thejoa703.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +22,9 @@ public interface Sboard2Repository extends JpaRepository<Sboard2, Long> { // Ent
 
 	// 최신순 전체조회
 	List<Sboard2> findAllByOrderByIdDesc();
+
+	// ★전체조회 - 페이징(Spring Data JPA 표준 Pageable) - 12개씩 화면표시용
+	Page<Sboard2> findAllByOrderByIdDesc(Pageable pageable);
 
 	// 제목검색(부분일치)
 	List<Sboard2> findByBtitleContainingOrderByIdDesc(String keyword);

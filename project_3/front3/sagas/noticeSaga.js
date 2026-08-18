@@ -13,10 +13,13 @@ import {
 const NOTICE_API_BASE = '/api/notices';
 
 //   watchFetchNotices      -  GET   /api/notices   전체조회
-export const fetchNoticesAPI = () => api.get(NOTICE_API_BASE);
-export function* fetchNotices() {
+//   watchFetchNotices      -  GET   /api/notices?page=1&size=12   전체(페이징) 조회
+//   action.payload : { page, size } (모두 선택, 기본 page=1/size=12)
+export const fetchNoticesAPI = (params = {}) =>
+    api.get(NOTICE_API_BASE, { params: { page: params.page || 1, size: params.size || 12 } });
+export function* fetchNotices(action) {
     try {
-        const result = yield call(fetchNoticesAPI);
+        const result = yield call(fetchNoticesAPI, action.payload);
         yield put(fetchNoticesSuccess(result.data));
     } catch (err) {
         yield put(fetchNoticesFailure(err.response?.data?.message || err.message));

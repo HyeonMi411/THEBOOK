@@ -8,14 +8,21 @@ import {
     createBookRequest, createBookSuccess, createBookFailure,
     updateBookRequest, updateBookSuccess, updateBookFailure,
     deleteBookRequest, deleteBookSuccess, deleteBookFailure,
+    kakaoInsertRequest, kakaoInsertSuccess, kakaoInsertFailure,
 } from '../reducers/bookReducer';
 
 const BOOK_API_BASE = '/api/books';
 
 //   watchFetchBooks       -  GET   /api/books?category=xxx   전체(카테고리별) 조회
 //   action.payload : category 문자열 (없으면 전체조회)
-export const fetchBooksAPI = (category) =>
-    api.get(BOOK_API_BASE, { params: category ? { category } : {} });
+//   watchFetchBooks       -  GET   /api/books?page=1&size=12&category=xxx   전체(페이징+카테고리) 조회
+//   action.payload : { page, size, category } (모두 선택, 기본 page=1/size=12)
+export const fetchBooksAPI = (params = {}) =>
+    api.get(BOOK_API_BASE, { params: {
+        page: params.page || 1,
+        size: params.size || 12,
+        ...(params.category ? { category: params.category } : {}),
+    } });
 export function* fetchBooks(action) {
     try {
         const result = yield call(fetchBooksAPI, action.payload);
@@ -110,6 +117,19 @@ export function* deleteBook(action) {
     }
 }
 
+//   watchKakaoInsert      -  POST /api/books/kakao-insert?search=xxx   카카오 도서검색 자동등록 ( ★관리자 전용 )
+//   검색버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후, 응답으로 등록건수를 돌려줍니다.
+export const kakaoInsertAPI = (search) =>
+    api.post(`${BOOK_API_BASE}/kakao-insert`, null, { params: { search } });
+export function* kakaoInsert(action) {
+    try {
+        const result = yield call(kakaoInsertAPI, action.payload);
+        yield put(kakaoInsertSuccess(result.data)); // { search, insertedCount }
+    } catch (err) {
+        yield put(kakaoInsertFailure(err.response?.data?.message || err.message));
+    }
+}
+
 //  --- watch saga들 ---
 function* watchFetchBooks() {      yield takeLatest(fetchBooksRequest.type,      fetchBooks); }
 function* watchFetchBookDetail() { yield takeLatest(fetchBookDetailRequest.type, fetchBookDetail); }
@@ -117,6 +137,7 @@ function* watchSearchBooks() {     yield takeLatest(searchBooksRequest.type,    
 function* watchCreateBook() {      yield takeLatest(createBookRequest.type,      createBook); }
 function* watchUpdateBook() {      yield takeLatest(updateBookRequest.type,      updateBook); }
 function* watchDeleteBook() {      yield takeLatest(deleteBookRequest.type,      deleteBook); }
+function* watchKakaoInsert() {     yield takeLatest(kakaoInsertRequest.type,     kakaoInsert); }
 
 export default function* bookSaga() {
     yield all([
@@ -126,5 +147,6 @@ export default function* bookSaga() {
         call(watchCreateBook),
         call(watchUpdateBook),
         call(watchDeleteBook),
+        call(watchKakaoInsert),
     ]);
 }

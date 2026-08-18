@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.thejoa703.dto.PageResponseDto;
 import com.thejoa703.dto.Sboard2Dto.Sboard2RequestDto;
 import com.thejoa703.dto.Sboard2Dto.Sboard2ResponseDto;
 import com.thejoa703.service.AuthUserJwtService;
@@ -38,10 +39,13 @@ public class Sboard2Controller {
 	private final Sboard2Service     sboard2Service;
 	private final AuthUserJwtService authUserJwtService; // ###
 
-	@Operation(summary = "공지사항 전체조회", description = "최신순 전체 공지사항")
+	@Operation(summary = "공지사항 전체조회(페이징)", description = "page(1부터)/size 파라미터로 12개씩 페이징 조회")
 	@GetMapping
-	public ResponseEntity<List<Sboard2ResponseDto>> getNotices() {
-		return ResponseEntity.ok(sboard2Service.getAllNotices());
+	public ResponseEntity<PageResponseDto<Sboard2ResponseDto>> getNotices(
+			@Parameter(description = "페이지 번호(1부터)") @RequestParam(name = "page", defaultValue = "1") int page,
+			@Parameter(description = "페이지당 개수") @RequestParam(name = "size", defaultValue = "12") int size
+	) {
+		return ResponseEntity.ok(sboard2Service.getAllNoticesPaged(page, size));
 	}
 
 	@Operation(summary = "공지사항 단건조회", description = "조회시 조회수(BHIT)가 1 증가합니다.")

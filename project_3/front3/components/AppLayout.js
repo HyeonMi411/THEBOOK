@@ -6,6 +6,8 @@ import { useSelector, useDispatch}  from 'react-redux'; // 전역상태 , 액션
 import { useRouter }                from 'next/router'; // 경로이동
 import { useEffect,  useState   }  from 'react';       // 이벤트변경감지, 변수
 import  Link                        from 'next/link';
+import  BookSearchBox               from './BookSearchBox';   // ★boot1 헤더 AJAX 검색창
+import  Footer                      from './Footer';           // ★boot1 푸터
 
 const  {Header, Content} = Layout;    // <Layout.Header> → <Header>  
 const  {useBreakpoint} = Grid;
@@ -39,8 +41,7 @@ function AppLayout({  children , initialUser  }){   //★ 대체부품, 초기�
                   { key: "newBook",   label: <Link href="/books/new">📘 도서등록</Link> },     // ★관리자전용
                   { key: "newNotice", label: <Link href="/notices/new">📝 공지작성</Link> },   // ★관리자전용
                 ]
-              : []),
-            { key: "new",       label: <Link href="/posts/new">✏️ NEW POST</Link> },
+              : []),            
             { key: "profile",   label: <Link href="/mypage">👤 MYPAGE </Link> },
             { key: "logout",    label: <a onClick={handleLogout}  style={{cursor:"pointer"}} >🔓 로그아웃</a> },
         ]
@@ -56,16 +57,20 @@ function AppLayout({  children , initialUser  }){   //★ 대체부품, 초기�
     ////////////#2) 반응형속성 (모바일 : xs, sm, 태블릿: md, pc: lg) - 24칸 
     //  display:"flex"  자식요소 배치 알아서
     //  justify="space-between"  양쪽에 콘텐츠 배치 
-    return   (<Layout>
-    {/* Header */}
+    return   (<Layout className="bookstore-body">
+    {/* Header - ★boot1(BookStore) 로고 + 검색창을 antd Header 안에 통합 */}
     <Header  style={{display:"flex"}}>  
-        <Row align="middle" justify="space-between"  style={{width:"100%"}} >
+        <Row align="middle" justify="space-between"  style={{width:"100%"}} gutter={16}>
             <Col  flex="none">
                 <Link href="/">    
-                    <a style={{color:"#fff", fontWeight:"bold", fontSize:"18px"}}>
-                        THEJOA703 (POST VER) 
+                    <a className="bs-logo" style={{fontSize:"20px", color:"#8ab4f8"}}>
+                        📚 BookStore
                     </a>
                 </Link>
+            </Col>
+            {/* 검색창 - 태블릿 이상에서만 노출 (모바일은 Drawer 메뉴로) */}
+            <Col flex="auto" xs={0} sm={0} md={8} lg={9} style={{maxWidth:400}}>
+                <BookSearchBox />
             </Col>
             {/*  xs, sm (모바일): 0 숨김처리  ,  md (테블릿) : 16  24칸중에 16 , lg(pc) : 18 */}
             <Col flex="auto" xs={0}  sm={0}  md={16}  lg={18}>
@@ -91,12 +96,18 @@ function AppLayout({  children , initialUser  }){   //★ 대체부품, 초기�
     onClose={()=> setDrawerOpen(false)}
     open={drawerOpen}
     >
+        {/* 모바일에서는 Drawer 안에 검색창도 함께 노출 */}
+        <div style={{marginBottom:16}}>
+            <BookSearchBox />
+        </div>
         <Menu 
         mode="vertical" 
         items={menuItems}  
         />
     </Drawer>
     <Content  style={{ padding: "40px" }}>{children}</Content>
+    {/* Footer - ★boot1(BookStore) 푸터 */}
+    <Footer />
     </Layout>);
 }
 //3. export

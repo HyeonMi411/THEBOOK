@@ -1,0 +1,311 @@
+/* styles/bookstore.css
+   ------------------------------------------------------------------
+   boot1(the703) 의 templates/fragments(layout/header/footer) 및
+   book/board 화면 디자인(mycss.css)을 React(Next.js) 버전으로 그대로 재현한 스타일입니다.
+   BookList / NoticeList / 도서·공지 상세/작성 페이지 / 헤더 / 푸터에서 사용합니다.
+   ------------------------------------------------------------------ */
+
+/* ================= 공통 ================= */
+.bookstore-body {
+    background: #f5f6f8;
+}
+
+/* ================= Header (BookStore 로고 + 검색 + 네비) ================= */
+.bs-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #fff;
+    border-bottom: 1px solid #e9ecef;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .05);
+}
+
+.bs-header-inner {
+    max-width: 1280px;
+    margin: auto;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 12px 24px;
+    flex-wrap: wrap;
+}
+
+.bs-logo {
+    font-size: 28px;
+    font-weight: 800;
+    color: #2563eb;
+    text-decoration: none;
+    letter-spacing: -1px;
+    white-space: nowrap;
+}
+.bs-logo:hover { color: #1d4ed8; }
+
+.bs-search-box { flex: 1; max-width: 480px; min-width: 200px; position: relative; }
+.bs-search-form { position: relative; }
+.bs-search-form input {
+    width: 100%;
+    height: 46px;
+    border: 2px solid #2563eb;
+    border-radius: 40px;
+    padding: 0 55px 0 20px;
+    font-size: 14px;
+    background: #fff;
+    transition: .25s;
+}
+.bs-search-form input:focus {
+    outline: none;
+    box-shadow: 0 0 0 5px rgba(37, 99, 235, .15);
+}
+.bs-search-btn {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    transition: .2s;
+}
+.bs-search-btn:hover { background: #1d4ed8; }
+
+.bs-search-result-box {
+    position: absolute;
+    top: 52px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .1);
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 6px;
+    z-index: 9999;
+}
+.bs-search-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
+.bs-search-item:last-child { border-bottom: none; }
+.bs-search-item:hover { background: #f1f5ff; }
+.bs-search-viewall { text-align: center; font-weight: 600; color: #2563eb; background: #f8faff; }
+.bs-search-viewall:hover { background: #eaf1ff; }
+
+.bs-nav-menu { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.bs-nav-menu a {
+    color: #444;
+    text-decoration: none;
+    font-weight: 600;
+    position: relative;
+    transition: .2s;
+    white-space: nowrap;
+}
+.bs-nav-menu a:hover { color: #2563eb; }
+.bs-nav-user { color: #2563eb; font-weight: 700; }
+.bs-logout-btn {
+    border: none;
+    background: none;
+    color: #dc3545;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 10px;
+}
+
+/* ================= Footer ================= */
+.bs-footer {
+    margin-top: 80px;
+    background: #212529;
+    color: #adb5bd;
+}
+.bs-footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, .1);
+    padding: 18px 0;
+    text-align: center;
+    font-size: .9rem;
+    color: #868e96;
+}
+.bs-footer-bottom strong { color: #ffffff; }
+
+/* ================= Book List (책 그리드) ================= */
+.book-wrap { max-width: 1300px; margin: 40px auto; padding: 0 16px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; flex-wrap: wrap; gap: 12px; }
+.page-title { font-size: 32px; font-weight: 700; color: #222; }
+.page-title span { color: #2563eb; }
+.btn-write {
+    display: inline-block;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-weight: 600;
+    background: #2563eb;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+.btn-write:hover { background: #1d4ed8; color: #fff; }
+
+.book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 26px; }
+.book-card {
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .08);
+    transition: .25s;
+    display: flex;
+    flex-direction: column;
+}
+.book-card:hover { transform: translateY(-8px); box-shadow: 0 18px 35px rgba(0, 0, 0, .15); }
+.book-cover { height: 300px; overflow: hidden; background: #eef1f5; }
+.book-cover img { width: 100%; height: 100%; object-fit: cover; transition: .3s; }
+.book-card:hover .book-cover img { transform: scale(1.05); }
+.book-body { padding: 18px; flex: 1; display: flex; flex-direction: column; }
+.book-title {
+    font-size: 18px; font-weight: 700; color: #222; margin-bottom: 8px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.book-author { color: #666; margin-bottom: 10px; font-size: 14px; }
+.book-category {
+    display: inline-block; background: #eef4ff; color: #2563eb;
+    padding: 4px 10px; border-radius: 30px; font-size: 12px; margin-bottom: 12px; width: fit-content;
+}
+.book-rating { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+.book-star { color: #f59e0b; font-weight: 700; }
+.book-price { color: #222; font-weight: 700; }
+
+/* ================= 검색결과 화면 (BookSearchBox → /books?keyword=) ================= */
+.search-result-header {
+    max-width: 1300px; margin: 40px auto 0; padding: 0 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+}
+.search-result-title { font-size: 20px; font-weight: 700; color: #222; }
+.search-result-count { margin-left: 10px; color: #2563eb; font-weight: 700; font-size: 15px; }
+.search-result-back {
+    color: #666; text-decoration: none; font-size: 14px; font-weight: 600;
+    border: 1px solid #ddd; border-radius: 20px; padding: 6px 16px;
+}
+.search-result-back:hover { background: #f5f5f5; color: #2563eb; border-color: #2563eb; }
+.search-result-empty {
+    max-width: 600px; margin: 60px auto; padding: 40px 20px; text-align: center;
+    color: #777; line-height: 1.8; font-size: 15px;
+}
+
+/* ================= Book/Notice 상세 ================= */
+.detail-container { max-width: 1100px; margin: 40px auto; padding: 0 16px; }
+.detail-card { background: #fff; border-radius: 18px; box-shadow: 0 8px 25px rgba(0, 0, 0, .08); overflow: hidden; }
+.detail-card .row-flex { display: flex; flex-wrap: wrap; }
+.detail-cover-col { flex: 0 0 340px; padding: 24px; }
+.detail-info-col { flex: 1; min-width: 280px; padding: 24px 32px; }
+.detail-cover-col img { width: 100%; height: 460px; object-fit: cover; border-radius: 12px; }
+.info-title { font-size: 30px; font-weight: 700; color: #222; margin-bottom: 12px; }
+.info-meta { color: #666; font-size: 15px; margin-bottom: 12px; }
+.badge-category {
+    display: inline-block; background: #eef4ff; color: #2563eb;
+    padding: 6px 14px; border-radius: 30px; font-size: 14px; font-weight: 600; margin-bottom: 16px;
+}
+.rating-line { font-size: 18px; color: #f59e0b; font-weight: 700; margin-bottom: 18px; }
+.info-table { width: 100%; margin-top: 16px; border-collapse: collapse; }
+.info-table th { width: 110px; color: #666; font-weight: 600; padding: 8px 0; text-align: left; }
+.info-table td { color: #333; padding: 8px 0; }
+.description-box {
+    margin-top: 26px; padding: 22px; background: #f8f9fa; border-radius: 12px;
+    line-height: 1.8; color: #444; white-space: pre-wrap;
+}
+.btn-area { margin-top: 30px; display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-area .btn {
+    min-width: 100px; border-radius: 10px; font-weight: 600; padding: 10px 20px;
+    text-align: center; text-decoration: none; cursor: pointer; border: 1px solid transparent;
+}
+.btn-outline { background: #fff; border-color: #ccc; color: #444; }
+.btn-outline:hover { background: #f5f5f5; }
+.btn-primary-bs { background: #2563eb; color: #fff; }
+.btn-primary-bs:hover { background: #1d4ed8; color: #fff; }
+.btn-danger-bs { background: #dc3545; color: #fff; }
+.btn-danger-bs:hover { background: #bb2d3b; color: #fff; }
+
+@media (max-width: 768px) {
+    .detail-cover-col { flex: 0 0 100%; }
+    .detail-cover-col img { height: 320px; }
+    .info-title { font-size: 24px; }
+}
+
+/* ================= 등록/수정 폼 (write) ================= */
+.write-wrap { max-width: 900px; margin: 40px auto; padding: 0 16px; }
+.write-card { background: #fff; border: none; border-radius: 20px; overflow: hidden; box-shadow: 0 12px 35px rgba(0, 0, 0, .08); }
+.write-header { background: linear-gradient(135deg, #2563eb, #0d6efd); color: #fff; padding: 30px 36px; }
+.write-header h2 { margin: 0; font-weight: 700; }
+.write-header p { margin-top: 8px; opacity: .9; }
+.write-body { padding: 32px; }
+.bs-form-label { font-weight: 700; color: #444; display: block; margin-bottom: 6px; }
+.bs-form-control {
+    width: 100%; min-height: 46px; border-radius: 10px; border: 1px solid #dcdfe6;
+    padding: 8px 14px; font-size: 14px; box-sizing: border-box;
+}
+.bs-form-control:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 .2rem rgba(37, 99, 235, .15); }
+textarea.bs-form-control { min-height: 160px; resize: vertical; }
+.upload-box { border: 2px dashed #d8dee8; border-radius: 15px; padding: 22px; background: #fafbfc; margin-top: 10px; }
+.button-area { margin-top: 28px; padding-top: 24px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+
+/* ================= 카카오 도서검색 자동등록 영역 (boot1 book/write.html 하단 섹션) ================= */
+.search-section { max-width: 900px; margin: 0 auto; padding: 0 16px; }
+.search-box-kakao {
+    background: #f8f9fa; border-radius: 10px; padding: 16px;
+    box-shadow: inset 0 0 0 1px #eee;
+}
+.alert-info-box {
+    margin-top: 16px; padding: 14px 18px; border-radius: 10px;
+    background: #e7f1ff; color: #2563eb; font-size: 14px; line-height: 1.6;
+}
+
+/* ================= Notice(공지사항) 목록 - 테이블형 ================= */
+.notice-wrap { max-width: 1200px; margin: 40px auto; padding: 0 16px; }
+.notice-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 26px; flex-wrap: wrap; gap: 12px; }
+.notice-title h2 { font-size: 30px; font-weight: 800; margin: 0; color: #222; }
+.notice-title p { margin-top: 6px; color: #777; font-size: 14px; }
+.notice-card { background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, .08); }
+.notice-table { width: 100%; border-collapse: collapse; }
+.notice-table thead { background: #f8f9fa; }
+.notice-table th { padding: 16px; text-align: center; font-size: 14px; color: #555; font-weight: 700; }
+.notice-table td { padding: 16px; text-align: center; vertical-align: middle; border-top: 1px solid #f0f0f0; }
+.notice-table tbody tr { transition: .2s; }
+.notice-table tbody tr:hover { background: #f8fbff; }
+.notice-link { text-decoration: none; color: #222; font-weight: 600; }
+.notice-link:hover { color: #0d6efd; }
+.notice-title-cell { text-align: left !important; }
+.notice-date { color: #777; font-size: 13px; }
+.notice-empty { padding: 60px 0; text-align: center; color: #999; }
+
+/* ================= Notice(공지사항) 상세 ================= */
+.notice-detail-wrap { max-width: 900px; margin: 40px auto; padding: 0 16px; }
+.notice-detail-card { background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, .08); }
+.notice-detail-header { padding: 30px 32px; border-bottom: 1px solid #eee; }
+.notice-detail-title { font-size: 28px; font-weight: 700; color: #222; }
+.notice-detail-info { margin-top: 14px; display: flex; gap: 26px; color: #666; font-size: 14px; flex-wrap: wrap; }
+.notice-detail-image { text-align: center; padding: 26px; border-bottom: 1px solid #eee; }
+.notice-detail-image img { max-width: 100%; max-height: 420px; border-radius: 10px; }
+.notice-detail-content { padding: 32px; white-space: pre-wrap; line-height: 1.8; color: #333; min-height: 100px; }
+.notice-detail-footer { padding: 22px 32px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
+
+/* ================= 접근권한 안내 (관리자 전용 화면 가드) ================= */
+.access-denied-wrap { max-width: 640px; margin: 80px auto; padding: 0 16px; text-align: center; }
+.access-denied-card {
+    background: #fff; border-radius: 18px; padding: 50px 36px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+}
+.access-denied-icon { font-size: 54px; margin-bottom: 18px; }
+.access-denied-title { font-size: 22px; font-weight: 700; color: #222; margin-bottom: 10px; }
+.access-denied-desc { color: #777; font-size: 15px; line-height: 1.6; margin-bottom: 26px; }
+.access-denied-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* ================= Pagination (공용) ================= */
+.bs-pagination { margin: 40px 0; display: flex; justify-content: center; gap: 6px; list-style: none; padding: 0; }
+.bs-page-link {
+    display: inline-block; padding: 8px 14px; border-radius: 8px; border: 1px solid #dcdfe6;
+    color: #444; text-decoration: none; cursor: pointer; background: #fff;
+}
+.bs-page-link.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+.bs-page-link:hover { background: #f1f5ff; }

@@ -2,6 +2,8 @@ package com.thejoa703.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,8 +21,14 @@ public interface BookRepository extends JpaRepository<Book, Long> { // Entity , 
 	// 전체조회 (최신순)
 	List<Book> findAllByOrderByIdDesc();
 
+	// ★전체조회 - 페이징(Spring Data JPA 표준 Pageable) - 12개씩 화면표시용
+	Page<Book> findAllByOrderByIdDesc(Pageable pageable);
+
 	// 카테고리별 조회
 	List<Book> findByCategoryOrderByIdDesc(String category);
+
+	// ★카테고리별 조회 - 페이징
+	Page<Book> findByCategoryOrderByIdDesc(String category, Pageable pageable);
 
 	// 카테고리별 개수
 	long countByCategory(String category);

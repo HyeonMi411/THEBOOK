@@ -3,11 +3,16 @@ package com.thejoa703.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.thejoa703.dto.PageResponseDto;
 import com.thejoa703.dto.Sboard2Dto.Sboard2RequestDto;
 import com.thejoa703.dto.Sboard2Dto.Sboard2ResponseDto;
 import com.thejoa703.entity.AppUser;
@@ -28,11 +33,28 @@ public class Sboard2Service {
 	private final AppUserRepository  appUserRepository;
 	private final FileStorageService fileStorageService; // 첨부파일 업로드처리
 
-	// 1. 전체조회 (최신순)
+	private static final int DEFAULT_PAGE_SIZE = 12; // ★화면에 12개씩
+
+	// 1. 전체조회 (최신순) - 비페이징(내부용/구버전 호환용)
 	public List<Sboard2ResponseDto> getAllNotices() {
 		return sboard2Repository.findAllByOrderByIdDesc().stream()
 				.map(Sboard2ResponseDto::from)
 				.collect(Collectors.toList());
+	}
+
+	// 1-1. ★전체조회 - 페이징(화면 12개씩)
+	public PageResponseDto<Sboard2ResponseDto> getAllNoticesPaged(int page, int size) {
+		int currentPage = Math.max(page, 1);
+		int pageSize     = size > 0 ? size : DEFAULT_PAGE_SIZE;
+		Pageable pageable = PageRequest.of(currentPage - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+
+		Page<Sboard2> result = sboard2Repository.findAllByOrderByIdDesc(pageable);
+
+		List<Sboard2ResponseDto> content = result.getContent().stream()
+				.map(Sboard2ResponseDto::from)
+				.collect(Collectors.toList());
+
+		return new PageResponseDto<>(content, currentPage, pageSize, result.getTotalElements(), result.getTotalPages());
 	}
 
 	// 2. 단건조회 ( 조회수 +1 )

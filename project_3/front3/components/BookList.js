@@ -1,69 +1,81 @@
 // components/BookList.js
+// boot1(the703) templates/book/list.html 의 book-grid / book-card 디자인을 그대로 재현했습니다.
 import React from 'react';
-import { Card, Button, Popconfirm, Image, Tag, Row, Col } from 'antd';
-import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useSelector } from 'react-redux';
+import Pagination from './Pagination';
 
-export default function BookList({ books = [], isAdmin, handleEdit, handleDelete }) {
+export default function BookList({ books = [], currentPage, totalPages, onPageChange }) {
+  const router = useRouter();
+  const { user } = useSelector((state) => state.auth);
+  const isAdmin = user?.role === "ROLE_ADMIN";
+
   return (
-    <div>
-      {/* 도서목록 */}
-      <h3> 도서 : {books?.length || 0} </h3>
+    <div className="book-wrap">
+      <div className="page-header">
+        <div className="page-title">
+          📚 <span>BookStore</span>
+        </div>
+        {isAdmin && (
+          <a
+            className="btn-write"
+            onClick={(e) => { e.preventDefault(); router.push('/books/new'); }}
+            href="/books/new"
+          >
+            + 도서 등록
+          </a>
+        )}
+      </div>
 
-      <Row gutter={[16, 16]}>
-        {books?.map((book) => (
-          <Col xs={24} sm={12} md={8} key={book.id}>
-            <Card
-              style={{ height: "100%" }}
-              // ★관리자(isAdmin)일 때만 수정/삭제 버튼 노출 (도서등록은 관리자전용)
-              actions={
-                isAdmin
-                  ? [
-                      <Button type="link" onClick={() => handleEdit(book)}>수정</Button>,
-                      <Popconfirm
-                        title="정말 삭제하시겠습니까?"
-                        onConfirm={() => handleDelete(book.id)}
-                        okText="예"
-                        cancelText="아니오"
-                      >
-                        <Button type="link">삭제</Button>
-                      </Popconfirm>,
-                    ]
-                  : undefined
-              }
+      {books.length === 0 ? (
+        <div className="notice-empty">등록된 도서가 없습니다.</div>
+      ) : (
+        <div className="book-grid">
+          {books.map((book) => (
+            <div
+              key={book.id}
+              className="book-card"
+              onClick={() => router.push(`/books/${book.id}`)}
             >
-              {/* 도서 표지이미지 */}
-              {book?.bookCover && (
-                <div style={{ textAlign: "center", marginBottom: 12 }}>
-                  <Image
-                    src={`http://localhost:8080/${book.bookCover}`}
+              <div className="book-cover">
+                {book.bookCover ? (
+                  <img
+                    src={
+                      book.bookCover.startsWith('http')
+                        ? book.bookCover
+                        : `http://localhost:8080/${book.bookCover}`
+                    }
                     alt={book.title}
-                    style={{ maxWidth: "100%", height: "220px", objectFit: "cover", borderRadius: "8px" }}
                   />
-                </div>
-              )}
-
-              <Link href={`/books/${book.id}`}>
-                <a style={{ fontSize: 17, fontWeight: "bold" }}>{book.title}</a>
-              </Link>
-              <p style={{ margin: "4px 0", color: "#555" }}>
-                {book.author} · {book.publisher}
-              </p>
-
-              <div style={{ marginBottom: 8 }}>
-                <Tag color="blue">{book.category}</Tag>
-                {book.ranking && <Tag color="volcano">{book.ranking}</Tag>}
+                ) : (
+                  <div style={{
+                    width: "100%", height: "100%", display: "flex",
+                    alignItems: "center", justifyContent: "center", color: "#bbb", fontSize: 40,
+                  }}>📕</div>
+                )}
               </div>
 
-              {book.price != null && (
-                <p style={{ fontWeight: "bold" }}>{book.price.toLocaleString()}원</p>
-              )}
-              {book.rating != null && <p>⭐ {book.rating}</p>}
+              <div className="book-body">
+                <div className="book-title">{book.title}</div>
+                <div className="book-author">{book.author} · {book.publisher}</div>
+                <div className="book-category">{book.category}</div>
 
-              <p style={{ color: "#999", fontSize: 12 }}>등록자 : {book.userNickname}</p>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+                <div className="book-rating">
+                  {book.rating != null ? (
+                    <span className="book-star">⭐ {book.rating}</span>
+                  ) : <span />}
+                  {book.price != null && (
+                    <span className="book-price">{book.price.toLocaleString()}원</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ★페이징 - boot1 book/list.html 과 동일하게 하단에 페이지번호 노출 */}
+      <Pagination currentPage={currentPage} totalPages={totalPages} onChange={onPageChange} />
     </div>
   );
 }

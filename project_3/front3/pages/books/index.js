@@ -1,65 +1,30 @@
 // pages/books/index.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from "react-redux";
-import {
-  fetchBooksRequest, updateBookRequest, deleteBookRequest, resetBookState
-} from "../../reducers/bookReducer";
-import { Spin, Input, message } from 'antd';
+import { fetchBooksRequest, searchBooksRequest, resetBookState } from "../../reducers/bookReducer";
 import BookList from '../../components/BookList';
-import EditBookModal from '../../components/EditBookModal';
-
-const { Search } = Input;
 
 export default function BooksPage() {
+  const router = useRouter();
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
-  const { books, loading, error } = useSelector((state) => state.book);
+  const { books, loading, error, currentPage, totalPages, totalElements } = useSelector((state) => state.book);
+  const keyword = router.query.keyword;
 
-  const isAdmin = user?.role === "ROLE_ADMIN"; // ★도서등록/수정/삭제는 관리자만
-
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [uploadCover, setUploadCover] = useState(null);
-  const [editBook, setEditBook] = useState(null);
-
-  // 페이지가 처음뜰때 전체 도서조회
+  // 페이지 진입/쿼리변경시: ?keyword= 있으면 검색키워드 관련 목록조회, 없으면 ?page=(기본1) 로 페이징 조회 (12개씩)
   useEffect(() => {
-    dispatch(fetchBooksRequest());
-  }, [dispatch]);
+    if (!router.isReady) return;
+    const { page, category } = router.query;
+    if (keyword) {
+      dispatch(searchBooksRequest(keyword));
+    } else {
+      dispatch(fetchBooksRequest({ page: Number(page) || 1, size: 12, category }));
+    }
+  }, [dispatch, router.isReady, keyword, router.query.page, router.query.category]);
 
-  const handleCategorySearch = (category) => {
-    dispatch(fetchBooksRequest(category || undefined));
-  };
-
-  const handleEdit = (book) => {
-    setEditBook(book);
-    setIsEditModalVisible(true);
-    setUploadCover(null);
-  };
-
-  const handleEditSubmit = (values) => {
-    dispatch(updateBookRequest({
-      bookId: editBook.id,
-      dto: {
-        title: values.title,
-        author: values.author,
-        publisher: values.publisher,
-        publishDate: values.publishDate ? values.publishDate.format("YYYY-MM-DD") : undefined,
-        category: values.category,
-        ranking: values.ranking,
-        pages: values.pages,
-        price: values.price,
-        description: values.description,
-      },
-      cover: uploadCover,
-    }));
-    setIsEditModalVisible(false);
-    setEditBook(null);
-    message.success("도서가 수정되었습니다.");
-  };
-
-  const handleDelete = (bookId) => {
-    dispatch(deleteBookRequest(bookId));
-    message.success("도서가 삭제되었습니다.");
+  const handlePageChange = (page) => {
+    const query = { ...router.query, page };
+    router.push({ pathname: '/books', query }, undefined, { scroll: true });
   };
 
   useEffect(() => {
@@ -68,31 +33,40 @@ export default function BooksPage() {
 
   return (
     <div>
-      <Search
-        placeholder="카테고리로 검색 (예: IT, 소설, 인문 ...)"
-        allowClear
-        onSearch={handleCategorySearch}
-        style={{ maxWidth: 400, marginBottom: 20 }}
-      />
+      {/* ★검색키워드 관련 도서 목록 화면 - AJAX 검색(BookSearchBox)에서 이 화면으로 이동합니다 */}
+      {keyword && (
+        <div className="search-result-header">
+          <div className="search-result-title">
+            🔍 &ldquo;<strong>{keyword}</strong>&rdquo; 검색결과
+            <span className="search-result-count">{books.length}건</span>
+          </div>
+          <a
+            className="search-result-back"
+            onClick={(e) => { e.preventDefault(); router.push('/books'); }}
+            href="/books"
+          >
+            전체 도서 목록으로
+          </a>
+        </div>
+      )}
 
-      {loading && <Spin />}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {loading && <p style={{ textAlign: "center" }}>로딩중...</p>}
+      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
 
-      <BookList
-        books={books}
-        isAdmin={isAdmin}
-        handleEdit={handleEdit}
-        handleDelete={handleDelete}
-      />
-
-      <EditBookModal
-        visible={isEditModalVisible}
-        onCancel={() => setIsEditModalVisible(false)}
-        editBook={editBook}
-        onSubmit={handleEditSubmit}
-        uploadCover={uploadCover}
-        setUploadCover={setUploadCover}
-      />
+      {keyword && !loading && books.length === 0 ? (
+        <div className="search-result-empty">
+          <div style={{ fontSize: 44, marginBottom: 12 }}>🔎</div>
+          &ldquo;{keyword}&rdquo;에 대한 검색결과가 없습니다.<br />
+          다른 검색어로 다시 시도해보세요.
+        </div>
+      ) : (
+        <BookList
+          books={books}
+          currentPage={currentPage}
+          totalPages={keyword ? 1 : totalPages} // 검색결과는 페이징 없이 전체표시
+          onPageChange={handlePageChange}
+        />
+      )}
     </div>
   );
 }

@@ -1,48 +1,25 @@
 // pages/notices/index.js  (SBOARD2 - 공지사항)
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from "react-redux";
-import {
-  fetchNoticesRequest, updateNoticeRequest, deleteNoticeRequest, resetNoticeState
-} from "../../reducers/noticeReducer";
-import { Spin, message } from 'antd';
+import { fetchNoticesRequest, resetNoticeState } from "../../reducers/noticeReducer";
 import NoticeList from '../../components/NoticeList';
-import EditNoticeModal from '../../components/EditNoticeModal';
 
 export default function NoticesPage() {
+  const router = useRouter();
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
-  const { notices, loading, error } = useSelector((state) => state.notice);
-
-  const isAdmin = user?.role === "ROLE_ADMIN"; // ★공지사항 글쓰기/수정/삭제는 관리자만
-
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [uploadFile, setUploadFile] = useState(null);
-  const [editNotice, setEditNotice] = useState(null);
+  const {
+    notices, loading, error, currentPage, totalPages, totalElements, pageSize
+  } = useSelector((state) => state.notice);
 
   useEffect(() => {
-    dispatch(fetchNoticesRequest());
-  }, [dispatch]);
+    if (!router.isReady) return;
+    const { page } = router.query;
+    dispatch(fetchNoticesRequest({ page: Number(page) || 1, size: 12 }));
+  }, [dispatch, router.isReady, router.query.page]);
 
-  const handleEdit = (notice) => {
-    setEditNotice(notice);
-    setIsEditModalVisible(true);
-    setUploadFile(null);
-  };
-
-  const handleEditSubmit = (values) => {
-    dispatch(updateNoticeRequest({
-      noticeId: editNotice.id,
-      dto: { btitle: values.btitle, bcontent: values.bcontent },
-      file: uploadFile,
-    }));
-    setIsEditModalVisible(false);
-    setEditNotice(null);
-    message.success("공지사항이 수정되었습니다.");
-  };
-
-  const handleDelete = (noticeId) => {
-    dispatch(deleteNoticeRequest(noticeId));
-    message.success("공지사항이 삭제되었습니다.");
+  const handlePageChange = (page) => {
+    router.push({ pathname: '/notices', query: { page } }, undefined, { scroll: true });
   };
 
   useEffect(() => {
@@ -51,23 +28,15 @@ export default function NoticesPage() {
 
   return (
     <div>
-      {loading && <Spin />}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
+      {loading && <p style={{ textAlign: "center" }}>로딩중...</p>}
+      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
       <NoticeList
         notices={notices}
-        isAdmin={isAdmin}
-        handleEdit={handleEdit}
-        handleDelete={handleDelete}
-      />
-
-      <EditNoticeModal
-        visible={isEditModalVisible}
-        onCancel={() => setIsEditModalVisible(false)}
-        editNotice={editNotice}
-        onSubmit={handleEditSubmit}
-        uploadFile={uploadFile}
-        setUploadFile={setUploadFile}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
       />
     </div>
   );

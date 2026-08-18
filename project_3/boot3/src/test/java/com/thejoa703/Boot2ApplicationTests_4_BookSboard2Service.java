@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.thejoa703.dto.BookDto.BookRequestDto;
 import com.thejoa703.dto.BookDto.BookResponseDto;
+import com.thejoa703.dto.PageResponseDto;
 import com.thejoa703.dto.Sboard2Dto.Sboard2RequestDto;
 import com.thejoa703.dto.Sboard2Dto.Sboard2ResponseDto;
 import com.thejoa703.entity.AppUser;
@@ -53,7 +54,7 @@ import jakarta.persistence.PersistenceContext;
  *   전부 UUID 를 붙여 매번 고유하게 생성합니다.)
  * - 컨트롤러는 인증정보(Authentication)에서 사용자ID를 꺼내 서비스로 그대로 위임하는
  *   얇은 계층이므로, 서비스 계층을 직접 호출해 실제 비즈니스 로직(@PreAuthorize 권한체크,
- *   더티체킹 수정, 조회수 증가 등)을 검증합니다.
+ *   더티체킹 수정, 조회수 증가, 12개씩 페이징 등)을 검증합니다.
  * - Sboard2Service.getNotice() 의 조회수 증가는 @Modifying 벌크 UPDATE 라서 1차캐시가
  *   낀 상태로는 "실제로 DB에 반영됐는지"를 착각하기 쉽습니다. EntityManager.clear() 로
  *   1차캐시를 비우고 다시 조회해서, 진짜 DB로부터 새로 읽은 값으로 검증합니다.
@@ -62,6 +63,12 @@ import jakarta.persistence.PersistenceContext;
  *   SecurityContextHolder 에 남겨둔 로그인상태(예: 관리자)가 다음 테스트로 새어나갈 수
  *   있습니다. 그래서 @TestMethodOrder 를 명시하고, @BeforeEach/@AfterEach 에서도
  *   SecurityContextHolder 를 매번 초기화해서 테스트 간 상태가 절대 섞이지 않게 했습니다.
+ * - ⚠️ getAllBooks(String category) 는 더 이상 존재하지 않습니다. 12개씩 페이징 도입 이후
+ *   getAllBooks() 는 무인자(전체 List) 버전만 남았고, 카테고리 필터/페이징은
+ *   getAllBooksPaged(page, size, category) 로 옮겨졌습니다. (이 파일도 그에 맞춰 갱신했습니다)
+ * - insertFromKakao() 는 실제 카카오 외부 API를 호출하므로, 네트워크가 없는 CI 환경에서도
+ *   안정적으로 돌아가도록 "실제 카카오 응답 검증"은 하지 않고 "@PreAuthorize 로 일반회원은
+ *   막히는지"만 검증합니다.
  * ------------------------------------------------------------------------------
  */
 @SpringBootTest
@@ -155,24 +162,25 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 	}
 
 	//-------------------------------------------------------------------
-	// 1. BookService - CRUD + 검색 + ROLE_ADMIN 권한체크
+	// 1. BookService - CRUD + 검색 + 페이징(12개씩) + ROLE_ADMIN 권한체크
 	//-------------------------------------------------------------------
 	@Test
 	@Order(1)
-	@DisplayName("■ BookService - 조회/검색 + 관리자전용 등록·수정·삭제(@PreAuthorize)")
+	@DisplayName("■ BookService - 조회/검색/페이징 + 관리자전용 등록·수정·삭제(@PreAuthorize)")
 	void testBookService() {
 		AppUser admin = createTestAdmin("google"); // 소셜로그인(구글) 관리자
 		AppUser user  = createTestUser();           // 일반회원(ROLE_USER)
 
-		// 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록 UUID 로 고유 제목 생성
+		// 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록 UUID 로 고유 제목/카테고리 생성
 		String uniqueTitle = "서비스테스트도서_" + UUID.randomUUID();
+		String uniqueCategory = "서비스테스트카테고리_" + UUID.randomUUID();
 
 		BookRequestDto dto = new BookRequestDto();
 		dto.setTitle(uniqueTitle);
 		dto.setAuthor("테스트작가");
 		dto.setPublisher("테스트출판사");
 		dto.setPublishDate(LocalDate.of(2024, 5, 1));
-		dto.setCategory("서비스테스트카테고리");
+		dto.setCategory(uniqueCategory);
 		dto.setDescription("서비스 계층 테스트용 도서 설명입니다.");
 		dto.setPrice(19900);
 
@@ -195,6 +203,11 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 				.isInstanceOf(AccessDeniedException.class);
 		assertThat(bookService.searchByTitle(uniqueTitle)).isEmpty();
 
+		// ★일반회원이라도 카카오 자동등록은 시도조차 못 해야 함 (관리자 전용)
+		assertThatThrownBy(() -> bookService.insertFromKakao(uniqueTitle, user.getId()))
+				.as("ROLE_USER 로 카카오 자동등록(insertFromKakao) 호출 시 반드시 AccessDeniedException 이어야 합니다.")
+				.isInstanceOf(AccessDeniedException.class);
+
 		// 2) 관리자 로그인상태 → 등록 성공 (표지이미지 업로드 경로까지 확인)
 		loginAs(admin);
 		BookResponseDto created = bookService.createBook(admin.getId(), dto, cover);
@@ -211,24 +224,36 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		assertThat(bookService.searchByTitle(uniqueTitle)).extracting(BookResponseDto::getId)
 				.contains(created.getId());
 
-		// 5) 카테고리필터 전체조회
-		assertThat(bookService.getAllBooks("서비스테스트카테고리")).extracting(BookResponseDto::getId)
+		// 5) 전체조회(비페이징, 내부용/구버전 호환) - getAllBooks() 는 이제 무인자입니다
+		assertThat(bookService.getAllBooks()).extracting(BookResponseDto::getId)
 				.contains(created.getId());
 
-		// 6) 관리자 → 수정 성공 (더티체킹, 표지없이 나머지값만 변경)
+		// 6) ★페이징 조회(12개씩) + 카테고리 필터 - getAllBooksPaged(page, size, category)
+		PageResponseDto<BookResponseDto> paged = bookService.getAllBooksPaged(1, 12, uniqueCategory);
+		assertThat(paged.getContent()).extracting(BookResponseDto::getId).containsExactly(created.getId());
+		assertThat(paged.getCurrentPage()).isEqualTo(1);
+		assertThat(paged.getPageSize()).isEqualTo(12);
+		assertThat(paged.getTotalElements()).isEqualTo(1L);
+		assertThat(paged.getTotalPages()).isEqualTo(1);
+
+		// 카테고리 필터 없이 전체 페이징 조회에도 포함되는지 확인
+		PageResponseDto<BookResponseDto> pagedAll = bookService.getAllBooksPaged(1, 12, null);
+		assertThat(pagedAll.getContent()).extracting(BookResponseDto::getId).contains(created.getId());
+
+		// 7) 관리자 → 수정 성공 (더티체킹, 표지없이 나머지값만 변경)
 		dto.setPrice(15000);
 		BookResponseDto updated = bookService.updateBook(created.getId(), dto, null);
 		assertThat(updated.getPrice()).isEqualTo(15000);
 		assertThat(updated.getBookCover()).startsWith("uploads/"); // 표지 미첨부시 기존값 유지
 
-		// 7) 일반회원 로그인상태 → 수정/삭제 거부
+		// 8) 일반회원 로그인상태 → 수정/삭제 거부
 		loginAs(user);
 		assertThatThrownBy(() -> bookService.updateBook(created.getId(), dto, null))
 				.isInstanceOf(AccessDeniedException.class);
 		assertThatThrownBy(() -> bookService.deleteBook(created.getId()))
 				.isInstanceOf(AccessDeniedException.class);
 
-		// 8) 관리자 → 삭제 성공
+		// 9) 관리자 → 삭제 성공
 		loginAs(admin);
 		bookService.deleteBook(created.getId());
 		assertThatThrownBy(() -> bookService.getBook(created.getId()))
@@ -236,11 +261,11 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 	}
 
 	//-------------------------------------------------------------------
-	// 2. Sboard2Service - CRUD + 조회수 증가가 "실제로 DB에" 반영되는지 검증
+	// 2. Sboard2Service - CRUD + 페이징(12개씩) + 조회수 증가가 "실제로 DB에" 반영되는지 검증
 	//-------------------------------------------------------------------
 	@Test
 	@Order(2)
-	@DisplayName("■ Sboard2Service - 관리자전용 작성·수정·삭제 + 조회수 DB반영 검증")
+	@DisplayName("■ Sboard2Service - 관리자전용 작성·수정·삭제 + 페이징 + 조회수 DB반영 검증")
 	void testSboard2Service() {
 		AppUser admin = createTestAdmin("kakao"); // 소셜로그인(카카오) 관리자
 		AppUser user  = createTestUser();
@@ -304,11 +329,18 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		assertThat(freshAfterView3.getBhit()).isEqualTo(3); // 3번 조회 → DB에 실제로 3 반영 확인
 		// ---------------------------------------------------------------
 
-		// 3) 전체조회 / 제목검색
+		// 3) 전체조회(비페이징) / 제목검색
 		assertThat(sboard2Service.getAllNotices()).extracting(Sboard2ResponseDto::getId)
 				.contains(boardId);
 		assertThat(sboard2Service.searchByTitle(uniqueTitle)).extracting(Sboard2ResponseDto::getId)
 				.contains(boardId);
+
+		// 3-1) ★페이징 조회(12개씩) - getAllNoticesPaged(page, size)
+		PageResponseDto<Sboard2ResponseDto> paged = sboard2Service.getAllNoticesPaged(1, 12);
+		assertThat(paged.getContent()).extracting(Sboard2ResponseDto::getId).contains(boardId);
+		assertThat(paged.getCurrentPage()).isEqualTo(1);
+		assertThat(paged.getPageSize()).isEqualTo(12);
+		assertThat(paged.getTotalElements()).isGreaterThanOrEqualTo(1L);
 
 		// 4) 관리자 → 수정 성공 (더티체킹, 첨부파일 신규 업로드)
 		dto.setBtitle(uniqueTitle + "_수정됨");
@@ -396,11 +428,13 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		assertThat(json).as("/v3/api-docs 응답에 /api/notices 경로가 있어야 합니다.")
 				.contains("\"/api/notices\"");
 
-		// 2) 세부 경로(단건조회/검색)도 등록되어 있는지
+		// 2) 세부 경로(단건조회/검색/카카오등록)도 등록되어 있는지
 		assertThat(json).as("/v3/api-docs 응답에 /api/books/{id} 경로가 있어야 합니다.")
 				.contains("/api/books/{id}");
 		assertThat(json).as("/v3/api-docs 응답에 /api/notices/{id} 경로가 있어야 합니다.")
 				.contains("/api/notices/{id}");
+		assertThat(json).as("/v3/api-docs 응답에 카카오 도서검색 자동등록 경로가 있어야 합니다.")
+				.contains("/api/books/kakao-insert");
 
 		// 3) @Tag 로 지정한 그룹명이 정상 반영되어 있는지
 		assertThat(json).as("Book Api 태그가 있어야 합니다.")

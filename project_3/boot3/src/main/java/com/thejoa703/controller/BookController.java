@@ -1,6 +1,7 @@
 package com.thejoa703.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.thejoa703.dto.BookDto.BookRequestDto;
 import com.thejoa703.dto.BookDto.BookResponseDto;
+import com.thejoa703.dto.PageResponseDto;
 import com.thejoa703.service.AuthUserJwtService;
 import com.thejoa703.service.BookService;
 
@@ -37,12 +39,14 @@ public class BookController {
 	private final BookService        bookService;
 	private final AuthUserJwtService authUserJwtService; // ###
 
-	@Operation(summary = "도서 전체조회", description = "category 파라미터로 필터링 조회 가능")
+	@Operation(summary = "도서 전체조회(페이징)", description = "page(1부터)/size 파라미터로 12개씩 페이징 조회, category 로 필터링 가능")
 	@GetMapping
-	public ResponseEntity<List<BookResponseDto>> getBooks(
-			@Parameter(description = "카테고리") @RequestParam(required = false) String category
+	public ResponseEntity<PageResponseDto<BookResponseDto>> getBooks(
+			@Parameter(description = "페이지 번호(1부터)") @RequestParam(name = "page", defaultValue = "1") int page,
+			@Parameter(description = "페이지당 개수") @RequestParam(name = "size", defaultValue = "12") int size,
+			@Parameter(description = "카테고리 필터(선택)") @RequestParam(name = "category", required = false) String category
 	) {
-		return ResponseEntity.ok(bookService.getAllBooks(category));
+		return ResponseEntity.ok(bookService.getAllBooksPaged(page, size, category));
 	}
 
 	@Operation(summary = "도서 단건조회")
@@ -89,5 +93,21 @@ public class BookController {
 	) {
 		bookService.deleteBook(id);
 		return ResponseEntity.ok(id);
+	}
+
+	@Operation(
+			summary = "카카오 도서검색 후 자동등록 (ROLE_ADMIN 전용)",
+			description = "검색어로 카카오 도서검색 API(dapi.kakao.com)를 호출해 결과를 자동으로 DB에 저장합니다. "
+					+ "이미 등록된 제목은 건너뜁니다. 검색버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 "
+					+ "DB에 저장한 후, 도서 목록을 다시 조회하시면 됩니다."
+	)
+	@PostMapping("/kakao-insert")
+	public ResponseEntity<Map<String, Object>> kakaoInsert(
+			Authentication authentication,
+			@Parameter(description = "검색할 도서명") @RequestParam(name = "search") String search
+	) {
+		Long userId = authUserJwtService.getCurrentUserId(authentication);
+		int insertedCount = bookService.insertFromKakao(search, userId);
+		return ResponseEntity.ok(Map.of("search", search, "insertedCount", insertedCount));
 	}
 }
