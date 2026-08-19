@@ -16,6 +16,14 @@ const initialState = {
     kakaoLoading: false,
     kakaoError: null,
     kakaoInsertedCount: null, // 마지막 카카오검색 등록 결과(등록된 건수)
+    // ★국립중앙도서관 도서검색 관련 상태
+    nlResults: [],          // 검색결과 목록
+    nlLoading: false,
+    nlError: null,
+    nlSelectedBook: null,   // 목록에서 클릭해서 상세로 넘어간 도서(재검색 없이 상세화면에서 그대로 사용)
+    nlSaveLoading: false,
+    nlSaveError: null,
+    nlSaveSuccess: false,
 };
 
 const bookReducer = createSlice({
@@ -145,6 +153,48 @@ const bookReducer = createSlice({
             state.kakaoError = null;
             state.kakaoInsertedCount = null;
         },
+
+        // --- ★국립중앙도서관 도서검색 (조회전용, 로그인 없이도 검색 가능) ---
+        nlSearchRequest: (state) => {
+            state.nlLoading = true;
+            state.nlError = null;
+        },
+        nlSearchSuccess: (state, action) => {
+            state.nlLoading = false;
+            state.nlResults = action.payload;
+        },
+        nlSearchFailure: (state, action) => {
+            state.nlLoading = false;
+            state.nlError = action.payload;
+        },
+        // 목록에서 클릭한 도서를 상세화면에서 그대로 쓰기 위해 저장 (국립중앙도서관 API 특성상
+        // id 하나로 재조회하는 API가 없어서, 클릭 시점의 검색결과 객체를 그대로 들고 이동합니다)
+        selectNlBook: (state, action) => {
+            state.nlSelectedBook = action.payload;
+        },
+        clearNlSelectedBook: (state) => {
+            state.nlSelectedBook = null;
+        },
+
+        // --- ★국립중앙도서관 검색결과 저장 (관리자 전용) ---
+        nlSaveRequest: (state) => {
+            state.nlSaveLoading = true;
+            state.nlSaveError = null;
+            state.nlSaveSuccess = false;
+        },
+        nlSaveSuccess: (state) => {
+            state.nlSaveLoading = false;
+            state.nlSaveSuccess = true;
+        },
+        nlSaveFailure: (state, action) => {
+            state.nlSaveLoading = false;
+            state.nlSaveError = action.payload;
+        },
+        resetNlSaveState: (state) => {
+            state.nlSaveLoading = false;
+            state.nlSaveError = null;
+            state.nlSaveSuccess = false;
+        },
     },
 });
 
@@ -157,6 +207,9 @@ export const {
     updateBookRequest, updateBookSuccess, updateBookFailure,
     deleteBookRequest, deleteBookSuccess, deleteBookFailure,
     kakaoInsertRequest, kakaoInsertSuccess, kakaoInsertFailure, resetKakaoInsertState,
+    nlSearchRequest, nlSearchSuccess, nlSearchFailure,
+    selectNlBook, clearNlSelectedBook,
+    nlSaveRequest, nlSaveSuccess, nlSaveFailure, resetNlSaveState,
 } = bookReducer.actions;
 
 export default bookReducer.reducer;

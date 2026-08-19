@@ -9,6 +9,8 @@ import {
     updateBookRequest, updateBookSuccess, updateBookFailure,
     deleteBookRequest, deleteBookSuccess, deleteBookFailure,
     kakaoInsertRequest, kakaoInsertSuccess, kakaoInsertFailure,
+    nlSearchRequest, nlSearchSuccess, nlSearchFailure,
+    nlSaveRequest, nlSaveSuccess, nlSaveFailure,
 } from '../reducers/bookReducer';
 
 const BOOK_API_BASE = '/api/books';
@@ -130,6 +132,32 @@ export function* kakaoInsert(action) {
     }
 }
 
+//   watchNlSearch          -  GET  /api/books/national-library/search?keyword=&page=   국립중앙도서관 검색 (조회전용)
+//   action.payload : { keyword, page }
+export const nlSearchAPI = ({ keyword, page = 1 }) =>
+    api.get(`${BOOK_API_BASE}/national-library/search`, { params: { keyword, page } });
+export function* nlSearch(action) {
+    try {
+        const result = yield call(nlSearchAPI, action.payload);
+        yield put(nlSearchSuccess(result.data));
+    } catch (err) {
+        yield put(nlSearchFailure(err.response?.data?.message || err.message));
+    }
+}
+
+//   watchNlSave            -  POST /api/books/national-library/save   국립중앙도서관 검색결과 1권 저장 ( ★관리자 전용 )
+//   action.payload : BookNlDto 형태의 원본 검색결과 객체
+export const nlSaveAPI = (nlBook) =>
+    api.post(`${BOOK_API_BASE}/national-library/save`, nlBook);
+export function* nlSave(action) {
+    try {
+        yield call(nlSaveAPI, action.payload);
+        yield put(nlSaveSuccess());
+    } catch (err) {
+        yield put(nlSaveFailure(err.response?.data?.message || err.message));
+    }
+}
+
 //  --- watch saga들 ---
 function* watchFetchBooks() {      yield takeLatest(fetchBooksRequest.type,      fetchBooks); }
 function* watchFetchBookDetail() { yield takeLatest(fetchBookDetailRequest.type, fetchBookDetail); }
@@ -138,6 +166,8 @@ function* watchCreateBook() {      yield takeLatest(createBookRequest.type,     
 function* watchUpdateBook() {      yield takeLatest(updateBookRequest.type,      updateBook); }
 function* watchDeleteBook() {      yield takeLatest(deleteBookRequest.type,      deleteBook); }
 function* watchKakaoInsert() {     yield takeLatest(kakaoInsertRequest.type,     kakaoInsert); }
+function* watchNlSearch() {        yield takeLatest(nlSearchRequest.type,        nlSearch); }
+function* watchNlSave() {          yield takeLatest(nlSaveRequest.type,          nlSave); }
 
 export default function* bookSaga() {
     yield all([
@@ -148,5 +178,7 @@ export default function* bookSaga() {
         call(watchUpdateBook),
         call(watchDeleteBook),
         call(watchKakaoInsert),
+        call(watchNlSearch),
+        call(watchNlSave),
     ]);
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchBookDetailRequest, deleteBookRequest, updateBookRequest, resetBookState } from "../../reducers/bookReducer";
 import EditBookModal from "../../components/EditBookModal";
+import BookCoverImage from "../../components/BookCoverImage";
 
 export default function BookDetailPage() {
   const router = useRouter();
@@ -68,14 +69,8 @@ export default function BookDetailPage() {
         <div className="row-flex">
           {/* 이미지 */}
           <div className="detail-cover-col">
-            {coverSrc
-              ? <img src={coverSrc} alt={currentBook.title} />
-              : (
-                <div style={{
-                  width: "100%", height: 460, borderRadius: 12, background: "#eef1f5",
-                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60, color: "#bbb",
-                }}>📕</div>
-              )}
+            {/* ★표지 없음/링크깨짐 → 자동으로 기본 아이콘 표시 */}
+            <BookCoverImage src={coverSrc} alt={currentBook.title} height={460} iconSize={60} style={{ borderRadius: 12 }} />
           </div>
 
           {/* 정보 */}

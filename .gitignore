@@ -10,6 +10,7 @@ track005_jsp/tomcat9.0/
 track005_jsp/Servers/
 track006_spring/Servers/
 
+project_3/boot3/src/main/resources/application-oauth.yml
 project_3/front3/node_modules/
 
 # 빌드 결과물 무시

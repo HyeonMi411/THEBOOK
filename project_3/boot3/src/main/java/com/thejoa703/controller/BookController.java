@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.thejoa703.dto.BookDto.BookRequestDto;
 import com.thejoa703.dto.BookDto.BookResponseDto;
+import com.thejoa703.api.BookNlDto;
 import com.thejoa703.dto.PageResponseDto;
 import com.thejoa703.service.AuthUserJwtService;
 import com.thejoa703.service.BookService;
@@ -109,5 +111,30 @@ public class BookController {
 		Long userId = authUserJwtService.getCurrentUserId(authentication);
 		int insertedCount = bookService.insertFromKakao(search, userId);
 		return ResponseEntity.ok(Map.of("search", search, "insertedCount", insertedCount));
+	}
+
+	@Operation(
+			summary = "국립중앙도서관 도서검색 (전체공개)",
+			description = "키워드 또는 KDC 분류명으로 국립중앙도서관 오픈API를 검색합니다. DB에는 저장하지 않고 검색결과만 반환합니다."
+	)
+	@GetMapping("/national-library/search")
+	public ResponseEntity<List<BookNlDto>> searchNationalLibrary(
+			@Parameter(description = "검색어(키워드 또는 KDC 분류명)") @RequestParam(name = "keyword") String keyword,
+			@Parameter(description = "페이지 번호(1부터)") @RequestParam(name = "page", defaultValue = "1") int page
+	) {
+		return ResponseEntity.ok(bookService.searchNationalLibrary(keyword, page));
+	}
+
+	@Operation(
+			summary = "국립중앙도서관 검색결과 저장 (ROLE_ADMIN 전용)",
+			description = "국립중앙도서관 검색결과 중 선택한 도서 1권을 DB에 저장합니다. 이미 등록된 제목이면 저장이 거부됩니다."
+	)
+	@PostMapping("/national-library/save")
+	public ResponseEntity<BookResponseDto> saveNationalLibraryBook(
+			Authentication authentication,
+			@RequestBody BookNlDto nlBook
+	) {
+		Long userId = authUserJwtService.getCurrentUserId(authentication);
+		return ResponseEntity.ok(bookService.saveNationalLibraryBook(nlBook, userId));
 	}
 }

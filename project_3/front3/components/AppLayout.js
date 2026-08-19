@@ -28,6 +28,7 @@ function AppLayout({ children }) {
             ? [
                 { key: "books",   label: <Link href="/books">📚 BOOK</Link> },     // ★도서 (전체공개)
                 { key: "notices", label: <Link href="/notices">📢 NOTICE</Link> }, // ★공지사항 (전체공개)
+                { key: "nl",      label: <Link href="/books/national-library">🏛 국립중앙도서관</Link> }, // ★전체공개, 저장만 관리자전용
                 ...(user.role === "ROLE_ADMIN"
                     ? [
 
@@ -39,6 +40,7 @@ function AppLayout({ children }) {
             : [
                 { key: "books",   label: <Link href="/books">📚 BOOK</Link> },     // ★비로그인도 조회는 가능
                 { key: "notices", label: <Link href="/notices">📢 NOTICE</Link> }, // ★비로그인도 조회는 가능
+                { key: "nl",      label: <Link href="/books/national-library">🏛 국립중앙도서관</Link> }, // ★비로그인도 검색은 가능
                 { key: "login",   label: <Link href="/login">🔒 Login</Link> },
                 { key: "signup",  label: <Link href="/signup">👤 Signup</Link> },
             ]

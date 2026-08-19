@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import Pagination from './Pagination';
+import BookCoverImage from './BookCoverImage';
 
 export default function BookList({ books = [], currentPage, totalPages, onPageChange }) {
   const router = useRouter();
@@ -38,21 +39,14 @@ export default function BookList({ books = [], currentPage, totalPages, onPageCh
               onClick={() => router.push(`/books/${book.id}`)}
             >
               <div className="book-cover">
-                {book.bookCover ? (
-                  <img
-                    src={
-                      book.bookCover.startsWith('http')
-                        ? book.bookCover
-                        : `http://localhost:8080/${book.bookCover}`
-                    }
-                    alt={book.title}
-                  />
-                ) : (
-                  <div style={{
-                    width: "100%", height: "100%", display: "flex",
-                    alignItems: "center", justifyContent: "center", color: "#bbb", fontSize: 40,
-                  }}>📕</div>
-                )}
+                {/* ★표지 없음/링크깨짐 → 자동으로 기본 아이콘 표시 */}
+                <BookCoverImage
+                  src={book.bookCover
+                    ? (book.bookCover.startsWith('http') ? book.bookCover : `http://localhost:8080/${book.bookCover}`)
+                    : null}
+                  alt={book.title}
+                  iconSize={40}
+                />
               </div>
 
               <div className="book-body">
