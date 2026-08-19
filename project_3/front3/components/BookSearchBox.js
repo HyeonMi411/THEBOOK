@@ -65,7 +65,7 @@ export default function BookSearchBox() {
           onBlur={() => setTimeout(() => setShowResult(false), 150)} // 클릭 이벤트 먼저 처리되도록 지연
           placeholder="도서명 · 작가 · 출판사 검색"
         />
-        <button type="submit" className="bs-search-btn">🔍</button>
+        {/* <button type="submit" className="bs-search-btn">🔍</button> */}
 
         {showResult && (
           <div className="bs-search-result-box">
