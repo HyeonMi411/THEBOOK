@@ -1,0 +1,7 @@
+/.metadata/
+/Servers/
+
+/boot3/src/main/resources/application-oauth.yml
+/boot3/*.zip
+/front3/*.zip
+/front3/node_modules/
