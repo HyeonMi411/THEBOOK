@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.OrderItemMapper">
+
+    <!-- order/book 연관관계는 조회전용 매퍼에서는 매핑하지 않습니다. -->
+    <resultMap id="OrderItemResultMap" type="OrderItem">
+        <id     property="id"                column="ID"/>
+        <result property="quantity"          column="QUANTITY"/>
+        <result property="price"             column="PRICE"/>
+        <result property="bookTitleSnapshot" column="BOOK_TITLE_SNAPSHOT"/>
+    </resultMap>
+
+    <!-- 특정 주문에 담긴 상품목록 -->
+    <select id="findByOrderId" parameterType="long" resultMap="OrderItemResultMap">
+        SELECT * FROM ORDER_ITEMS WHERE ORDER_ID = #{orderId}
+    </select>
+
+    <!-- ★베스트셀러/판매통계 - 결제완료(PAID) 주문만 집계해서 판매량 TOP N 조회 -->
+    <select id="findBestSellerBookIds" parameterType="int" resultType="map">
+        SELECT oi.BOOK_ID AS BOOK_ID, SUM(oi.QUANTITY) AS TOTAL_QTY
+        FROM ORDER_ITEMS oi
+        JOIN ORDERS o ON oi.ORDER_ID = o.ID
+        WHERE o.ORDER_STATUS = 'PAID'
+        GROUP BY oi.BOOK_ID
+        ORDER BY TOTAL_QTY DESC
+        FETCH FIRST #{limit} ROWS ONLY
+    </select>
+
+</mapper>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.BookStockMapper">
+
+    <!-- book(Book 연관관계)/version(낙관적 락)은 조회전용 매퍼에서는 매핑하지 않습니다. -->
+    <resultMap id="BookStockResultMap" type="BookStock">
+        <id     property="bookId"        column="BOOK_ID"/>
+        <result property="stockQuantity" column="STOCK_QUANTITY"/>
+        <result property="updatedAt"     column="UPDATED_AT"/>
+    </resultMap>
+
+    <select id="findByBookId" parameterType="long" resultMap="BookStockResultMap">
+        SELECT * FROM BOOK_STOCK WHERE BOOK_ID = #{bookId}
+    </select>
+
+</mapper>

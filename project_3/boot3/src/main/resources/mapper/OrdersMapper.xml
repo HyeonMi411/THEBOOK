@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.OrdersMapper">
+
+    <!-- user(AppUser)/items(OrderItem 목록) 연관관계는 조회전용 매퍼에서는 매핑하지 않습니다.
+         orderStatus 는 MyBatis 가 자동으로 Enum(EnumTypeHandler)으로 매핑해줍니다. -->
+    <resultMap id="OrdersResultMap" type="Orders">
+        <id     property="id"                column="ID"/>
+        <result property="totalAmount"       column="TOTAL_AMOUNT"/>
+        <result property="orderStatus"       column="ORDER_STATUS"/>
+        <result property="tid"               column="TID"/>
+        <result property="kakaoResponseJson" column="KAKAO_RESPONSE_JSON"/>
+        <result property="createdAt"         column="CREATED_AT"/>
+        <result property="approvedAt"        column="APPROVED_AT"/>
+    </resultMap>
+
+    <!-- 주문 단건조회 -->
+    <select id="findById" parameterType="long" resultMap="OrdersResultMap">
+        SELECT * FROM ORDERS WHERE ID = #{id}
+    </select>
+
+    <!-- 카카오페이 결제승인 콜백에서 tid 로 원래 주문 찾기 -->
+    <select id="findByTid" parameterType="string" resultMap="OrdersResultMap">
+        SELECT * FROM ORDERS WHERE TID = #{tid}
+    </select>
+
+    <!-- 내 주문내역 - 페이징 (map : { userId, start, end }) -->
+    <select id="findByUserId" parameterType="java.util.Map" resultMap="OrdersResultMap">
+        SELECT * FROM ORDERS
+        WHERE APP_USER_ID = #{userId}
+        ORDER BY ID DESC
+        OFFSET #{start} ROWS FETCH NEXT #{end} ROWS ONLY
+    </select>
+
+    <!-- 내 주문내역 전체 건수 -->
+    <select id="countByUserId" parameterType="long" resultType="int">
+        SELECT COUNT(*) FROM ORDERS WHERE APP_USER_ID = #{userId}
+    </select>
+
+</mapper>
