@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.SequenceGenerator;
@@ -115,6 +116,14 @@ public class AppUser {
 	// ★관리자가 작성한 공지사항들 (공지사항 글쓰기는 ROLE_ADMIN 전용)
 	@OneToMany( mappedBy = "user" ,cascade = CascadeType.ALL, orphanRemoval = true )
 	private List<Sboard2> sboard2s = new ArrayList<>();	
+	
+	// ★사용자의 장바구니 (1:1 - 한 사용자당 장바구니 1개)
+	@OneToOne( mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true )
+	private Cart cart;
+	
+	// ★사용자의 주문내역들 (1:N - 여러 번 주문 가능)
+	@OneToMany( mappedBy = "user" ,cascade = CascadeType.ALL, orphanRemoval = true )
+	private List<Orders> orders = new ArrayList<>();
 	
 }
 

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.SequenceGenerator;
@@ -88,4 +90,8 @@ public class Book {
 	@ManyToOne
 	@JoinColumn(name = "APP_USER_ID", nullable = false)
 	private AppUser user;
+
+	// ★이 도서의 재고 (1:1, BookStock 이 주인/PK공유 - 여기서는 조회 편의를 위한 역방향 매핑)
+	@OneToOne(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+	private BookStock stock;
 }
