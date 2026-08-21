@@ -42,27 +42,32 @@ import com.thejoa703.repository.OrdersRepository;
  * ------------------------------------------------------------------------------
  * - Boot2ApplicationTests_1_Entity 패턴을 참고하되, @BeforeEach 로 공통데이터를 미리 만들지
  *   않고 각 테스트메서드 안에서 필요한 데이터를 직접 생성합니다.
- * - 원칙적으로 클래스에 @Transactional 을 걸어 자동롤백시키는 대신, 매 테스트가 끝난 뒤
- *   @AfterEach 에서 실제 커밋된 데이터를 지워서 초기화합니다. (JPA 쓰기를 "실제 커밋된 상태"
- *   기준으로 검증하고, MyBatis 매퍼도 그 커밋된 데이터를 정상적으로 읽어오는지 확인하기 위함)
- * - ★단, testBookStockRepository() / testPaymentMyBatisMappers() 두 개는 예외적으로
- *   메서드 단위 @Transactional 을 붙였습니다. BookStock.book 은 @OneToOne @MapsId 관계라서,
- *   자식(BookStock)을 저장하는 시점에 부모(Book)가 "같은 영속성 컨텍스트 안에서 계속
- *   매니지드 상태"여야 합니다. @Transactional 없이 여러 리포지토리 호출을 이어서 하면
- *   각 호출마다 트랜잭션이 따로 열렸다 닫히면서 Book 이 detached 되어
- *   "detached entity passed to persist" 에러가 납니다. 이 두 테스트만 @Transactional 로
- *   하나의 트랜잭션을 유지시켜 이 문제를 피했습니다 (스프링 테스트의 @Transactional 은
- *   기본적으로 테스트 종료 후 자동 롤백되므로, 이 두 테스트에 한해서는 @AfterEach 가
- *   지울 데이터가 없어 그냥 통과합니다 - 무해합니다).
+ * - ★원래는 클래스에 @Transactional 없이, 매 테스트가 끝난 뒤 @AfterEach 에서 "실제
+ *   커밋된" 데이터를 지워서 초기화하는 방식으로 작성했습니다. 하지만 BookStock(@MapsId),
+ *   Cart→CartItem/Orders→OrderItem(cascade + orphanRemoval) 검증에서 반복적으로
+ *   문제가 발생했습니다:
+ *     1) detached entity passed to persist  (부모가 다른 트랜잭션에서 detach됨)
+ *     2) FK 제약조건 위반(ORA-02292)          (양방향 컬렉션 미동기화로 cascade가 자식을 못 찾음)
+ *     3) LazyInitializationException          (세션이 닫힌 뒤 지연로딩 컬렉션 접근)
+ *     4) cascade 가 에러 없이 조용히 스킵됨    (detached→merge 과정에서 초기화 안 된
+ *                                              지연로딩 컬렉션이 "변경없음"으로 취급됨)
+ *   전부 "연관된 엔티티 조작을 여러 개의 독립된 트랜잭션에 걸쳐서 하는 것"이 근본 원인이라,
+ *   개별 메서드에만 @Transactional 을 붙이는 임시방편으로는 매번 다른 증상만 새로 나왔습니다.
+ *   그래서 이 클래스는 **전체에 @Transactional** 을 적용해 모든 테스트가 하나의 영속성
+ *   컨텍스트 안에서 일관되게 동작하도록 했습니다.
+ * - 스프링 테스트의 클래스 레벨 @Transactional 은 테스트 메서드가 끝나면 기본적으로
+ *   자동 롤백됩니다. 그래서 아래 @AfterEach 는 사실상 "지울 데이터가 없어 그냥 통과"하는
+ *   무해한 안전망으로 남겨뒀습니다 (혹시 모를 REQUIRES_NEW/명시적 커밋 등으로 실제 데이터가
+ *   남는 경우를 대비).
  * - MyBatis 매퍼(BookStockMapper/CartMapper/CartItemMapper/OrdersMapper/OrderItemMapper)는
  *   전부 조회전용이므로, JPA로 저장한 데이터를 MyBatis 로도 똑같이 읽어올 수 있는지만
- *   검증합니다 (테이블명/컬럼명 불일치를 가장 확실하게 잡아내는 방법입니다). 단,
- *   testPaymentMyBatisMappers() 는 @Transactional 안에서 "저장 직후 바로 조회"를 하므로,
- *   JPA 가 아직 플러시하지 않아 MyBatis 조회에 안 보이는 일이 없도록 save() 대신
- *   saveAndFlush() 를 사용해 매번 즉시 DB에 반영합니다.
+ *   검증합니다 (테이블명/컬럼명 불일치를 가장 확실하게 잡아내는 방법입니다). 같은 트랜잭션
+ *   안에서 "저장 직후 바로 조회"하므로, JPA 가 아직 플러시하지 않아 MyBatis 조회에 안 보이는
+ *   일이 없도록 save() 대신 saveAndFlush() 를 사용해 매번 즉시 DB에 반영합니다.
  * ------------------------------------------------------------------------------
  */
 @SpringBootTest
+@Transactional
 class Boot2ApplicationTests_5_PaymentEntity {
 
 	@Autowired private AppUserRepository   appUserRepository;
@@ -132,20 +137,9 @@ class Boot2ApplicationTests_5_PaymentEntity {
 
 	//-------------------------------------------------------------------
 	// 1. BookStock - 1:1(Book), 낙관적 락(@Version), 비관적 락 조회
-	//-------------------------------------------------------------------
-	// ★이 테스트만 별도로 @Transactional 을 붙였습니다. BookStock.book 은 @OneToOne @MapsId
-	//   관계라서, 자식(BookStock)을 저장할 때 부모(Book)가 "같은 영속성 컨텍스트 안에서
-	//   계속 매니지드 상태"여야 합니다. 그런데 findById() 로 재조회해도 그 조회 자체가
-	//   (클래스에 @Transactional 이 없으므로) 별도의 독립 트랜잭션이라, 조회가 끝나는 순간
-	//   결과가 다시 detached 되어버려 "detached entity passed to persist" 에러가 재발합니다.
-	//   메서드에 @Transactional 을 붙이면, 이 메서드 안의 모든 리포지토리 호출이 "하나의"
-	//   트랜잭션에 참여(Propagation.REQUIRED, 스프링 데이터 JPA 기본값)하게 되어 book 이
-	//   메서드가 끝날 때까지 계속 매니지드 상태로 유지됩니다.
-	//   (스프링 테스트의 @Transactional 은 기본적으로 테스트 종료 후 자동 롤백되므로,
-	//    아래 @AfterEach 는 이 테스트에 한해서는 지울 데이터가 없어 그냥 통과합니다 - 무해합니다)
+	//   (클래스 레벨 @Transactional 덕분에 book 이 메서드 끝까지 매니지드 상태로 유지됩니다)
 	//-------------------------------------------------------------------
 	@Test
-	@Transactional
 	@DisplayName("■ BookStock - Book과 1:1(@MapsId), 재고 증감, @Version 증가, 비관적 락 조회, Book 삭제시 cascade")
 	void testBookStockRepository() {
 		AppUser admin = createAdmin();
@@ -246,13 +240,15 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		itemC.setBook(bookB);
 		itemC.setQuantity(3);
 		cartItemRepository.save(itemC);
+		// ★Cart.items 필드는 엔티티에 `= new ArrayList<>()` 로 기본값이 채워져 있어서,
+		//   Hibernate 가 이미 "초기화된(로딩완료된)" 컬렉션으로 취급합니다. 그래서 자식쪽
+		//   (itemC.setCart(cart))에서만 연관관계를 설정하면, 같은 트랜잭션 안에서 다시
+		//   조회해도(1차 캐시로 같은 인스턴스가 반환되므로) cart.getItems() 는 계속 빈
+		//   상태로 남아 cascade 삭제가 자식을 못 찾습니다. 부모 컬렉션에도 명시적으로
+		//   추가해서 양방향을 실제로 동기화해줘야 합니다.
+		cart.getItems().add(itemC);
 
-		// ★cart.getItems() 인메모리 컬렉션은 비어있는 상태(양방향 미동기화)라서, 그대로
-		//   delete() 하면 Hibernate 가 자식을 못 찾고 CART 행만 지우려다 FK 제약조건에
-		//   걸립니다. 삭제 직전에 다시 조회해서 실제 자식 목록을 로딩한 뒤 삭제합니다.
-		Cart cartToDelete = cartRepository.findById(cart.getId()).orElseThrow();
-		assertThat(cartToDelete.getItems()).hasSize(1); // cascade 삭제를 위해 자식이 실제로 로딩됐는지 확인
-		cartRepository.delete(cartToDelete);
+		cartRepository.deleteById(cart.getId());
 		assertThat(cartItemRepository.findById(itemC.getId())).isEmpty();
 	}
 
@@ -282,6 +278,7 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		paidItemA.setPrice(bookA.getPrice());
 		paidItemA.setBookTitleSnapshot(bookA.getTitle());
 		orderItemRepository.save(paidItemA);
+		paidOrder.getItems().add(paidItemA); // ★양방향 동기화 - 부모 컬렉션에도 명시적으로 추가
 
 		OrderItem paidItemB = new OrderItem();
 		paidItemB.setOrder(paidOrder);
@@ -290,6 +287,7 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		paidItemB.setPrice(bookB.getPrice());
 		paidItemB.setBookTitleSnapshot(bookB.getTitle());
 		orderItemRepository.save(paidItemB);
+		paidOrder.getItems().add(paidItemB); // ★양방향 동기화
 
 		// 2) 카카오페이 결제승인 처리 시뮬레이션 - tid 세팅 + 상태를 PAID 로 변경
 		String tid = "T" + UUID.randomUUID().toString().substring(0, 20);
@@ -313,6 +311,7 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		pendingItemA.setPrice(bookA.getPrice());
 		pendingItemA.setBookTitleSnapshot(bookA.getTitle());
 		orderItemRepository.save(pendingItemA);
+		pendingOrder.getItems().add(pendingItemA); // ★양방향 동기화
 
 		// 4) 단건조회 + CLOB 저장확인
 		Orders foundOrder = ordersRepository.findById(paidOrder.getId()).orElseThrow();
@@ -347,32 +346,29 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		assertThat(bestSellerMap).containsEntry(bookB.getId(), 2L);
 
 		// 10) Orders 삭제시 OrderItem 도 cascade 로 함께 삭제되는지 확인
-		//    ★paidOrder 는 new Orders() 로 만든 뒤 items 를 orderItemRepository.save() 로
-		//      "자식(OrderItem) 쪽에서" 저장했을 뿐이라, paidOrder.getItems() 인메모리 컬렉션은
-		//      비어있는 상태입니다(양방향 연관관계를 수동으로 채워주지 않았기 때문). 이 상태로
-		//      바로 delete() 하면 Hibernate 가 "지울 자식이 없다"고 판단해 OrderItem 은 그대로
-		//      둔 채 ORDERS 행만 지우려다 FK 제약조건(ORA-02292)에 걸립니다.
-		//      그래서 삭제 직전에 findById() 로 다시 조회해서, DB에 실제로 있는 OrderItem
-		//      목록이 컬렉션에 제대로 채워진 상태로 만든 뒤 삭제합니다.
+		//    ★Orders.items 필드는 엔티티에 `= new ArrayList<>()` 로 기본값이 채워져 있어서,
+		//      Hibernate 가 이미 "초기화된(로딩완료된)" 컬렉션으로 취급합니다. 그래서 위에서
+		//      paidItemA/paidItemB 를 만들 때 자식쪽(setOrder)에서만 연관관계를 설정하고
+		//      부모 컬렉션(paidOrder.getItems())에 추가해주지 않으면, 클래스에 @Transactional
+		//      이 있어 같은 영속성 컨텍스트가 유지되더라도(1차 캐시로 같은 인스턴스가 계속
+		//      쓰이므로) paidOrder.getItems() 는 계속 빈 상태로 남습니다. 그 상태로 삭제하면
+		//      Hibernate 가 "지울 자식이 없다"고 판단해 ORDERS 행만 지우려다 FK 제약조건
+		//      (ORA-02292)에 걸립니다. → 위 1) 단계에서 paidOrder.getItems().add(...) 로
+		//      양방향을 실제로 동기화해뒀기 때문에 여기서는 정상적으로 cascade 삭제됩니다.
 		Long paidOrderId = paidOrder.getId();
-		Orders orderToDelete = ordersRepository.findById(paidOrderId).orElseThrow();
-		assertThat(orderToDelete.getItems()).hasSize(2); // cascade 삭제를 위해 자식이 실제로 로딩됐는지 확인
-		ordersRepository.delete(orderToDelete);
+		ordersRepository.deleteById(paidOrderId);
 		assertThat(orderItemRepository.findByOrder_Id(paidOrderId)).isEmpty();
 	}
 
 	//-------------------------------------------------------------------
 	// 4. MyBatis 매퍼 - JPA로 저장한 데이터를 MyBatis 로도 정상적으로 읽어오는지 확인
-	//-------------------------------------------------------------------
-	// ★이 테스트도 @Transactional 이 필요합니다 (BookStock 저장 이유는 위와 동일).
-	//   추가로, 이 테스트는 "JPA로 저장 직후 MyBatis로 바로 읽기"를 하는데, JPA 의 save()
-	//   는 기본적으로 즉시 DB에 INSERT 하지 않고 커밋/플러시 시점까지 미룰 수 있습니다.
+	//   이 테스트는 "JPA로 저장 직후 MyBatis로 바로 읽기"를 하는데, JPA 의 save() 는
+	//   기본적으로 즉시 DB에 INSERT 하지 않고 커밋/플러시 시점까지 미룰 수 있습니다.
 	//   MyBatis 는 (같은 트랜잭션의) 커넥션으로 직접 SQL을 실행하므로, Hibernate가 아직
 	//   플러시하지 않은 변경분은 MyBatis 조회에 안 보일 수 있습니다. 그래서 save() 대신
 	//   saveAndFlush() 를 사용해서 매번 즉시 DB에 반영한 뒤 MyBatis로 확인합니다.
 	//-------------------------------------------------------------------
 	@Test
-	@Transactional
 	@DisplayName("■ 결제 MyBatis 매퍼(전부 조회전용) - JPA로 저장한 데이터를 정확히 읽어오는지 확인")
 	void testPaymentMyBatisMappers() {
 		AppUser admin = createAdmin();
@@ -399,6 +395,7 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		cartItem.setBook(book);
 		cartItem.setQuantity(4);
 		cartItemRepository.saveAndFlush(cartItem);
+		cart.getItems().add(cartItem); // ★양방향 동기화
 
 		Cart mapperCart = cartMapper.findByUserId(buyer.getId());
 		assertThat(mapperCart).isNotNull();
@@ -424,6 +421,7 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		orderItem.setPrice(25000);
 		orderItem.setBookTitleSnapshot(book.getTitle());
 		orderItemRepository.saveAndFlush(orderItem);
+		order.getItems().add(orderItem); // ★양방향 동기화
 
 		Orders mapperOrder = ordersMapper.findById(order.getId());
 		assertThat(mapperOrder).isNotNull();
