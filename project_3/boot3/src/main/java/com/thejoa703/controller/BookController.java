@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.thejoa703.dto.BookDto.BookRequestDto;
 import com.thejoa703.dto.BookDto.BookResponseDto;
+import com.thejoa703.dto.BookDto.StockUpdateRequestDto;
 import com.thejoa703.api.BookNlDto;
 import com.thejoa703.dto.PageResponseDto;
 import com.thejoa703.service.AuthUserJwtService;
@@ -86,6 +87,19 @@ public class BookController {
 			@Parameter(description = "교체할 표지 이미지") @RequestPart(name = "cover", required = false) MultipartFile cover
 	) {
 		return ResponseEntity.ok(bookService.updateBook(id, dto, cover));
+	}
+
+	@Operation(
+			summary = "도서 재고 수정 (ROLE_ADMIN 전용)",
+			description = "재고가 없으면 새로 만들고, 있으면 값을 갱신합니다. 결제 기능(장바구니/주문/결제)을 "
+					+ "Swagger 에서 테스트하려면 먼저 이 API로 원하는 도서에 재고를 채워주세요."
+	)
+	@PatchMapping("/{id}/stock")
+	public ResponseEntity<BookResponseDto> updateStock(
+			@Parameter(description = "재고를 수정할 도서 ID") @PathVariable("id") Long id,
+			@Valid @RequestBody StockUpdateRequestDto dto
+	) {
+		return ResponseEntity.ok(bookService.updateStock(id, dto));
 	}
 
 	@Operation(summary = "도서삭제 (ROLE_ADMIN 전용)")

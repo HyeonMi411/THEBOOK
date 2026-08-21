@@ -44,6 +44,8 @@ spring:
 app:
   oauth2:
     redirect-url: http://localhost:3000/oauth2/callback
+  # ★프론트엔드(React) 기본 주소 - 카카오페이 결제완료/취소/실패 후 리다이렉트될 URL을 만드는 데 사용합니다.
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
 
  
 # ★카카오 도서검색 API(dapi.kakao.com) 용 REST API 키
@@ -51,6 +53,12 @@ app:
 #   KAKAO_REST_API_KEY 를 별도로 안 정해주셨다면, 위에서 쓰고 계신 KAKAO_CLIENT_ID 를 그대로 재사용합니다.
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY:${KAKAO_CLIENT_ID:}}
+  # ★카카오페이 결제 API 설정 (Admin key 는 카카오페이 개발자센터에서 별도 발급받아야 합니다.
+  #   개발/테스트 단계에서는 카카오가 공개한 테스트용 cid(TC0ONETIME)로 결제 흐름을 그대로
+  #   확인할 수 있습니다. 실서비스 전환시 실제 발급받은 cid/Admin key 로 교체해주세요.)
+  pay:
+    admin-key: ${KAKAO_PAY_ADMIN_KEY:}
+    cid: ${KAKAO_PAY_CID:TC0ONETIME}
 
 # ★국립중앙도서관 도서검색 API 키 (boot1 원본에서 사용하던 키를 기본값으로 둡니다.
 #   개인/테스트용 키일 수 있으니, 정상 동작 안 하면 국립중앙도서관 오픈API 홈페이지에서

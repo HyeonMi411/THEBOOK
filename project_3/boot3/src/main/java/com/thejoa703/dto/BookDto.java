@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 import com.thejoa703.entity.Book;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 public class BookDto {
+
+	// ★재고 수정 요청 Dto (관리자 전용)
+	@Getter @Setter @AllArgsConstructor @NoArgsConstructor
+	public static class StockUpdateRequestDto {
+		@NotNull(message = "재고수량은 필수입니다.")
+		@Min(value = 0, message = "재고수량은 0 이상이어야 합니다.")
+		private Integer stockQuantity;
+	}
 
 	// 도서 등록/수정 요청 Dto
 	@Getter @Setter @AllArgsConstructor @NoArgsConstructor
@@ -58,6 +67,7 @@ public class BookDto {
 		private String bookCover;
 		private LocalDateTime regDate;
 		private String userNickname; // 등록한 관리자 닉네임
+		private Integer stockQuantity; // ★재고수량 (BookStock 이 아직 없으면 0)
 
 		public static BookResponseDto from(Book book) {
 			BookResponseDto dto = new BookResponseDto();
@@ -76,6 +86,7 @@ public class BookDto {
 			dto.setBookCover(book.getBookCover());
 			dto.setRegDate(book.getRegDate());
 			if (book.getUser() != null) { dto.setUserNickname(book.getUser().getNickname()); }
+			dto.setStockQuantity(book.getStock() != null ? book.getStock().getStockQuantity() : 0);
 			return dto;
 		}
 	}

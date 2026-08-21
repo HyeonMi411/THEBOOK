@@ -1,0 +1,169 @@
+package com.thejoa703.service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thejoa703.dto.OrderDto.OrderCreateRequestDto;
+import com.thejoa703.dto.OrderDto.OrderResponseDto;
+import com.thejoa703.dto.PageResponseDto;
+import com.thejoa703.entity.AppUser;
+import com.thejoa703.entity.Book;
+import com.thejoa703.entity.CartItem;
+import com.thejoa703.entity.OrderItem;
+import com.thejoa703.entity.OrderStatus;
+import com.thejoa703.entity.Orders;
+import com.thejoa703.exception.ResourceNotFoundException;
+import com.thejoa703.repository.AppUserRepository;
+import com.thejoa703.repository.BookRepository;
+import com.thejoa703.repository.CartItemRepository;
+import com.thejoa703.repository.OrderItemRepository;
+import com.thejoa703.repository.OrdersRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * 주문 서비스 - 로그인한 사용자라면 누구나 이용 가능 (관리자 전용 아님)
+ * - 장바구니 결제(cartItemIds) 또는 바로구매(bookId+quantity) 두 방식을 모두 지원합니다.
+ * - 주문 생성 시점에는 재고를 "확인만" 하고 차감하지는 않습니다. 실제 차감은 결제 승인
+ *   완료 시점(PaymentService.approve)에 이루어집니다.
+ * - ★검증(재고체크/요청유효성)을 전부 먼저 끝낸 뒤에만 Orders 를 생성/저장합니다. 검증
+ *   순서를 뒤집어서 "일단 Orders 부터 저장하고 나중에 검증"하면, 검증에 실패했을 때도
+ *   이미 저장 예약된(pending) Orders 가 트랜잭션 경계에 따라 남아버릴 수 있습니다
+ *   (특히 상위 트랜잭션에 참여(REQUIRED)하는 구조에서, 실패 시점에 즉시 롤백되지 않고
+ *   트랜잭션이 끝날 때까지 지연되는 경우). 검증을 먼저 다 마치고 나서 저장하면 이런
+ *   문제 자체가 생기지 않습니다.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class OrderService {
+
+	private static final int DEFAULT_PAGE_SIZE = 12;
+
+	private final OrdersRepository    ordersRepository;
+	private final OrderItemRepository orderItemRepository;
+	private final CartItemRepository  cartItemRepository;
+	private final BookRepository      bookRepository;
+	private final AppUserRepository   appUserRepository;
+
+	// 주문 생성 직전까지 검증/계산한 "한 줄(도서/수량)" 정보를 임시로 담아두는 내부 레코드
+	private record OrderLine(Book book, int quantity) {}
+
+	// 1. 주문 생성 ( ★장바구니 결제 or 바로구매 )
+	@Transactional
+	public OrderResponseDto createOrder(Long userId, OrderCreateRequestDto dto) {
+		AppUser user = appUserRepository.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 사용자입니다. ID : " + userId));
+
+		// ---------------------------------------------------------------
+		// 1단계 : 검증 + 계산만 먼저 (Orders 는 아직 만들지 않음)
+		// ---------------------------------------------------------------
+		List<OrderLine> lines = new ArrayList<>();
+		List<CartItem> usedCartItems = new ArrayList<>();
+		int totalAmount = 0;
+
+		if (dto.getCartItemIds() != null && !dto.getCartItemIds().isEmpty()) {
+			// ---- 장바구니에서 선택한 항목으로 주문 ----
+			for (Long cartItemId : dto.getCartItemIds()) {
+				CartItem cartItem = cartItemRepository.findById(cartItemId)
+						.orElseThrow(() -> new ResourceNotFoundException("장바구니 항목이 없습니다. ID : " + cartItemId));
+				if (!cartItem.getCart().getUser().getId().equals(userId)) {
+					throw new IllegalStateException("본인의 장바구니 항목만 주문할 수 있습니다.");
+				}
+				Book book = cartItem.getBook();
+				checkStock(book, cartItem.getQuantity());
+
+				lines.add(new OrderLine(book, cartItem.getQuantity()));
+				totalAmount += (book.getPrice() != null ? book.getPrice() : 0) * cartItem.getQuantity();
+				usedCartItems.add(cartItem);
+			}
+
+		} else if (dto.getBookId() != null) {
+			// ---- 바로구매 ----
+			Book book = bookRepository.findById(dto.getBookId())
+					.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 도서입니다. ID : " + dto.getBookId()));
+			int quantity = (dto.getQuantity() != null) ? dto.getQuantity() : 1;
+			checkStock(book, quantity);
+
+			lines.add(new OrderLine(book, quantity));
+			totalAmount += (book.getPrice() != null ? book.getPrice() : 0) * quantity;
+
+		} else {
+			throw new IllegalArgumentException("장바구니 항목(cartItemIds) 또는 바로구매 도서(bookId)를 지정해야 합니다.");
+		}
+
+		// ---------------------------------------------------------------
+		// 2단계 : 검증을 전부 통과한 경우에만 Orders + OrderItem 저장
+		// ---------------------------------------------------------------
+		Orders order = new Orders();
+		order.setUser(user);
+		order.setOrderStatus(OrderStatus.PENDING);
+		order.setTotalAmount(totalAmount); // ★이제는 이미 계산이 끝난 실제 값으로 바로 저장
+		ordersRepository.save(order);
+
+		for (OrderLine line : lines) {
+			addOrderItem(order, line.book(), line.quantity());
+		}
+
+		// 주문에 사용한 장바구니 항목은 제거
+		// ★Cart.items(부모의 메모리상 컬렉션)는 아예 건드리지 않고, CartItemRepository 로만
+		//   개별 삭제합니다. (orphanRemoval 컬렉션 조작과 repository 삭제를 같이 쓰면
+		//   같은 행을 두 번 지우려다 충돌하고, 컬렉션 조작만 믿고 repository 삭제를 안 하면
+		//   타이밍에 따라 실제로 삭제가 안 되는 경우가 있어, 가장 단순하고 확실한 개별
+		//   repository.delete() 방식 하나로 통일했습니다. CartService 도 동일한 원칙입니다.)
+		for (CartItem used : usedCartItems) {
+			cartItemRepository.delete(used);
+		}
+
+		return OrderResponseDto.from(order);
+	}
+
+	private void checkStock(Book book, int quantity) {
+		int stockQuantity = (book.getStock() != null) ? book.getStock().getStockQuantity() : 0;
+		if (quantity > stockQuantity) {
+			throw new IllegalStateException("[" + book.getTitle() + "] 재고가 부족합니다. (현재 재고 : " + stockQuantity + "권)");
+		}
+	}
+
+	private void addOrderItem(Orders order, Book book, int quantity) {
+		OrderItem orderItem = new OrderItem();
+		orderItem.setOrder(order);
+		orderItem.setBook(book);
+		orderItem.setQuantity(quantity);
+		orderItem.setPrice(book.getPrice());               // ★주문 시점 가격 스냅샷
+		orderItem.setBookTitleSnapshot(book.getTitle());   // ★주문 시점 도서명 스냅샷
+		orderItemRepository.save(orderItem);
+		order.getItems().add(orderItem); // ★양방향 동기화
+	}
+
+	// 2. 내 주문내역 조회 - 12개씩 페이징
+	public PageResponseDto<OrderResponseDto> getMyOrders(Long userId, int page, int size) {
+		int currentPage = Math.max(page, 1);
+		int pageSize = (size > 0) ? size : DEFAULT_PAGE_SIZE;
+		Pageable pageable = PageRequest.of(currentPage - 1, pageSize);
+
+		Page<Orders> result = ordersRepository.findByUser_IdOrderByIdDesc(userId, pageable);
+		List<OrderResponseDto> content = result.getContent().stream()
+				.map(OrderResponseDto::from)
+				.collect(Collectors.toList());
+
+		return new PageResponseDto<>(content, currentPage, pageSize, result.getTotalElements(), result.getTotalPages());
+	}
+
+	// 3. 주문 상세 조회 (본인 주문만)
+	public OrderResponseDto getOrder(Long userId, Long orderId) {
+		Orders order = ordersRepository.findById(orderId)
+				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 주문입니다. ID : " + orderId));
+		if (!order.getUser().getId().equals(userId)) {
+			throw new IllegalStateException("본인의 주문만 조회할 수 있습니다.");
+		}
+		return OrderResponseDto.from(order);
+	}
+}

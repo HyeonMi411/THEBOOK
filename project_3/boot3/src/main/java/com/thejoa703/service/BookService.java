@@ -19,12 +19,15 @@ import com.thejoa703.api.BookNlDto;
 import com.thejoa703.api.NlBookApiService;
 import com.thejoa703.dto.BookDto.BookRequestDto;
 import com.thejoa703.dto.BookDto.BookResponseDto;
+import com.thejoa703.dto.BookDto.StockUpdateRequestDto;
 import com.thejoa703.dto.PageResponseDto;
 import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Book;
+import com.thejoa703.entity.BookStock;
 import com.thejoa703.exception.ResourceNotFoundException;
 import com.thejoa703.repository.AppUserRepository;
 import com.thejoa703.repository.BookRepository;
+import com.thejoa703.repository.BookStockRepository;
 import com.thejoa703.util.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
@@ -34,11 +37,12 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true) // ##
 public class BookService {
 
-	private final BookRepository     bookRepository;
-	private final AppUserRepository  appUserRepository;
-	private final FileStorageService fileStorageService; // 표지이미지 업로드처리
-	private final ApiKakaoBook       apiKakaoBook;        // ★카카오 도서검색 API
-	private final NlBookApiService   nlBookApiService;    // ★국립중앙도서관 도서검색 API
+	private final BookRepository      bookRepository;
+	private final BookStockRepository bookStockRepository; // ★재고 관리
+	private final AppUserRepository   appUserRepository;
+	private final FileStorageService  fileStorageService; // 표지이미지 업로드처리
+	private final ApiKakaoBook        apiKakaoBook;        // ★카카오 도서검색 API
+	private final NlBookApiService    nlBookApiService;    // ★국립중앙도서관 도서검색 API
 
 	private static final int DEFAULT_PAGE_SIZE = 12; // ★화면에 12개씩
 
@@ -260,5 +264,29 @@ public class BookService {
 
 	private String blankToDefault(String value, String defaultValue) {
 		return (value == null || value.isBlank()) ? defaultValue : value;
+	}
+
+	// ★재고 수정 ( 관리자 전용 ) - BookStock 이 아직 없으면 새로 만들고, 있으면 값만 갱신
+	//   Swagger 에서 결제기능(장바구니/주문/결제)을 테스트하려면 재고가 있어야 하므로,
+	//   테스트 전에 이 API로 원하는 도서의 재고를 먼저 세팅해주세요.
+	@PreAuthorize("hasRole('ADMIN')")
+	@Transactional
+	public BookResponseDto updateStock(Long bookId, StockUpdateRequestDto dto) {
+		Book book = bookRepository.findById(bookId)
+				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 도서입니다. ID : " + bookId));
+
+		BookStock stock = bookStockRepository.findById(bookId).orElse(null);
+		if (stock == null) {
+			stock = new BookStock();
+			stock.setBook(book); // ★같은 트랜잭션 안이므로 book 이 매니지드 상태 - @MapsId 안전
+			stock.setStockQuantity(dto.getStockQuantity());
+			bookStockRepository.save(stock);
+			book.setStock(stock); // ★양방향 동기화
+		} else {
+			stock.setStockQuantity(dto.getStockQuantity());
+			bookStockRepository.save(stock);
+		}
+
+		return BookResponseDto.from(book);
 	}
 }
