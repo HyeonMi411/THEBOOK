@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchBookDetailRequest, deleteBookRequest, updateBookRequest, resetBookState } from "../../reducers/bookReducer";
+import { addToCartRequest } from "../../reducers/cartReducer";
+import { createOrderRequest, resetOrderState } from "../../reducers/orderReducer";
 import EditBookModal from "../../components/EditBookModal";
 import BookCoverImage from "../../components/BookCoverImage";
 
@@ -14,9 +16,11 @@ export default function BookDetailPage() {
 
   const { currentBook, loading, error } = useSelector((state) => state.book);
   const { user } = useSelector((state) => state.auth);
+  const { currentOrder } = useSelector((state) => state.order);
   const isAdmin = user?.role === "ROLE_ADMIN";
 
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [buyQuantity, setBuyQuantity] = useState(1);
 
   useEffect(() => {
     if (id) {
@@ -24,6 +28,14 @@ export default function BookDetailPage() {
     }
     return () => { dispatch(resetBookState()); };
   }, [id, dispatch]);
+
+  // ★바로구매: 주문 생성 성공하면 결제확인 화면으로 이동
+  useEffect(() => {
+    if (currentOrder) {
+      router.push(`/order/checkout?orderId=${currentOrder.id}`);
+      dispatch(resetOrderState());
+    }
+  }, [currentOrder, router, dispatch]);
 
   const handleDelete = () => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
@@ -54,6 +66,19 @@ export default function BookDetailPage() {
     setIsEditModalVisible(false);
   };
 
+  // ★장바구니 담기 (로그인 필요)
+  const handleAddToCart = () => {
+    if (!user) { router.push('/login'); return; }
+    dispatch(addToCartRequest({ bookId: currentBook.id, quantity: buyQuantity }));
+    alert('장바구니에 담았습니다.');
+  };
+
+  // ★바로구매 (로그인 필요) - 주문 생성 후 결제확인 화면으로 이동
+  const handleBuyNow = () => {
+    if (!user) { router.push('/login'); return; }
+    dispatch(createOrderRequest({ bookId: currentBook.id, quantity: buyQuantity }));
+  };
+
   if (loading || !currentBook) return <div className="detail-container">로딩중...</div>;
   if (error) return <div className="detail-container" style={{ color: "red" }}>{error}</div>;
 
@@ -78,6 +103,9 @@ export default function BookDetailPage() {
             <h2 className="info-title">{currentBook.title}</h2>
             <div className="info-meta">{currentBook.author} · {currentBook.publisher}</div>
             <span className="badge-category">{currentBook.category}</span>
+            <span className={`stock-badge ${currentBook.stockQuantity > 0 ? 'in-stock' : 'out-of-stock'}`}>
+              {currentBook.stockQuantity > 0 ? `재고 ${currentBook.stockQuantity}권` : '품절'}
+            </span>
 
             {currentBook.rating != null && (
               <div className="rating-line">
@@ -108,6 +136,28 @@ export default function BookDetailPage() {
             </table>
 
             <div className="description-box">{currentBook.description}</div>
+
+            {/* ★장바구니 담기 / 바로구매 - 로그인한 회원이면 누구나 가능 */}
+            <div style={{ marginTop: 20 }}>
+              <select
+                className="qty-select"
+                value={buyQuantity}
+                onChange={(e) => setBuyQuantity(Number(e.target.value))}
+                disabled={currentBook.stockQuantity === 0}
+              >
+                {Array.from({ length: Math.max(Math.min(currentBook.stockQuantity, 10), 1) }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>{n}권</option>
+                ))}
+              </select>
+              <div className="buy-btn-area">
+                <button type="button" className="btn-cart" onClick={handleAddToCart} disabled={currentBook.stockQuantity === 0}>
+                  🛒 장바구니 담기
+                </button>
+                <button type="button" className="btn-buy-now" onClick={handleBuyNow} disabled={currentBook.stockQuantity === 0}>
+                  ⚡ 바로구매
+                </button>
+              </div>
+            </div>
 
             <div className="btn-area">
               <a className="btn btn-outline" onClick={(e) => { e.preventDefault(); router.push('/books'); }} href="/books">

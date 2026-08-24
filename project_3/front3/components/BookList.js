@@ -47,6 +47,12 @@ export default function BookList({ books = [], currentPage, totalPages, onPageCh
                   alt={book.title}
                   iconSize={40}
                 />
+                {/* ★재고 0이면 품절 뱃지 표시 (요구사항정의서 8-13) */}
+                {book.stockQuantity === 0 && (
+                  <span className="stock-badge out-of-stock" style={{ position: 'absolute', top: 10, right: 10, margin: 0 }}>
+                    품절
+                  </span>
+                )}
               </div>
 
               <div className="book-body">

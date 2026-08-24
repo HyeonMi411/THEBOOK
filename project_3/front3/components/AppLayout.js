@@ -11,6 +11,8 @@ import Footer from './Footer';                            // ★boot1 푸터
 
 const { Header, Content } = Layout;    // <Layout.Header> → <Header>
 import { logoutRequest } from '../reducers/authReducer';  // ##
+import { fetchCartRequest } from '../reducers/cartReducer'; // ##
+import { useEffect } from 'react';
 
 // 2. 부품
 // Header / Drawer
@@ -20,6 +22,11 @@ function AppLayout({ children }) {
     const router   = useRouter();
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
+    const { items: cartItems } = useSelector((state) => state.cart); // ★장바구니 담긴 개수 뱃지용
+
+    useEffect(() => {
+        if (user && user.nickname) dispatch(fetchCartRequest());
+    }, [user, dispatch]);
 
     const handleLogout = () => { dispatch(logoutRequest()); router.replace('/login'); };  // 디스패치(logoutRequest()) / 경로 login 넘기기   //##
 
@@ -33,7 +40,10 @@ function AppLayout({ children }) {
                     ? [
 
                     ]
-                    : []),                
+                    : []),
+                { key: "cart",    label: <Link href="/cart">🛒 CART{cartItems?.length > 0 ? ` (${cartItems.length})` : ''}</Link> }, // ★장바구니
+                { key: "orders",  label: <Link href="/mypage/orders">📋 주문내역</Link> }, // ★내 주문내역
+                { key: "new",     label: <Link href="/posts/new">✏️ NEW POST</Link> },
                 { key: "profile", label: <Link href="/mypage">👤 MYPAGE </Link> },
                 { key: "logout",  label: <a onClick={handleLogout} style={{ cursor: "pointer" }}>🔓 로그아웃</a> },
             ]

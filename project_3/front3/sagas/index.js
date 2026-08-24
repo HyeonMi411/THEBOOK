@@ -5,6 +5,8 @@ import  authSaga  from  './authSaga';
 import  postSaga  from  './postSaga';
 import  bookSaga  from  './bookSaga';     // ★도서(BOOK)
 import  noticeSaga  from  './noticeSaga'; // ★공지사항(SBOARD2)
+import  cartSaga  from  './cartSaga';     // ★장바구니
+import  orderSaga  from  './orderSaga';   // ★주문/결제
 //import  commentSaga  from  './commentSaga';
 
 export default  function  *rootSaga(){
@@ -13,6 +15,8 @@ export default  function  *rootSaga(){
         fork( postSaga ) ,
         fork( bookSaga ) ,     // ★
         fork( noticeSaga ) ,   // ★
+        fork( cartSaga ) ,     // ★
+        fork( orderSaga ) ,    // ★
        // fork( commentSaga ) ,
     ]);
 }
