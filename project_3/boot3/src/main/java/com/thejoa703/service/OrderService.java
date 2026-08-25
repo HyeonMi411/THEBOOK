@@ -78,10 +78,10 @@ public class OrderService {
 					throw new IllegalStateException("본인의 장바구니 항목만 주문할 수 있습니다.");
 				}
 				Book book = cartItem.getBook();
-				checkStock(book, cartItem.getQuantity());
+				checkPurchasable(book, cartItem.getQuantity());
 
 				lines.add(new OrderLine(book, cartItem.getQuantity()));
-				totalAmount += (book.getPrice() != null ? book.getPrice() : 0) * cartItem.getQuantity();
+				totalAmount += book.getPrice() * cartItem.getQuantity();
 				usedCartItems.add(cartItem);
 			}
 
@@ -90,10 +90,10 @@ public class OrderService {
 			Book book = bookRepository.findById(dto.getBookId())
 					.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 도서입니다. ID : " + dto.getBookId()));
 			int quantity = (dto.getQuantity() != null) ? dto.getQuantity() : 1;
-			checkStock(book, quantity);
+			checkPurchasable(book, quantity);
 
 			lines.add(new OrderLine(book, quantity));
-			totalAmount += (book.getPrice() != null ? book.getPrice() : 0) * quantity;
+			totalAmount += book.getPrice() * quantity;
 
 		} else {
 			throw new IllegalArgumentException("장바구니 항목(cartItemIds) 또는 바로구매 도서(bookId)를 지정해야 합니다.");
@@ -125,7 +125,20 @@ public class OrderService {
 		return OrderResponseDto.from(order);
 	}
 
-	private void checkStock(Book book, int quantity) {
+	// ★재고 + 가격 검증을 함께 처리 (기존 이름 checkStock 에서 checkPurchasable 로 변경)
+	//   - 재고 부족 시 거부 (기존과 동일)
+	//   - ★가격(price)이 비어있는 도서는 여기서 즉시 거부합니다. 예전에는 가격이 null이면
+	//     조용히 0원으로 처리해서, 겉보기엔 정상적으로 PENDING 주문이 만들어졌다가 카카오페이
+	//     결제준비(ready) 단계에서 total_amount=0 을 이상하게 여긴 카카오 서버가
+	//     "error_code: -1 internal server error!" 라는, 원인을 전혀 알 수 없는 응답을
+	//     돌려주는 문제가 있었습니다. 문제를 훨씬 이해하기 쉬운 시점(주문생성)에서,
+	//     훨씬 명확한 한국어 메시지로 미리 막습니다.
+	private void checkPurchasable(Book book, int quantity) {
+		if (book.getPrice() == null || book.getPrice() <= 0) {
+			throw new IllegalStateException(
+					"[" + book.getTitle() + "] 이 도서는 가격이 등록되지 않아 구매할 수 없습니다. 관리자에게 문의해주세요."
+			);
+		}
 		int stockQuantity = (book.getStock() != null) ? book.getStock().getStockQuantity() : 0;
 		if (quantity > stockQuantity) {
 			throw new IllegalStateException("[" + book.getTitle() + "] 재고가 부족합니다. (현재 재고 : " + stockQuantity + "권)");
