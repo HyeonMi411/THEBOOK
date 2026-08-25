@@ -1,12 +1,8 @@
 {
-  "parser": "@babel/eslint-parser",
+  "parser": "babel-eslint",
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "module",
-    "requireConfigFile": false,
-    "babelOptions": {
-      "presets": ["next/babel"]
-    },
     "ecmaFeatures": {
       "jsx": true
     }
