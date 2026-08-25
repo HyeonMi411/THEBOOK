@@ -42,8 +42,7 @@ function AppLayout({ children }) {
                     ]
                     : []),
                 { key: "cart",    label: <Link href="/cart">{`🛒 CART${cartItems?.length > 0 ? ` (${cartItems.length})` : ''}`}</Link> }, // ★장바구니
-                { key: "orders",  label: <Link href="/mypage/orders">📋 주문내역</Link> }, // ★내 주문내역
-                { key: "new",     label: <Link href="/posts/new">✏️ NEW POST</Link> },
+                { key: "orders",  label: <Link href="/mypage/orders">📋 주문내역</Link> }, // ★내 주문내역                
                 { key: "profile", label: <Link href="/mypage">👤 MYPAGE </Link> },
                 { key: "logout",  label: <a onClick={handleLogout} style={{ cursor: "pointer" }}>🔓 로그아웃</a> },
             ]
