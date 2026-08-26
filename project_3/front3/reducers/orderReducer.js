@@ -52,7 +52,9 @@ const orderReducer = createSlice({
         },
         fetchMyOrdersSuccess: (state, action) => {
             state.loading = false;
-            state.orders = action.payload.content;
+            // ★action.payload.content 가 없는 경우(응답 구조가 예상과 다른 경우 등)에도
+            //   orders 가 undefined 가 되지 않도록 방어합니다.
+            state.orders = action.payload.content || [];
             state.currentPage = action.payload.currentPage;
             state.pageSize = action.payload.pageSize;
             state.totalElements = action.payload.totalElements;

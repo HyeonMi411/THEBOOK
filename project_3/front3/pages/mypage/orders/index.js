@@ -17,6 +17,7 @@ export default function MyOrdersPage() {
   const dispatch = useDispatch();
   const { orders, currentPage, totalPages, loading, error } = useSelector((state) => state.order);
   const { user } = useSelector((state) => state.auth);
+  const orderList = orders || []; // ★orders 가 어떤 이유로든 배열이 아닐 때도 화면이 깨지지 않도록 방어
 
   useEffect(() => {
     if (!user) { router.replace('/login'); return; }
@@ -40,11 +41,11 @@ export default function MyOrdersPage() {
       {loading && <p style={{ textAlign: 'center' }}>불러오는 중...</p>}
       {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
-      {!loading && orders.length === 0 && (
+      {!loading && orderList.length === 0 && (
         <div className="notice-empty">주문내역이 없습니다.</div>
       )}
 
-      {orders.map((order) => (
+      {orderList.map((order) => (
         <div
           key={order.id}
           className="myorder-card"
