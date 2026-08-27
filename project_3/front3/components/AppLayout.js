@@ -10,7 +10,7 @@ import BookSearchBox from './BookSearchBox';              // ★boot1 헤더 AJA
 import Footer from './Footer';                            // ★boot1 푸터
 
 const { Header, Content } = Layout;    // <Layout.Header> → <Header>
-import { logoutRequest } from '../reducers/authReducer';  // ##
+import { logoutRequest, loadUserRequest } from '../reducers/authReducer';  // ##
 import { fetchCartRequest } from '../reducers/cartReducer'; // ##
 import { useEffect } from 'react';
 
@@ -23,6 +23,19 @@ function AppLayout({ children }) {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
     const { items: cartItems } = useSelector((state) => state.cart); // ★장바구니 담긴 개수 뱃지용
+
+    // ★새로고침, 혹은 카카오페이 결제창(외부 도메인)에서 우리 사이트로 돌아오는 것처럼
+    //   브라우저가 완전히 새로 페이지를 로드하면 Redux 스토어가 처음부터 다시 만들어져서
+    //   user 가 null 이 됩니다. localStorage 에 accessToken 이 남아있다면(진짜 로그아웃한
+    //   게 아니라면) 그 토큰으로 내 정보를 다시 불러와서 로그인 상태를 복원합니다.
+    //   이게 없으면, 결제 완료 후 "주문내역 보기"처럼 로그인이 필요한 화면으로 이동할 때
+    //   실제로는 로그인되어 있는데도 user 가 비어있어서 로그인 화면으로 튕겨나가 버립니다.
+    useEffect(() => {
+        if (!user && typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
+            dispatch(loadUserRequest());
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
         if (user && user.nickname) dispatch(fetchCartRequest());

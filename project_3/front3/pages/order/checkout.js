@@ -19,7 +19,9 @@ export default function CheckoutPage() {
   const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (!user) { router.replace('/login'); return; }
+    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
+    if (!user && !hasToken) { router.replace('/login'); return; }
+    if (!user) return; // user 복원 대기중 (AppLayout 의 loadUserRequest)
     if (!router.isReady) return;
 
     if (orderId) {
@@ -49,7 +51,7 @@ export default function CheckoutPage() {
     dispatch(paymentReadyRequest(currentOrder.id));
   };
 
-  if (!user) return null;
+  if (!user) return <div className="checkout-wrap" style={{ textAlign: 'center', color: '#999' }}>로그인 확인 중...</div>;
   if (loading || !currentOrder) return <div className="checkout-wrap">주문 준비중...</div>;
   if (error) return <div className="checkout-wrap" style={{ color: 'red' }}>{error}</div>;
 

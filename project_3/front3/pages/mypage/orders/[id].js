@@ -24,14 +24,16 @@ export default function MyOrderDetailPage() {
   const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (!user) { router.replace('/login'); return; }
+    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
+    if (!user && !hasToken) { router.replace('/login'); return; }
+    if (!user) return; // user 복원 대기중 (AppLayout 의 loadUserRequest)
     if (!id) return;
     dispatch(fetchOrderDetailRequest(Number(id)));
     return () => { dispatch(resetOrderState()); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
 
-  if (!user) return null;
+  if (!user) return <div className="myorders-wrap" style={{ textAlign: 'center', color: '#999' }}>로그인 확인 중...</div>;
   if (loading || !currentOrder) {
     return <div className="myorders-wrap">{error ? <p style={{ color: 'red' }}>{error}</p> : '불러오는 중...'}</div>;
   }

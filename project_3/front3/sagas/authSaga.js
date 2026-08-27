@@ -123,9 +123,19 @@ export function*  updateProfileImage( action ){
 }   
 
 // ---  유저 정보 로드  ---
-export const  loadUserApi = ()=>{};
+// ★새로고침, 혹은 카카오페이 결제창(외부 도메인)에서 우리 사이트로 돌아오는 것처럼
+//   브라우저가 완전히 새로 페이지를 로드하는 경우, Redux 스토어가 처음부터 다시
+//   만들어져서 state.auth.user 가 null 로 초기화됩니다. localStorage 의 accessToken
+//   은 그대로 살아있으므로, 이 API로 "그 토큰이 진짜 유효한 사용자의 것인지" 확인하고
+//   user 정보를 다시 채워넣습니다.
+export const loadUserApi = () => api.get(`${USER_API_BASE}/me`);
 export function * loadUser(action){
-
+    try {
+        const result = yield call(loadUserApi);
+        yield put(loadUserSuccess(result.data));
+    } catch (err) {
+        yield put(loadUserFailure(err.response?.data?.message || err.message));
+    }
 }
 
 //■1) takeLatest : 여러번요청와도 1번만 
@@ -134,7 +144,7 @@ function* watchLogin(){             yield  takeLatest( loginRequest.type        
 function* watchLogout(){            yield  takeLatest( logoutRequest.type              , logout );      }
 function* watchUpdateNickname(){    yield  takeLatest( updateNicknameRequest.type      , updateNickname );    }
 function* watchUpdateProfileImage(){yield  takeLatest( updateProfileImageRequest.type  , updateProfileImage );   }
-function* watchLoadUser(){yield  takeLatest( updateProfileImageRequest.type  , updateProfileImage );   }
+function* watchLoadUser(){yield  takeLatest( loadUserRequest.type  , loadUser );   }
 
 export default  function * authSaga(){
     yield all([
@@ -143,6 +153,7 @@ export default  function * authSaga(){
         call(watchLogout),
         call(watchUpdateNickname),
         call(watchUpdateProfileImage),
+        call(watchLoadUser),
     ]);
 }
  

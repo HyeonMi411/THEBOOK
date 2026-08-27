@@ -15,10 +15,12 @@ export default function CartPage() {
   const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (!user) {
+    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
+    if (!user && !hasToken) {
       router.replace('/login');
       return;
     }
+    if (!user) return; // user 복원 대기중 (AppLayout 의 loadUserRequest)
     dispatch(fetchCartRequest());
   }, [dispatch, user, router]);
 
@@ -56,7 +58,7 @@ export default function CartPage() {
     router.push({ pathname: '/order/checkout', query: { cartItemIds: selectedIds.join(',') } });
   };
 
-  if (!user) return null;
+  if (!user) return <div className="cart-wrap" style={{ textAlign: 'center', color: '#999' }}>로그인 확인 중...</div>;
 
   return (
     <div className="cart-wrap">

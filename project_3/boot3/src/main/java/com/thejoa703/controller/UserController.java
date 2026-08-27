@@ -94,6 +94,7 @@ public class UserController {
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> login(
             @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest,	// ★로컬(HTTP) 환경 여부 판별용
             HttpServletResponse response	// 응답객체( 쿠키설정 )   
     ) { // 1. 사용자인증처리
         UserResponseDto user = userService.login(request);
@@ -112,10 +113,17 @@ public class UserController {
         );
         //3. 쿠키설정
         //  org.springframework.http.ResponseCooke         
+        // ★secure(true) 를 무조건 고정하면, http://localhost 같은 비HTTPS 로컬 개발환경에서는
+        //   브라우저가 이 쿠키를 아예 서버로 전송하지 않습니다. 그러면 /auth/refresh 호출 시
+        //   쿠키가 없어서 항상 실패하고, 프론트(axios 인터셉터)가 이를 "재로그인 필요"로
+        //   판단해 강제 로그아웃시켜 버립니다. OAuth2SuccessHandler 와 동일하게 로컬環境
+        //   여부를 판별해서 로컬에서는 secure=false 로 설정합니다.
+        boolean isLocal = httpRequest.getServerName().equals("localhost") || httpRequest.getServerName().equals("127.0.0.1");
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)		// js 접근불가   
-                .secure(true)  	   // https 전송한 허용
-                .sameSite("Strict")  // csrf 방지
+                .secure(!isLocal)  	   // ★로컬(http)에서는 false, 배포환경(https)에서는 true
+                .sameSite("Lax")  // ★"Strict" 는 카카오페이 결제처럼 외부(카카오) 도메인을 거쳐
+                                  //   돌아오는 리다이렉트 흐름에서 쿠키가 누락될 수 있어 완화
                 .path("/")   // 전체경로 적용
                 .maxAge(props.getRefreshTokenExpSeconds())		// 만료시간설정  
                 .build();
@@ -142,16 +150,18 @@ public class UserController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
           @CookieValue(name = "refreshToken", required = false) String refreshToken,
+                                       HttpServletRequest httpRequest,
                                        HttpServletResponse response) {
         var claims = jwtProvider.parse(refreshToken).getBody();
         String userId = claims.getSubject();
 
         tokenStore.deleteRefreshToken(userId);	// redis 제거
  
+        boolean isLocal = httpRequest.getServerName().equals("localhost") || httpRequest.getServerName().equals("127.0.0.1");
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
+                .secure(!isLocal)  // ★login() 과 동일한 이유로 로컬환경 여부에 따라 분기
+                .sameSite("Lax")
                 .path("/")
                 .maxAge(0)
                 .build();
@@ -254,10 +264,11 @@ public class UserController {
             } 
             
             // 쿠키삭제
+            boolean isLocal = request.getServerName().equals("localhost") || request.getServerName().equals("127.0.0.1");
             ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
                     .httpOnly(true)
-                    .secure(true)
-                    .sameSite("Strict")
+                    .secure(!isLocal)
+                    .sameSite("Lax")
                     .path("/")
                     .maxAge(0)
                     .build();
