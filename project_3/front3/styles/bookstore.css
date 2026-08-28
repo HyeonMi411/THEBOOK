@@ -437,6 +437,16 @@ textarea.bs-form-control { min-height: 160px; resize: vertical; }
 .myorder-status.CANCELLED, .myorder-status.FAILED { background: #fde2e2; color: #dc2626; }
 .myorder-items { color: #555; font-size: 14px; margin-bottom: 8px; }
 .myorder-total { font-weight: 700; color: #222; text-align: right; }
+.myorder-delete-btn {
+    padding: 6px 14px; border-radius: 8px; border: 1px solid #f0b4b4;
+    background: #fff; color: #dc2626; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.myorder-delete-btn:hover { background: #fdecec; }
+.myorder-delete-btn-large {
+    width: 100%; margin-top: 10px; padding: 14px; border-radius: 10px;
+    border: 1px solid #f0b4b4; background: #fff; color: #dc2626; font-weight: 700; cursor: pointer;
+}
+.myorder-delete-btn-large:hover { background: #fdecec; }
 
 /* ================= 재고/구매버튼 (도서 상세 페이지) ================= */
 .stock-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; margin-left: 10px; }
@@ -449,3 +459,13 @@ textarea.bs-form-control { min-height: 160px; resize: vertical; }
 .btn-buy-now:hover { background: #1d4ed8; }
 .btn-cart:disabled, .btn-buy-now:disabled { opacity: .5; cursor: not-allowed; }
 .qty-select { padding: 10px 12px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 12px; }
+
+/* ================= 소셜 가입확인(추가정보 입력) 화면 (/oauth2/signup) ================= */
+.signup-confirm-wrap { max-width: 480px; margin: 100px auto; padding: 0 16px; text-align: center; }
+.signup-confirm-card { background: #fff; border-radius: 18px; padding: 44px 36px; box-shadow: 0 10px 30px rgba(0,0,0,.08); text-align: left; }
+.signup-confirm-card h2 { text-align: center; margin-bottom: 12px; }
+.signup-confirm-desc { color: #777; font-size: 14px; line-height: 1.6; text-align: center; margin-bottom: 28px; }
+.signup-confirm-card label { display: block; font-size: 13px; color: #555; font-weight: 700; margin-bottom: 6px; }
+.signup-confirm-card input { width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #ddd; font-size: 15px; box-sizing: border-box; }
+.signup-confirm-card input:focus { outline: none; border-color: #2563eb; }
+.signup-confirm-card button { width: 100%; }

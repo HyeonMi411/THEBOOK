@@ -9,7 +9,8 @@ export default function BooksPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const { books, loading, error, currentPage, totalPages, totalElements } = useSelector((state) => state.book);
-  const keyword = router.query.keyword;
+  // ★URL을 직접 수정해서 들어오는 경우(?keyword= 뒤에 공백 등)까지 대비해 여기서도 정리합니다.
+  const keyword = typeof router.query.keyword === 'string' ? router.query.keyword.trim() : router.query.keyword;
 
   // 페이지 진입/쿼리변경시: ?keyword= 있으면 검색키워드 관련 목록조회, 없으면 ?page=(기본1) 로 페이징 조회 (12개씩)
   useEffect(() => {

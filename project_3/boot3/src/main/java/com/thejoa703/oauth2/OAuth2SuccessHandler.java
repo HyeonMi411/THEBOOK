@@ -37,6 +37,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     @Value("${app.oauth2.redirect-url}")
     private String redirectUrl;  // access Token을 react로 리다이렉트하면서 전달
 
+    @Value("${app.oauth2.signup-confirm-url:}")
+    private String signupConfirmUrlProp; // ★신규 소셜회원 "가입확인(추가정보 입력)" 화면 주소
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
@@ -56,16 +59,31 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             case "naver":  userInfo = new UserInfoNaver(attrs); break;
             default: throw new IllegalArgumentException("지원하지 않는 Provider: " + registrationId);
         }
-        
-        // Step1) db조회 / 저장
-        AppUser user = userService.findByEmailAndProvider(userInfo.getEmail(), userInfo.getProvider())
-                .orElseGet(() -> userService.saveSocialUser(
-                        userInfo.getEmail(),
-                        userInfo.getProvider(),
-                        userInfo.getProviderId(),
-                        userInfo.getNickname(),
-                        userInfo.getImage()
-                ));
+
+        // ★기존 회원인지 먼저 확인 (DB에 저장하지 않고 조회만)
+        var existingUser = userService.findByEmailAndProvider(userInfo.getEmail(), userInfo.getProvider());
+
+        if (existingUser.isEmpty()) {
+            // ------------------------------------------------------------------
+            // ★신규 소셜회원 - 여기서 곧바로 회원가입시키지 않습니다.
+            //   "가입확인(닉네임 확인/수정)" 화면으로 먼저 보내고, 사용자가 그 화면에서
+            //   확인을 완료해야만(POST /auth/social/signup) 실제로 DB에 저장됩니다.
+            // ------------------------------------------------------------------
+            String signupToken = jwtProvider.createSignupToken(Map.of(
+                    "email", userInfo.getEmail(),
+                    "provider", userInfo.getProvider(),
+                    "providerId", userInfo.getProviderId(),
+                    "nickname", userInfo.getNickname() != null ? userInfo.getNickname() : "",
+                    "image", userInfo.getImage() != null ? userInfo.getImage() : ""
+            ));
+            String signupConfirmUrl = (signupConfirmUrlProp != null && !signupConfirmUrlProp.isBlank())
+                    ? signupConfirmUrlProp
+                    : redirectUrl.replace("/oauth2/callback", "/oauth2/signup"); // ★기본값 유추
+            response.sendRedirect(signupConfirmUrl + "?signupToken=" + signupToken);
+            return;
+        }
+
+        AppUser user = existingUser.get();
         
         // Step2) JWT 토큰발급 
         String access = jwtProvider.createAccessToken(user.getId().toString(), Map.of(

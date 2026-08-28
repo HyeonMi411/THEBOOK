@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchMyOrdersRequest, resetOrderState } from '../../../reducers/orderReducer';
+import { fetchMyOrdersRequest, deleteOrderRequest, resetOrderState } from '../../../reducers/orderReducer';
 import Pagination from '../../../components/Pagination';
 
 const STATUS_LABEL = {
@@ -37,6 +37,14 @@ export default function MyOrdersPage() {
     router.push({ pathname: '/mypage/orders', query: { page } }, undefined, { scroll: true });
   };
 
+  // ★결제전(PENDING) 주문만 삭제 가능 - 목록 클릭(상세이동)과 이벤트가 겹치지 않도록 stopPropagation
+  const handleDelete = (e, orderId) => {
+    e.stopPropagation();
+    if (window.confirm('이 주문을 삭제하시겠습니까?')) {
+      dispatch(deleteOrderRequest(orderId));
+    }
+  };
+
   if (!user) return <div style={{ textAlign: 'center', padding: 60, color: '#999' }}>로그인 확인 중...</div>;
 
   return (
@@ -64,7 +72,18 @@ export default function MyOrdersPage() {
           <div className="myorder-items">
             {order.items?.map((item) => item.bookTitle).join(', ')}
           </div>
-          <div className="myorder-total">{order.totalAmount?.toLocaleString()}원</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="myorder-total">{order.totalAmount?.toLocaleString()}원</div>
+            {/* ★모든 상태에서 삭제 가능 - 결제전(PENDING)은 실제 삭제, 결제완료/취소/실패는
+                DB에는 그대로 두고 내 목록에서만 안 보이게(숨기기) 처리됩니다. */}
+            <button
+              type="button"
+              className="myorder-delete-btn"
+              onClick={(e) => handleDelete(e, order.id)}
+            >
+              삭제
+            </button>
+          </div>
         </div>
       ))}
 

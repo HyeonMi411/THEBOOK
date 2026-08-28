@@ -69,11 +69,18 @@ public class Sboard2Service {
 		return Sboard2ResponseDto.from(board);
 	}
 
-	// 3. 제목검색
+	// 3. 제목검색 ( ★대소문자 구분없이, 앞뒤/중복 공백은 정리해서 검색 )
 	public List<Sboard2ResponseDto> searchByTitle(String keyword) {
-		return sboard2Repository.findByBtitleContainingOrderByIdDesc(keyword).stream()
+		String cleaned = cleanKeyword(keyword);
+		return sboard2Repository.findByBtitleContainingIgnoreCaseOrderByIdDesc(cleaned).stream()
 				.map(Sboard2ResponseDto::from)
 				.collect(Collectors.toList());
+	}
+
+	// ★검색어 앞뒤 공백 제거 + 단어 사이 중복 공백을 하나로 정리 (BookService 와 동일한 이유)
+	private String cleanKeyword(String keyword) {
+		if (keyword == null) { return ""; }
+		return keyword.trim().replaceAll("\\s+", " ");
 	}
 
 	// 4. 공지사항 작성 ( ★관리자 전용 )

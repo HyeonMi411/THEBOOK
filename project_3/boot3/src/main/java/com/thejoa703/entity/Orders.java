@@ -65,6 +65,12 @@ public class Orders {
 	@Column(name = "APPROVED_AT")
 	private LocalDateTime approvedAt; // 결제 승인 완료 시각 (결제완료 전에는 null)
 
+	// ★사용자가 "삭제"한 결제완료/취소/실패 주문 - 실제 DB 레코드는 회계·이력 보존을 위해
+	//   남겨두고, 이 플래그만 true 로 바꿔서 "내 주문내역 목록"에서만 안 보이게 합니다.
+	//   (결제전(PENDING) 주문은 실제 거래 기록이 없으므로 이 플래그 없이 진짜로 삭제합니다)
+	@Column(name = "HIDDEN_BY_USER", nullable = false)
+	private boolean hiddenByUser = false;
+
 	// ★주문에 담긴 상품들 - 1:N (Orders 삭제시 상품도 함께 삭제)
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<OrderItem> items = new ArrayList<>();

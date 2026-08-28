@@ -6,13 +6,14 @@ import {
     createOrderRequest, createOrderSuccess, createOrderFailure,
     fetchMyOrdersRequest, fetchMyOrdersSuccess, fetchMyOrdersFailure,
     fetchOrderDetailRequest, fetchOrderDetailSuccess, fetchOrderDetailFailure,
+    deleteOrderRequest, deleteOrderSuccess, deleteOrderFailure,
     paymentReadyRequest, paymentReadySuccess, paymentReadyFailure,
     paymentApproveRequest, paymentApproveSuccess, paymentApproveFailure,
     paymentCancelRequest, paymentCancelSuccess, paymentCancelFailure,
     paymentFailRequest, paymentFailSuccess, paymentFailFailure,
 } from '../../reducers/orderReducer';
 import {
-    createOrder, fetchMyOrders, fetchOrderDetail,
+    createOrder, fetchMyOrders, fetchOrderDetail, deleteOrder,
     paymentReady, paymentApprove, paymentCancel, paymentFail,
 } from '../orderSaga';
 
@@ -115,6 +116,34 @@ describe('order saga', () => {
         const putStep = generator.throw(mockError).value;
 
         expect(putStep).toEqual(put(fetchOrderDetailFailure('본인의 주문만 조회할 수 있습니다.')));
+        expect(generator.next().done).toBe(true);
+    });
+
+    // -- ★주문 삭제 (결제전(PENDING) 주문만 가능) -- ( ★API 응답값(204, body없음)은 안 쓰고 orderId 를 그대로 담아 dispatch )
+    it('deleteOrder success', () => {
+        const orderId = 601;
+        const action = deleteOrderRequest(orderId);
+        const generator = deleteOrder(action);
+
+        const callStep = generator.next().value;
+        expect(callStep.type).toBe('CALL');
+
+        const putStep = generator.next(undefined).value; // DELETE 응답은 body 없음(204)
+
+        expect(putStep).toEqual(put(deleteOrderSuccess(orderId)));
+        expect(generator.next().done).toBe(true);
+    });
+
+    it('deleteOrder failure - 결제완료 주문 삭제 시도시 거부되는지', () => {
+        const action = deleteOrderRequest(601);
+        const generator = deleteOrder(action);
+
+        generator.next();
+
+        const mockError = { response: { data: { error: '결제가 진행된 주문은 삭제할 수 없습니다. (현재 상태 : PAID)' } } };
+        const putStep = generator.throw(mockError).value;
+
+        expect(putStep).toEqual(put(deleteOrderFailure('결제가 진행된 주문은 삭제할 수 없습니다. (현재 상태 : PAID)')));
         expect(generator.next().done).toBe(true);
     });
 

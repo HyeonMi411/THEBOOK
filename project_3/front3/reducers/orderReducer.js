@@ -84,6 +84,21 @@ const orderReducer = createSlice({
             state.error = action.payload;
         },
 
+        // --- ★주문 삭제 (결제전(PENDING) 주문만 가능) ---
+        deleteOrderRequest: (state) => {
+            state.loading = true;
+            state.error = null;
+        },
+        deleteOrderSuccess: (state, action) => {
+            state.loading = false;
+            // ★삭제한 주문만 목록에서 실제로 빠지는지 - 화면 새로고침 없이 즉시 반영
+            state.orders = state.orders.filter((order) => order.id !== action.payload);
+        },
+        deleteOrderFailure: (state, action) => {
+            state.loading = false;
+            state.error = action.payload;
+        },
+
         // --- ★카카오페이 결제준비 ---
         paymentReadyRequest: (state) => {
             state.paymentLoading = true;
@@ -148,6 +163,7 @@ export const {
     createOrderRequest, createOrderSuccess, createOrderFailure,
     fetchMyOrdersRequest, fetchMyOrdersSuccess, fetchMyOrdersFailure,
     fetchOrderDetailRequest, fetchOrderDetailSuccess, fetchOrderDetailFailure,
+    deleteOrderRequest, deleteOrderSuccess, deleteOrderFailure,
     paymentReadyRequest, paymentReadySuccess, paymentReadyFailure,
     paymentApproveRequest, paymentApproveSuccess, paymentApproveFailure,
     paymentCancelRequest, paymentCancelSuccess, paymentCancelFailure,

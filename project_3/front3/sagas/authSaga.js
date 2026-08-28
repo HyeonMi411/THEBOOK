@@ -1,5 +1,5 @@
 // sagas/authSaga.js
-import { all, call, put, takeLatest} from  'redux-saga/effects';
+import { all, call, put, select, takeLatest} from  'redux-saga/effects';
 import  api  from  '../api/axios';   //###
 import {signupRequest , signupSuccess , signupFailure,  resetUserState,
     loginRequest,loginSuccess,loginFailure,
@@ -77,17 +77,75 @@ export  function * refresh(){
 // ---  로그아웃  POST  :  /auth/logout  넘겨줄 데이터 x    ---
 export  const  logoutApi = (  )=> api.post( `${USER_API_BASE}/logout`);
 
+// ★소셜 로그아웃 URL 조회 - provider 별로 브라우저에 남은 소셜계정 세션까지 끊는 방법을 물어봅니다.
+export const socialLogoutUrlApi = (provider) => api.get(`${USER_API_BASE}/social/logout-url`, { params: { provider } });
+
 export function*  logout(){ 
+    // eslint-disable-next-line no-console
+    console.log('[logout] saga 시작');
     try{
         yield call(logoutApi);  
+        // eslint-disable-next-line no-console
+        console.log('[logout] 1) POST /auth/logout 완료');
 
         if(  typeof  window != "undefined"){
             localStorage.removeItem("accessToken");
             Cookies.remove("accessToken");
         }
+        // eslint-disable-next-line no-console
+        console.log('[logout] 2) accessToken 정리 완료');
+
+        // ★우리 서비스 로그아웃은 끝났지만, 카카오/네이버 같은 소셜 계정 자체의
+        //   브라우저 로그인 세션은 그대로 남아있을 수 있습니다. (그래서 로그아웃 직후
+        //   "카카오로 로그인"을 다시 누르면 비밀번호 확인 없이 바로 재로그인 되어버림)
+        //   provider 가 소셜(local 이 아님)이면, 그 계정 세션까지 끊는 방법을 서버에 물어봅니다.
+        const provider = yield select((state) => state.auth.user?.provider);
+        // eslint-disable-next-line no-console
+        console.log('[logout] 3) 현재 provider =', provider);
+
+        if (provider && provider !== 'local') {
+            try {
+                const result = yield call(socialLogoutUrlApi, provider);
+                // eslint-disable-next-line no-console
+                console.log('[logout] 4) /auth/social/logout-url 응답 =', result.data);
+                if (result.data.supported && result.data.logoutUrl) {
+                    // ★카카오 - 이 URL로 이동하면 브라우저의 카카오계정 세션 자체가 만료되고,
+                    //   로그아웃 처리 후 다시 로그인 화면으로 돌아옵니다.
+                    yield put(logoutSuccess());
+                    // eslint-disable-next-line no-console
+                    console.log('[logout] 5) 소셜 로그아웃 URL로 이동 =', result.data.logoutUrl);
+                    window.location.href = result.data.logoutUrl;
+                    return; // ★페이지가 이동하므로 이후 로직은 실행할 필요 없음
+                }
+                // ★네이버 등 자동 로그아웃 미지원 - 우리 서비스 로그아웃은 정상 완료됐으니
+                //   그대로 진행하되, 사용자에게 안내만 해줍니다.
+                if (!result.data.supported && typeof window !== 'undefined') {
+                    // eslint-disable-next-line no-alert
+                    alert(result.data.message);
+                }
+            } catch (e) {
+                // eslint-disable-next-line no-console
+                console.log('[logout] 4) /auth/social/logout-url 호출 실패 (조용히 넘어감) =', e);
+                // 소셜 로그아웃 URL 조회가 실패해도, 우리 서비스 로그아웃 자체는 이미
+                // 완료됐으므로 전체 로그아웃 처리가 실패한 것처럼 보이지 않게 조용히 넘어갑니다.
+            }
+        }
 
         yield put(  logoutSuccess() );
+
+        // ★provider 가 local 이거나, 소셜이지만 자동 로그아웃 미지원(구글)이거나,
+        //   소셜 로그아웃 URL 조회 자체가 실패한 경우 - 전부 여기까지 도달합니다.
+        //   카카오/네이버(리다이렉트 지원)는 이미 위에서 그 사이트로 이동하면서
+        //   return 됐으므로 여기 도달하지 않습니다. 이 경우들은 우리가 직접
+        //   /login 으로 이동시켜야 합니다 (AppLayout 은 더 이상 이동을 책임지지 않습니다).
+        // eslint-disable-next-line no-console
+        console.log('[logout] 6) /login 으로 이동');
+        if (typeof window !== "undefined") {
+            window.location.href = "/login";
+        }
     }catch(err){
+        // eslint-disable-next-line no-console
+        console.log('[logout] ★전체 실패 - POST /auth/logout 자체가 실패함 =', err);
         yield put(  logoutFailure( err.response?.data?.message || err.message ) );
     }
 }

@@ -2,6 +2,7 @@ package com.thejoa703.controller;
 
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -21,12 +22,18 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.thejoa703.dto.LoginRequest;
+import com.thejoa703.dto.UserDto.SignupPreviewDto;
+import com.thejoa703.dto.UserDto.SocialSignupCompleteRequestDto;
 import com.thejoa703.dto.UserDto.UserRequestDto;
 import com.thejoa703.dto.UserDto.UserResponseDto;
+import com.thejoa703.entity.AppUser;
 import com.thejoa703.security.JwtProperties;
 import com.thejoa703.security.JwtProvider;
 import com.thejoa703.security.TokenStore;
 import com.thejoa703.service.UserService;
+
+import io.jsonwebtoken.Claims;
+import jakarta.validation.Valid;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -44,6 +51,14 @@ public class UserController {
     private final JwtProvider   jwtProvider;	// 2. JWT 토큰생성/검증 ( access Token / refresh Token)  
     private final TokenStore    tokenStore;	  	// 3. jwt 저장소
 	private final UserService   userService;	//@Autowired
+
+	// ★카카오 REST API 키 - "카카오계정과 함께 로그아웃" URL을 서버에서 완성해서 내려주기
+	//   위한 용도입니다. (REST API 키 자체는 공개돼도 되는 값이라 노출 문제 없음)
+	@Value("${kakao.rest-api-key:}")
+	private String kakaoRestApiKey;
+
+	@Value("${app.frontend-base-url:http://localhost:3000}")
+	private String frontendBaseUrl;
 	
 	// 사용자 등록 (회원가입)
 	// 회원가입
@@ -135,6 +150,74 @@ public class UserController {
                 "user", user
         ));
     }
+
+    // ★소셜로그인 "가입확인(추가정보 입력)" 화면에서, 처음 온 사용자에게 보여줄 기본정보 조회
+    @Operation(
+            summary = "소셜 가입확인용 미리보기 조회",
+            description = "OAuth2SuccessHandler 가 신규 소셜회원에게 발급한 signupToken 을 검증하고, "
+                    + "화면에 미리 채워줄 이메일/기본닉네임/프로필이미지를 돌려줍니다. DB에는 아직 저장하지 않습니다."
+    )
+    @GetMapping("/social/preview")
+    public ResponseEntity<SignupPreviewDto> socialSignupPreview(
+            @Parameter(description = "OAuth2SuccessHandler 가 발급한 가입확인용 임시토큰") @RequestParam(name = "signupToken") String signupToken
+    ) {
+        Claims claims = jwtProvider.parseSignupToken(signupToken).getBody();
+        return ResponseEntity.ok(SignupPreviewDto.builder()
+                .email(claims.get("email", String.class))
+                .provider(claims.get("provider", String.class))
+                .nicknameSuggestion(claims.get("nickname", String.class))
+                .image(claims.get("image", String.class))
+                .build());
+    }
+
+    // ★소셜로그인 "가입확인(추가정보 입력)" 완료 - 사용자가 닉네임을 확인/수정하고 제출하면
+    //   이 시점에 비로소 실제로 회원가입(DB저장)이 이루어지고, 곧바로 로그인 처리됩니다.
+    @Operation(
+            summary = "소셜 가입확인 완료 (실제 회원가입 + 로그인)",
+            description = "signupToken 을 검증한 뒤, 사용자가 입력한 닉네임으로 최종 회원가입을 완료하고 "
+                    + "일반 로그인과 동일하게 accessToken 발급 + refreshToken 쿠키 설정을 합니다."
+    )
+    @PostMapping("/social/signup")
+    public ResponseEntity<Map<String, Object>> socialSignupComplete(
+            @Valid @RequestBody SocialSignupCompleteRequestDto request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse response
+    ) {
+        Claims claims = jwtProvider.parseSignupToken(request.getSignupToken()).getBody();
+        String email      = claims.get("email", String.class);
+        String provider   = claims.get("provider", String.class);
+        String providerId = claims.get("providerId", String.class);
+        String image      = claims.get("image", String.class);
+
+        // ★같은 signupToken 으로 중복 제출하는 경우(새로고침 등) 대비 - 이미 가입돼있으면 재가입 안함
+        AppUser user = userService.findByEmailAndProvider(email, provider)
+                .orElseGet(() -> userService.saveSocialUser(email, provider, providerId, request.getNickname(), image));
+
+        // ↓↓↓ 여기부터는 login() 과 동일한 방식으로 JWT 발급 + 쿠키설정
+        String accessToken = jwtProvider.createAccessToken(user.getId().toString(), Map.of(
+                "nickname", user.getNickname(),
+                "provider", user.getProvider(),
+                "role", user.getRole(),
+                "email", user.getEmail()
+        ));
+        String refreshToken = jwtProvider.createRefreshToken(user.getId().toString());
+        tokenStore.saveRefreshToken(user.getId().toString(), refreshToken, (long) props.getRefreshTokenExpSeconds());
+
+        boolean isLocal = httpRequest.getServerName().equals("localhost") || httpRequest.getServerName().equals("127.0.0.1");
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(!isLocal)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(props.getRefreshTokenExpSeconds())
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return ResponseEntity.ok(Map.of(
+                "accessToken", accessToken,
+                "user", UserResponseDto.fromEntity(user)
+        ));
+    }
 	
 	
 	// 로그아웃 
@@ -152,11 +235,24 @@ public class UserController {
           @CookieValue(name = "refreshToken", required = false) String refreshToken,
                                        HttpServletRequest httpRequest,
                                        HttpServletResponse response) {
-        var claims = jwtProvider.parse(refreshToken).getBody();
-        String userId = claims.getSubject();
+        // ★refreshToken 쿠키가 없거나(required=false 라 null 가능) 이미 만료/변조되어
+        //   파싱이 실패하더라도, 로그아웃 요청 자체는 항상 성공해야 합니다. 로그아웃의
+        //   목적은 "클라이언트 상태를 지우는 것"이라, 서버측 Redis 토큰 삭제는
+        //   "가능하면 같이 해주는 것"이지 실패의 이유가 되면 안 됩니다.
+        //   (이 방어 코드가 없으면 refreshToken 이 없을 때 jwtProvider.parse(null) 이
+        //   예외를 던지고, GlobalExceptionHandler 가 이를 400 으로 응답해서 로그아웃
+        //   버튼을 눌러도 항상 실패하는 문제가 있었습니다 - provider 와 무관하게 전부
+        //   여기서 막혔던 것입니다)
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            try {
+                var claims = jwtProvider.parse(refreshToken).getBody();
+                String userId = claims.getSubject();
+                tokenStore.deleteRefreshToken(userId);	// redis 제거
+            } catch (Exception e) {
+                // 이미 만료됐거나 유효하지 않은 토큰이어도 로그아웃 자체는 계속 진행합니다.
+            }
+        }
 
-        tokenStore.deleteRefreshToken(userId);	// redis 제거
- 
         boolean isLocal = httpRequest.getServerName().equals("localhost") || httpRequest.getServerName().equals("127.0.0.1");
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
@@ -303,7 +399,58 @@ public class UserController {
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
     }	
 
-	
+	// ★소셜 로그아웃 - "카카오계정과 함께 로그아웃" URL을 완성해서 돌려줍니다.
+	//   우리 서비스 로그아웃(POST /auth/logout)만으로는 우리 서비스의 JWT/쿠키만
+	//   지워질 뿐, 브라우저에 남아있는 카카오/네이버 자체 로그인 세션은 그대로입니다.
+	//   그래서 "카카오로 로그인" 버튼을 다시 누르면 비밀번호 확인 없이 곧바로 재로그인
+	//   되어버려서 "로그아웃이 안 된 것처럼" 느껴집니다.
+	//   - 카카오 : 공식적으로 "카카오계정과 함께 로그아웃" 기능을 제공합니다
+	//     (GET https://kauth.kakao.com/oauth/logout?client_id=...&logout_redirect_uri=...)
+	//     → 이 URL로 이동하면 브라우저의 카카오계정 세션 자체가 만료됩니다.
+	//   - 네이버 : 이런 공식 OAuth 로그아웃 엔드포인트를 제공하지 않습니다(연동해제만 제공).
+	//     그래서 네이버는 "완전 자동 로그아웃"이 불가능하다는 걸 그대로 응답에 담아
+	//     프론트가 사용자에게 안내할 수 있게 합니다.
+	@Operation(
+			summary = "소셜 로그아웃 URL 조회",
+			description = "provider 별로 브라우저에 남아있는 소셜 계정 세션까지 끊는 방법을 안내합니다. "
+					+ "kakao 는 이동할 로그아웃 URL을, 그 외(google/naver 등)는 자동 로그아웃을 지원하지 않는다는 안내를 돌려줍니다."
+	)
+	@GetMapping("/social/logout-url")
+	public ResponseEntity<Map<String, Object>> socialLogoutUrl(
+			@Parameter(description = "소셜 제공자 (kakao/google/naver)") @RequestParam(name = "provider") String provider
+	) {
+		if ("kakao".equalsIgnoreCase(provider)) {
+			String logoutRedirectUri = frontendBaseUrl + "/login";
+			String url = "https://kauth.kakao.com/oauth/logout?client_id=" + kakaoRestApiKey
+					+ "&logout_redirect_uri=" + logoutRedirectUri;
+			return ResponseEntity.ok(Map.of("supported", true, "logoutUrl", url));
+		}
+		if ("naver".equalsIgnoreCase(provider)) {
+			// ★네이버는 카카오 같은 "공식" OAuth 로그아웃 엔드포인트를 제공하지 않습니다.
+			//   다만 네이버 자체 웹사이트의 로그아웃 페이지(nidlogin.logout)로 이동시키면
+			//   부수적으로 브라우저의 네이버 로그인 세션이 함께 만료되는 것으로 널리
+			//   알려져 있습니다(비공식 - 네이버가 이 동작을 문서로 보장하지는 않습니다).
+			String returnUrl = frontendBaseUrl + "/login";
+			String url = "https://nid.naver.com/nidlogin.logout?returl=" + returnUrl;
+			return ResponseEntity.ok(Map.of(
+					"supported", true,
+					"logoutUrl", url,
+					"note", "네이버는 비공식 방식이라 100% 보장되지는 않습니다."
+			));
+		}
+		// ★구글은 accounts.google.com/Logout 이 있지만, 이건 Gmail 등 구글 전체
+		//   서비스 로그인까지 함께 끊어버려서 사용자 경험상 권장되지 않습니다. 대신
+		//   application-oauth.yml 의 authorization-uri 에 prompt=select_account 를
+		//   추가해서, 로그아웃 후 "구글로 로그인"을 다시 눌렀을 때 자동 재로그인되지
+		//   않고 항상 계정 선택 화면이 뜨도록 이미 처리해뒀습니다.
+		return ResponseEntity.ok(Map.of(
+				"supported", false,
+				"message", provider + " 은(는) 소셜 계정 자체를 자동으로 로그아웃할 수 있는 공식 방법을 제공하지 않습니다. "
+						+ "완전히 로그아웃하시려면 " + provider + " 사이트에서 직접 로그아웃해주세요. "
+						+ "(다음 로그인 시에는 재인증 화면이 뜨도록 이미 설정되어 있습니다)"
+		));
+	}
+
 }
 //
 //1. User Api    - 사용자 관련 API

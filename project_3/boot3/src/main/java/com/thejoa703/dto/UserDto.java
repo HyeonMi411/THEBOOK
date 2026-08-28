@@ -70,6 +70,26 @@ public class UserDto {
             return user;
         }
     }
+
+    // ★소셜로그인 가입확인(추가정보 입력) 화면에서, 처음 온 사용자인지 미리 보여주기 위한
+    //   조회용 응답 DTO (닉네임 기본값/프로필이미지 등을 화면에 미리 채워주는 용도)
+    @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class SignupPreviewDto {
+        private String email;
+        private String provider;
+        private String nicknameSuggestion; // 소셜에서 받아온 기본 닉네임(수정 가능)
+        private String image;
+    }
+
+    // ★소셜로그인 가입확인 완료 요청 DTO - 사용자가 닉네임을 확인/수정하고 제출
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor
+    public static class SocialSignupCompleteRequestDto {
+        @NotBlank(message = "가입확인 토큰이 없습니다. 로그인을 다시 시도해주세요.")
+        private String signupToken;
+
+        @NotBlank(message = "닉네임을 입력해주세요.")
+        private String nickname;
+    }
 }
 
 //1) UserDto :  UserRequestDto   /  UserResponseDto  

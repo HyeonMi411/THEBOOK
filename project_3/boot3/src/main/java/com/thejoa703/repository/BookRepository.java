@@ -33,14 +33,14 @@ public interface BookRepository extends JpaRepository<Book, Long> { // Entity , 
 	// 카테고리별 개수
 	long countByCategory(String category);
 
-	// 제목검색(부분일치)  findBy필드명Containing
-	List<Book> findByTitleContainingOrderByIdDesc(String keyword);
+	// 제목검색(부분일치, 대소문자 구분없음)  findBy필드명ContainingIgnoreCase
+	List<Book> findByTitleContainingIgnoreCaseOrderByIdDesc(String keyword);
 
-	// 저자검색(부분일치)
-	List<Book> findByAuthorContainingOrderByIdDesc(String keyword);
+	// 저자검색(부분일치, 대소문자 구분없음)
+	List<Book> findByAuthorContainingIgnoreCaseOrderByIdDesc(String keyword);
 
-	// 제목/저자/카테고리 동시 검색(OR)
-	List<Book> findByTitleContainingOrAuthorContainingOrCategoryContainingOrderByIdDesc(
+	// 제목/저자/카테고리 동시 검색(OR, 대소문자 구분없음)
+	List<Book> findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCaseOrCategoryContainingIgnoreCaseOrderByIdDesc(
 			String title, String author, String category);
 
 	// 제목중복확인(AJAX)   existsBy필드명

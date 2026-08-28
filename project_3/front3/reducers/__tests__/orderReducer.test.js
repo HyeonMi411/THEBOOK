@@ -4,6 +4,7 @@ import orderReducer, {
     createOrderRequest, createOrderSuccess, createOrderFailure,
     fetchMyOrdersRequest, fetchMyOrdersSuccess, fetchMyOrdersFailure,
     fetchOrderDetailRequest, fetchOrderDetailSuccess, fetchOrderDetailFailure,
+    deleteOrderRequest, deleteOrderSuccess, deleteOrderFailure,
     paymentReadyRequest, paymentReadySuccess, paymentReadyFailure,
     paymentApproveRequest, paymentApproveSuccess, paymentApproveFailure,
     paymentCancelRequest, paymentCancelSuccess, paymentCancelFailure,
@@ -119,6 +120,28 @@ describe('order slice reducer', () => {
     it('fetchOrderDetailFailure - 본인 주문이 아니면 거부 메시지 저장', () => {
         const state = orderReducer(initialState, fetchOrderDetailFailure('본인의 주문만 조회할 수 있습니다.'));
         expect(state.error).toBe('본인의 주문만 조회할 수 있습니다.');
+    });
+
+    //////////////////////////////////////////// ★주문 삭제 (결제전(PENDING) 주문만 가능)
+    it('deleteOrderRequest', () => {
+        const state = orderReducer(initialState, deleteOrderRequest());
+        expect(state.loading).toBe(true);
+        expect(state.error).toBeNull();
+    });
+
+    it('deleteOrderSuccess - 삭제한 주문만 목록에서 정확히 빠지는지', () => {
+        const otherOrder = { ...orderPayload, id: 502 };
+        const prev = { ...initialState, orders: [orderPayload, otherOrder] };
+        const state = orderReducer(prev, deleteOrderSuccess(orderPayload.id)); // id=501 삭제
+        expect(state.loading).toBe(false);
+        expect(state.orders).toHaveLength(1);
+        expect(state.orders[0].id).toBe(502); // otherOrder 만 남아야 함
+    });
+
+    it('deleteOrderFailure - 결제완료 주문 삭제 시도시 거부 메시지 저장', () => {
+        const state = orderReducer(initialState, deleteOrderFailure('결제가 진행된 주문은 삭제할 수 없습니다. (현재 상태 : PAID)'));
+        expect(state.loading).toBe(false);
+        expect(state.error).toBe('결제가 진행된 주문은 삭제할 수 없습니다. (현재 상태 : PAID)');
     });
 
     //////////////////////////////////////////// ★카카오페이 결제준비

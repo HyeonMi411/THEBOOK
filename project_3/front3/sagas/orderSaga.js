@@ -5,6 +5,7 @@ import {
     createOrderRequest, createOrderSuccess, createOrderFailure,
     fetchMyOrdersRequest, fetchMyOrdersSuccess, fetchMyOrdersFailure,
     fetchOrderDetailRequest, fetchOrderDetailSuccess, fetchOrderDetailFailure,
+    deleteOrderRequest, deleteOrderSuccess, deleteOrderFailure,
     paymentReadyRequest, paymentReadySuccess, paymentReadyFailure,
     paymentApproveRequest, paymentApproveSuccess, paymentApproveFailure,
     paymentCancelRequest, paymentCancelSuccess, paymentCancelFailure,
@@ -45,6 +46,17 @@ export function* fetchOrderDetail(action) {
         yield put(fetchOrderDetailSuccess(result.data));
     } catch (err) {
         yield put(fetchOrderDetailFailure(err.response?.data?.error || err.message));
+    }
+}
+
+// DELETE /api/orders/{id} - 주문 삭제 (action.payload : orderId, ★결제전(PENDING) 주문만 가능)
+export const deleteOrderAPI = (id) => api.delete(`${ORDER_API_BASE}/${id}`);
+export function* deleteOrder(action) {
+    try {
+        yield call(deleteOrderAPI, action.payload);
+        yield put(deleteOrderSuccess(action.payload)); // ★API 응답 body 는 없으므로(204), orderId 를 그대로 담아 dispatch
+    } catch (err) {
+        yield put(deleteOrderFailure(err.response?.data?.error || err.message));
     }
 }
 
@@ -96,6 +108,7 @@ export function* paymentFail(action) {
 function* watchCreateOrder() {       yield takeLatest(createOrderRequest.type,       createOrder); }
 function* watchFetchMyOrders() {     yield takeLatest(fetchMyOrdersRequest.type,     fetchMyOrders); }
 function* watchFetchOrderDetail() {  yield takeLatest(fetchOrderDetailRequest.type,  fetchOrderDetail); }
+function* watchDeleteOrder() {       yield takeLatest(deleteOrderRequest.type,       deleteOrder); }
 function* watchPaymentReady() {      yield takeLatest(paymentReadyRequest.type,      paymentReady); }
 function* watchPaymentApprove() {    yield takeLatest(paymentApproveRequest.type,    paymentApprove); }
 function* watchPaymentCancel() {     yield takeLatest(paymentCancelRequest.type,     paymentCancel); }
@@ -106,6 +119,7 @@ export default function* orderSaga() {
         call(watchCreateOrder),
         call(watchFetchMyOrders),
         call(watchFetchOrderDetail),
+        call(watchDeleteOrder),
         call(watchPaymentReady),
         call(watchPaymentApprove),
         call(watchPaymentCancel),

@@ -39,6 +39,8 @@ import lombok.RequiredArgsConstructor;
  *   (특히 상위 트랜잭션에 참여(REQUIRED)하는 구조에서, 실패 시점에 즉시 롤백되지 않고
  *   트랜잭션이 끝날 때까지 지연되는 경우). 검증을 먼저 다 마치고 나서 저장하면 이런
  *   문제 자체가 생기지 않습니다.
+ * - ★주문 삭제(deleteOrder) : 결제전(PENDING)은 실제 DB 삭제, 결제완료/취소/실패는
+ *   hiddenByUser 플래그로 "숨기기"만 처리해서 회계·이력 기록을 보존합니다.
  */
 @Service
 @RequiredArgsConstructor
@@ -162,7 +164,7 @@ public class OrderService {
 		int pageSize = (size > 0) ? size : DEFAULT_PAGE_SIZE;
 		Pageable pageable = PageRequest.of(currentPage - 1, pageSize);
 
-		Page<Orders> result = ordersRepository.findByUser_IdOrderByIdDesc(userId, pageable);
+		Page<Orders> result = ordersRepository.findByUser_IdAndHiddenByUserFalseOrderByIdDesc(userId, pageable);
 		List<OrderResponseDto> content = result.getContent().stream()
 				.map(OrderResponseDto::from)
 				.collect(Collectors.toList());
@@ -178,5 +180,36 @@ public class OrderService {
 			throw new IllegalStateException("본인의 주문만 조회할 수 있습니다.");
 		}
 		return OrderResponseDto.from(order);
+	}
+
+	// 4. 주문 삭제 (본인 주문만, ★결제전(PENDING) 주문만 삭제 가능)
+	//    ★결제완료(PAID)/취소(CANCELLED)/실패(FAILED) 주문은 회계·이력 보존을 위해
+	//    삭제를 허용하지 않습니다(실제 결제/재고차감이 일어났던 기록이라 지우면 안 됨).
+	//    "장바구니에 담았다가 결제까지 안 가고 방치된" PENDING 주문만 정리 목적으로
+	//    지울 수 있게 합니다.
+	@Transactional
+	// 4. 주문 삭제 (본인 주문만)
+	//    ★결제전(PENDING) : 실제 거래 기록이 없으므로 DB에서 진짜로 삭제합니다.
+	//    ★결제완료/취소/실패 : 실제 결제·재고차감이 있었던 기록이라 DB에서 지우지 않고,
+	//      hiddenByUser 플래그만 true 로 바꿔서 "내 주문내역 목록"에서만 안 보이게 합니다.
+	//      (회계·이력 보존 목적 - 관리자/DB 상에는 그대로 남아있습니다)
+	@Transactional
+	public void deleteOrder(Long userId, Long orderId) {
+		Orders order = ordersRepository.findById(orderId)
+				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 주문입니다. ID : " + orderId));
+		if (!order.getUser().getId().equals(userId)) {
+			throw new IllegalStateException("본인의 주문만 삭제할 수 있습니다.");
+		}
+
+		if (order.getOrderStatus() == OrderStatus.PENDING) {
+			// ★자식(OrderItem)을 먼저 개별 삭제한 뒤 부모(Orders)를 삭제합니다.
+			//   (Cart/CartItem 에서 겪었던 것과 동일한 이유로, 컬렉션(orphanRemoval)에
+			//   의존하지 않고 repository.delete() 로만 확실하게 처리합니다)
+			orderItemRepository.deleteAll(order.getItems());
+			ordersRepository.delete(order);
+		} else {
+			order.setHiddenByUser(true);
+			ordersRepository.save(order);
+		}
 	}
 }

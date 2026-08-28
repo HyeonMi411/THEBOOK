@@ -5,7 +5,7 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchOrderDetailRequest, resetOrderState } from '../../../reducers/orderReducer';
+import { fetchOrderDetailRequest, deleteOrderRequest, resetOrderState } from '../../../reducers/orderReducer';
 import BookCoverImage from '../../../components/BookCoverImage';
 
 const STATUS_LABEL = {
@@ -32,6 +32,14 @@ export default function MyOrderDetailPage() {
     return () => { dispatch(resetOrderState()); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
+
+  // ★결제전(PENDING) 주문만 삭제 가능 - 삭제 성공하면 목록으로 이동
+  const handleDelete = () => {
+    if (window.confirm('이 주문을 삭제하시겠습니까?')) {
+      dispatch(deleteOrderRequest(currentOrder.id));
+      router.push('/mypage/orders');
+    }
+  };
 
   if (!user) return <div className="myorders-wrap" style={{ textAlign: 'center', color: '#999' }}>로그인 확인 중...</div>;
   if (loading || !currentOrder) {
@@ -87,6 +95,16 @@ export default function MyOrderDetailPage() {
             🟡 이어서 결제하기
           </button>
         )}
+
+        {/* ★모든 상태에서 삭제 가능 - 결제전(PENDING)은 실제 삭제, 결제완료/취소/실패는
+            DB에는 그대로 두고 내 목록에서만 안 보이게(숨기기) 처리됩니다. */}
+        <button
+          type="button"
+          className="myorder-delete-btn-large"
+          onClick={handleDelete}
+        >
+          🗑 주문 삭제
+        </button>
 
         <div className="btn-area" style={{ marginTop: 20 }}>
           <a

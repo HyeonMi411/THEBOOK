@@ -2,6 +2,7 @@ package com.thejoa703.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -63,5 +64,21 @@ public class OrderController {
 	) {
 		Long userId = authUserJwtService.getCurrentUserId(authentication);
 		return ResponseEntity.ok(orderService.getOrder(userId, id));
+	}
+
+	@Operation(
+			summary = "주문 삭제 (본인 주문만)",
+			description = "결제전(PENDING) 주문은 실제로 DB에서 삭제됩니다. "
+					+ "결제완료/취소/실패 주문은 회계·이력 보존을 위해 DB에서 지우지 않고, "
+					+ "\"숨기기\" 처리되어 이후 내 주문내역 목록에서만 보이지 않게 됩니다."
+	)
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> deleteOrder(
+			Authentication authentication,
+			@Parameter(description = "삭제할 주문 ID") @PathVariable("id") Long id
+	) {
+		Long userId = authUserJwtService.getCurrentUserId(authentication);
+		orderService.deleteOrder(userId, id);
+		return ResponseEntity.noContent().build();
 	}
 }

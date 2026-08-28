@@ -26,8 +26,8 @@ public interface Sboard2Repository extends JpaRepository<Sboard2, Long> { // Ent
 	// ★전체조회 - 페이징(Spring Data JPA 표준 Pageable) - 12개씩 화면표시용
 	Page<Sboard2> findAllByOrderByIdDesc(Pageable pageable);
 
-	// 제목검색(부분일치)
-	List<Sboard2> findByBtitleContainingOrderByIdDesc(String keyword);
+	// 제목검색(부분일치, 대소문자 구분없음)
+	List<Sboard2> findByBtitleContainingIgnoreCaseOrderByIdDesc(String keyword);
 
 	// 제목중복확인(선택)
 	boolean existsByBtitle(String btitle);

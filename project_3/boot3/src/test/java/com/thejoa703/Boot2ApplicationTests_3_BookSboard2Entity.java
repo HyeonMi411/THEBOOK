@@ -86,6 +86,19 @@ class Boot2ApplicationTests_3_BookSboard2Entity {
 		book.setUser(admin);
 		bookRepository.save(book);
 
+		// ★대소문자 검증용 - 한글은 대소문자 구분 자체가 없으므로, 영문이 섞인 도서를 하나
+		//   더 만들어서 IgnoreCase 가 실제로 작동하는지 확인합니다.
+		Book bookEn = new Book();
+		bookEn.setTitle("Modern JavaScript Deep Dive");
+		bookEn.setAuthor("Kim Coding");
+		bookEn.setPublisher("코딩출판사");
+		bookEn.setPublishDate(LocalDate.of(2024, 1, 1));
+		bookEn.setCategory("IT");
+		bookEn.setDescription("영문 제목/저자 대소문자 검색 테스트용 도서입니다.");
+		bookEn.setPrice(25000);
+		bookEn.setUser(admin);
+		bookRepository.save(bookEn);
+
 		// 단건조회 + CLOB 저장확인
 		assertThat(bookRepository.findById(book.getId())).isPresent();
 		assertThat(bookRepository.findById(book.getId()).get().getDescription().length())
@@ -99,22 +112,32 @@ class Boot2ApplicationTests_3_BookSboard2Entity {
 		assertThat(bookRepository.findByCategoryOrderByIdDesc("IT")).isNotEmpty();
 		assertThat(bookRepository.countByCategory("IT")).isEqualTo(1L);
 
-		// 제목/저자 검색
-		assertThat(bookRepository.findByTitleContainingOrderByIdDesc("스프링")).isNotEmpty();
-		assertThat(bookRepository.findByAuthorContainingOrderByIdDesc("김코딩")).isNotEmpty();
+		// 제목/저자 검색 (대소문자 구분없음)
+		assertThat(bookRepository.findByTitleContainingIgnoreCaseOrderByIdDesc("스프링")).isNotEmpty();
+		assertThat(bookRepository.findByAuthorContainingIgnoreCaseOrderByIdDesc("김코딩")).isNotEmpty();
 
-		// 제목/저자/카테고리 동시검색(OR) - 셋 중 하나라도 일치하면 조회
-		assertThat(bookRepository.findByTitleContainingOrAuthorContainingOrCategoryContainingOrderByIdDesc(
+		// ★대소문자 무시 검증 - 소문자/대문자/섞어써도 전부 찾아져야 함
+		assertThat(bookRepository.findByTitleContainingIgnoreCaseOrderByIdDesc("modern"))
+				.extracting(Book::getId).contains(bookEn.getId());
+		assertThat(bookRepository.findByTitleContainingIgnoreCaseOrderByIdDesc("JAVASCRIPT"))
+				.extracting(Book::getId).contains(bookEn.getId());
+		assertThat(bookRepository.findByTitleContainingIgnoreCaseOrderByIdDesc("dEeP dIvE"))
+				.extracting(Book::getId).contains(bookEn.getId());
+		assertThat(bookRepository.findByAuthorContainingIgnoreCaseOrderByIdDesc("kim"))
+				.extracting(Book::getId).contains(bookEn.getId());
+
+		// 제목/저자/카테고리 동시검색(OR, 대소문자 구분없음) - 셋 중 하나라도 일치하면 조회
+		assertThat(bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCaseOrCategoryContainingIgnoreCaseOrderByIdDesc(
 				"매칭안됨", "매칭안됨", "IT")).extracting(Book::getId).contains(book.getId());
-		assertThat(bookRepository.findByTitleContainingOrAuthorContainingOrCategoryContainingOrderByIdDesc(
+		assertThat(bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCaseOrCategoryContainingIgnoreCaseOrderByIdDesc(
 				"매칭안됨", "매칭안됨", "매칭안됨")).isEmpty();
 
 		// 제목중복확인
 		assertThat(bookRepository.existsByTitle("스프링부트 완전정복")).isTrue();
 		assertThat(bookRepository.existsByTitle("존재하지않는제목입니다")).isFalse();
 
-		// 등록한 관리자기준 조회
-		assertThat(bookRepository.findByUser_IdOrderByIdDesc(admin.getId())).hasSize(1);
+		// 등록한 관리자기준 조회 ( ★book, bookEn 2권 등록했으므로 2건 )
+		assertThat(bookRepository.findByUser_IdOrderByIdDesc(admin.getId())).hasSize(2);
 
 		// 오라클 네이티브 페이징(ROWNUM)
 		assertThat(bookRepository.findBooksWithPaging(1, 10))
@@ -147,6 +170,14 @@ class Boot2ApplicationTests_3_BookSboard2Entity {
 		board.setUser(admin);
 		sboard2Repository.save(board);
 
+		// ★대소문자 검증용 - 영문 제목의 공지사항을 하나 더 만듭니다.
+		Sboard2 boardEn = new Sboard2();
+		boardEn.setBtitle("System Maintenance Notice");
+		boardEn.setBcontent("영문 제목 대소문자 검색 테스트용 공지사항입니다.");
+		boardEn.setBip("127.0.0.1");
+		boardEn.setUser(admin);
+		sboard2Repository.save(boardEn);
+
 		// 단건조회 + CLOB 저장확인
 		assertThat(sboard2Repository.findById(board.getId())).isPresent();
 		assertThat(sboard2Repository.findById(board.getId()).get().getBcontent().length())
@@ -156,14 +187,20 @@ class Boot2ApplicationTests_3_BookSboard2Entity {
 		assertThat(sboard2Repository.findAllByOrderByIdDesc())
 				.extracting(Sboard2::getId).contains(board.getId());
 
-		// 제목검색
-		assertThat(sboard2Repository.findByBtitleContainingOrderByIdDesc("긴급")).isNotEmpty();
+		// 제목검색 (대소문자 구분없음)
+		assertThat(sboard2Repository.findByBtitleContainingIgnoreCaseOrderByIdDesc("긴급")).isNotEmpty();
+
+		// ★대소문자 무시 검증 - 소문자/대문자 섞어써도 찾아져야 함
+		assertThat(sboard2Repository.findByBtitleContainingIgnoreCaseOrderByIdDesc("maintenance"))
+				.extracting(Sboard2::getId).contains(boardEn.getId());
+		assertThat(sboard2Repository.findByBtitleContainingIgnoreCaseOrderByIdDesc("SYSTEM"))
+				.extracting(Sboard2::getId).contains(boardEn.getId());
 
 		// 제목중복확인
 		assertThat(sboard2Repository.existsByBtitle("긴급 공지사항")).isTrue();
 
-		// 작성한 관리자기준 조회
-		assertThat(sboard2Repository.findByUser_IdOrderByIdDesc(admin.getId())).hasSize(1);
+		// 작성한 관리자기준 조회 ( ★board, boardEn 2건 작성했으므로 2건 )
+		assertThat(sboard2Repository.findByUser_IdOrderByIdDesc(admin.getId())).hasSize(2);
 
 		// 조회수 증가 (@Modifying)
 		assertThat(board.getBhit()).isEqualTo(0);

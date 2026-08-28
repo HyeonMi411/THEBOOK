@@ -323,7 +323,7 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		assertThat(ordersRepository.findByTid(tid).get().getId()).isEqualTo(paidOrder.getId());
 
 		// 6) 내 주문내역 - 페이징(12개씩과 동일한 관례, 여기선 소량이라 1페이지에 다 나옴)
-		var page = ordersRepository.findByUser_IdOrderByIdDesc(buyer.getId(), PageRequest.of(0, 12));
+		var page = ordersRepository.findByUser_IdAndHiddenByUserFalseOrderByIdDesc(buyer.getId(), PageRequest.of(0, 12));
 		assertThat(page.getTotalElements()).isEqualTo(2); // paidOrder + pendingOrder
 		assertThat(page.getContent()).extracting(Orders::getId).contains(paidOrder.getId(), pendingOrder.getId());
 

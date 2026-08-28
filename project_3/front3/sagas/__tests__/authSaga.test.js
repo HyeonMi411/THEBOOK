@@ -1,7 +1,7 @@
 // sagas/__tests__/authSaga.test.js  
 // call - 동기 - 제너레이터함수 function* 일시중단 후 결과물 받기 / fork (비동기)
 // put  - redux 액션처리
-import { call, put }  from 'redux-saga/effects';
+import { call, put, select }  from 'redux-saga/effects';
 import   {
     signupRequest , signupSuccess , signupFailure,  resetUserState,
     loginRequest,loginSuccess,loginFailure,
@@ -63,21 +63,112 @@ describe('auth saga' , ()=>{
     }); 
 
     // -- 로그아웃 --
-    it('logout' , ()=>{   
-        const action   = logoutRequest( );   //##  view
-        const generator= logout(action);
+    it('logout - local(일반) 로그인 사용자는 소셜 로그아웃 URL 조회 없이 바로 완료되고 /login 으로 이동하는지', () => {
+        const originalLocation = window.location;
+        delete window.location;
+        window.location = { href: '' }; // ★window.location.href 대입을 안전하게 가로채기 위한 모킹
 
-        //1. 1단계 API 호출 (call)
+        const action = logoutRequest();
+        const generator = logout(action);
+
+        // 1. 1단계 - 우리 서비스 로그아웃 API 호출 (call)
         const callStep = generator.next().value;
         expect(callStep.type).toBe('CALL');
 
-        //2. api 성공했다라는 가정하에 결과 값을 전달
-        const putStep = generator.next().value;
+        // 2. api 성공 - localStorage/쿠키 정리 후 provider 를 select 로 조회
+        const selectStep = generator.next().value;
+        expect(selectStep.type).toBe('SELECT');
 
-        //3. 2단계 성공액션 디스패치
-        expect(putStep).toEqual(  put(logoutSuccess())   );  //##4
-        expect(generator.next().done).toBe(true);  // 제너레이터 완전종료 done
-    }); 
+        // 3. provider 가 'local'(또는 없음) 이므로 소셜 로그아웃 URL 조회 없이 바로 완료
+        const putStep = generator.next('local').value; // ★state.auth.user?.provider 결과로 'local' 을 전달
+        expect(putStep).toEqual(put(logoutSuccess()));
+
+        // 4. ★AppLayout 이 더 이상 이동을 책임지지 않으므로, saga 가 직접 /login 으로 이동시켜야 함
+        expect(generator.next().done).toBe(true);
+        expect(window.location.href).toBe('/login');
+
+        window.location = originalLocation;
+    });
+
+    it('logout - 카카오 로그인 사용자는 카카오 로그아웃 URL 조회 후 이동하는지', () => {
+        const originalLocation = window.location;
+        delete window.location;
+        window.location = { href: '' }; // ★window.location.href 대입을 안전하게 가로채기 위한 모킹
+
+        const action = logoutRequest();
+        const generator = logout(action);
+
+        generator.next(); // CALL(logoutApi)
+        const selectStep = generator.next().value; // SELECT(provider)
+        expect(selectStep.type).toBe('SELECT');
+
+        // provider = 'kakao' 로 응답
+        const callSocialUrlStep = generator.next('kakao').value; // CALL(socialLogoutUrlApi)
+        expect(callSocialUrlStep.type).toBe('CALL');
+
+        const mockResponse = { data: { supported: true, logoutUrl: 'https://kauth.kakao.com/oauth/logout?client_id=test&logout_redirect_uri=http://localhost:3000/login' } };
+        const putStep = generator.next(mockResponse).value;
+
+        // ★카카오 로그아웃 URL을 받으면 logoutSuccess 를 dispatch 하고 그 URL 로 이동해야 함
+        expect(putStep).toEqual(put(logoutSuccess()));
+        expect(generator.next().done).toBe(true);
+        expect(window.location.href).toBe(mockResponse.data.logoutUrl);
+
+        window.location = originalLocation; // 원상복구
+    });
+
+    it('logout - 네이버 로그인 사용자는 (비공식) 네이버 로그아웃 URL로 이동하는지', () => {
+        const originalLocation = window.location;
+        delete window.location;
+        window.location = { href: '' };
+
+        const action = logoutRequest();
+        const generator = logout(action);
+
+        generator.next(); // CALL(logoutApi)
+        generator.next(); // SELECT(provider)
+
+        const callSocialUrlStep = generator.next('naver').value; // CALL(socialLogoutUrlApi)
+        expect(callSocialUrlStep.type).toBe('CALL');
+
+        const mockResponse = { data: { supported: true, logoutUrl: 'https://nid.naver.com/nidlogin.logout?returl=http://localhost:3000/login' } };
+        const putStep = generator.next(mockResponse).value;
+
+        expect(putStep).toEqual(put(logoutSuccess()));
+        expect(generator.next().done).toBe(true);
+        expect(window.location.href).toBe(mockResponse.data.logoutUrl);
+
+        window.location = originalLocation;
+    });
+
+    it('logout - 구글 로그인 사용자는 자동 로그아웃 미지원 안내가 뜨고 /login 으로 이동하는지', () => {
+        const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+        const originalLocation = window.location;
+        delete window.location;
+        window.location = { href: '' };
+
+        const action = logoutRequest();
+        const generator = logout(action);
+
+        generator.next(); // CALL(logoutApi)
+        generator.next(); // SELECT(provider)
+
+        const callSocialUrlStep = generator.next('google').value; // CALL(socialLogoutUrlApi)
+        expect(callSocialUrlStep.type).toBe('CALL');
+
+        const mockResponse = { data: { supported: false, message: 'google 은(는) 소셜 계정 자체를 자동으로 로그아웃할 수 없습니다.' } };
+        const putStep = generator.next(mockResponse).value;
+
+        expect(alertSpy).toHaveBeenCalledWith(mockResponse.data.message);
+        expect(putStep).toEqual(put(logoutSuccess()));
+
+        // ★소셜 로그아웃 리다이렉트를 지원 안 하는 경우도, saga 가 직접 /login 으로 이동시켜야 함
+        expect(generator.next().done).toBe(true);
+        expect(window.location.href).toBe('/login');
+
+        alertSpy.mockRestore();
+        window.location = originalLocation;
+    });
 
     // -- 닉네임수정 --
     it('updateNickname' , ()=>{  

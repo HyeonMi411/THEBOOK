@@ -30,7 +30,9 @@ export default function BookSearchBox() {
     // boot1 원본처럼 입력할때마다(keyup) 바로 검색하되, 너무 잦은 요청은 살짝 디바운스
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await api.get('/api/books/search', { params: { keyword: value } });
+        // ★앞뒤 공백을 정리한 값으로 검색합니다 (백엔드도 동일하게 trim 처리하지만,
+        //   프론트에서도 미리 정리해서 불필요한 공백이 포함된 요청 자체를 줄입니다)
+        const res = await api.get('/api/books/search', { params: { keyword: value.trim() } });
         setResults(res.data || []);
         setShowResult(true);
       } catch (err) {

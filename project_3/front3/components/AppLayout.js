@@ -41,7 +41,29 @@ function AppLayout({ children }) {
         if (user && user.nickname) dispatch(fetchCartRequest());
     }, [user, dispatch]);
 
-    const handleLogout = () => { dispatch(logoutRequest()); router.replace('/login'); };  // 디스패치(logoutRequest()) / 경로 login 넘기기   //##
+    // ★로그아웃 버튼 클릭시, 여기서 바로 /login 으로 이동시키면 안 됩니다.
+    //   dispatch(logoutRequest())는 saga 를 "비동기"로 실행시키는데(백엔드 로그아웃 API
+    //   호출 → 소셜 provider 확인 → 카카오/네이버면 그 사이트로 실제 이동), 만약 여기서
+    //   곧바로 router.replace('/login') 을 동기적으로 실행해버리면, saga 가 카카오/네이버
+    //   로그아웃 페이지로 이동시키기도 전에 사용자를 먼저 /login 으로 보내버려서
+    //   "소셜 로그아웃이 아예 실행이 안 되는" 것처럼 보이게 됩니다. 최종적으로 어디로
+    //   이동할지는 saga(authSaga.js 의 logout())가 전부 알아서 책임지도록 여기서는
+    //   액션만 dispatch 합니다.
+    const handleLogout = () => {
+        // eslint-disable-next-line no-console
+        console.log('[logout] 로그아웃 버튼 클릭됨 - logoutRequest dispatch');
+        dispatch(logoutRequest());
+    };  // 디스패치(logoutRequest()) - 이동은 saga 가 책임짐  //##
+
+    // ★antd Menu 의 items.label 안에 <a onClick={...}> 를 직접 넣는 방식 대신,
+    //   Menu 자체의 onClick 콜백(공식 권장 패턴)을 씁니다. label 내부에 onClick을
+    //   직접 넣는 방식은 antd 버전/설정에 따라 Menu 내부 이벤트 처리와 충돌해서
+    //   클릭이 씹히는 경우가 보고되어 있어, 더 안정적인 방식으로 바꿨습니다.
+    const handleMenuClick = ({ key }) => {
+        if (key === 'logout') {
+            handleLogout();
+        }
+    };
 
     const menuItems = [
         ...(user && user.nickname
@@ -57,7 +79,7 @@ function AppLayout({ children }) {
                 { key: "cart",    label: <Link href="/cart">{`🛒 CART${cartItems?.length > 0 ? ` (${cartItems.length})` : ''}`}</Link> }, // ★장바구니
                 { key: "orders",  label: <Link href="/mypage/orders">📋 주문내역</Link> }, // ★내 주문내역                
                 { key: "profile", label: <Link href="/mypage">👤 MYPAGE </Link> },
-                { key: "logout",  label: <a onClick={handleLogout} style={{ cursor: "pointer" }}>🔓 로그아웃</a> },
+                { key: "logout",  label: <span style={{ cursor: "pointer" }}>🔓 로그아웃</span> }, // ★클릭은 Menu의 onClick(handleMenuClick)이 처리
             ]
             : [
                 { key: "books",   label: <Link href="/books">📚 BOOK</Link> },     // ★비로그인도 조회는 가능
@@ -76,8 +98,14 @@ function AppLayout({ children }) {
     return (
         <Layout className="bookstore-body">
             {/* Header - ★boot1(BookStore) 로고 + 검색창을 antd Header 안에 통합 */}
-            <Header style={{ display: "flex" }}>
-                <Row align="middle" justify="space-between" style={{ width: "100%" }} gutter={16}>
+            {/* ★overflow: hidden - wrap={false} 로 줄바꿈은 막았지만, 혹시라도 내용이 Header의
+                고정 높이를 넘어서 삐져나오면서 겹쳐 보이는 것까지 이중으로 방지합니다. */}
+            <Header style={{ display: "flex", overflow: "hidden" }}>
+                {/* ★wrap={false} - Row 는 기본적으로 flex-wrap:wrap 이라, 로고+검색창+가로메뉴를
+                    한 줄에 담을 폭이 부족해지면 자동으로 다음 줄로 줄바꿈되어 헤더가 2줄(이중)로
+                    보이는 문제가 있었습니다. 태블릿 폭(md, 768px)에서 정확히 이 문제가 발생했습니다.
+                    wrap={false} 로 항상 한 줄을 유지하도록 강제합니다. */}
+                <Row align="middle" justify="space-between" wrap={false} style={{ width: "100%" }} gutter={16}>
                     <Col flex="none">
                         {/* ★로고 클릭시 도서 목록(/books)으로 이동 */}
                         <Link href="/books">
@@ -87,18 +115,21 @@ function AppLayout({ children }) {
                         </Link>
                     </Col>
 
-                    {/* 검색창 - 태블릿 이상에서만 노출 (모바일은 Drawer 메뉴로) */}
-                    <Col flex="auto" xs={0} sm={0} md={8} lg={9} style={{ maxWidth: 400 }}>
+                    {/* 검색창/가로메뉴 - ★태블릿(md=768px)까지는 항목이 많아 한 줄에 다 안 들어가서
+                        헤더가 줄바꿈(이중화)되는 문제가 있었습니다. lg(992px) 이상에서만 노출하도록
+                        변경해서, 태블릿 폭에서는 계속 햄버거(Drawer) 메뉴를 쓰도록 했습니다. */}
+                    <Col flex="auto" xs={0} sm={0} md={0} lg={9} style={{ maxWidth: 400 }}>
                         <BookSearchBox />
                     </Col>
 
-                    {/*  xs, sm (모바일): 0 숨김처리  ,  md (테블릿) : 16  24칸중에 16 , lg(pc) : 18 */}
-                    <Col flex="auto" xs={0} sm={0} md={16} lg={18}>
-                        <Menu theme="dark" mode="horizontal" items={menuItems} />
+                    {/*  xs, sm, md(태블릿까지): 0 숨김처리  ,  lg(PC) 부터만 가로메뉴 노출 */}
+                    <Col flex="auto" xs={0} sm={0} md={0} lg={18}>
+                        <Menu theme="dark" mode="horizontal" items={menuItems} onClick={handleMenuClick} />
                     </Col>
 
                     {/*  button 종류 : primary , default(하얀색), text(없음) , link(a링크형식모양)  */}
-                    <Col flex="none" xs={2} md={0}>
+                    {/*  ★lg(992px) 미만에서는 계속 햄버거 버튼 노출 (태블릿 포함) */}
+                    <Col flex="none" xs={2} lg={0}>
                         <Button
                             type="text"
                             icon={<MenuOutlined style={{ color: "white", fontSize: 20 }} />}
@@ -118,7 +149,7 @@ function AppLayout({ children }) {
                 <div style={{ marginBottom: 16 }}>
                     <BookSearchBox />
                 </div>
-                <Menu mode="vertical" items={menuItems} />
+                <Menu mode="vertical" items={menuItems} onClick={handleMenuClick} />
             </Drawer>
 
             <Content style={{ padding: "40px" }}>{children}</Content>

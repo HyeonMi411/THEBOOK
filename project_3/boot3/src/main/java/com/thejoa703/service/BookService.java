@@ -77,11 +77,19 @@ public class BookService {
 		return BookResponseDto.from(book);
 	}
 
-	// 3. 제목검색
+	// 3. 제목검색 ( ★대소문자 구분없이, 앞뒤/중복 공백은 정리해서 검색 )
 	public List<BookResponseDto> searchByTitle(String keyword) {
-		return bookRepository.findByTitleContainingOrderByIdDesc(keyword).stream()
+		String cleaned = cleanKeyword(keyword);
+		return bookRepository.findByTitleContainingIgnoreCaseOrderByIdDesc(cleaned).stream()
 				.map(BookResponseDto::from)
 				.collect(Collectors.toList());
+	}
+
+	// ★검색어 앞뒤 공백 제거 + 단어 사이 중복 공백(스페이스바 두번 등)을 하나로 정리
+	//   (예: "  자바   프로그래밍  " → "자바 프로그래밍")
+	private String cleanKeyword(String keyword) {
+		if (keyword == null) { return ""; }
+		return keyword.trim().replaceAll("\\s+", " ");
 	}
 
 	// 4. 도서등록 ( ★관리자 전용 )
