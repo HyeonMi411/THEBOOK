@@ -68,7 +68,17 @@ public class Orders {
 	// ★사용자가 "삭제"한 결제완료/취소/실패 주문 - 실제 DB 레코드는 회계·이력 보존을 위해
 	//   남겨두고, 이 플래그만 true 로 바꿔서 "내 주문내역 목록"에서만 안 보이게 합니다.
 	//   (결제전(PENDING) 주문은 실제 거래 기록이 없으므로 이 플래그 없이 진짜로 삭제합니다)
-	@Column(name = "HIDDEN_BY_USER", nullable = false)
+	// ★columnDefinition 으로 DEFAULT 0(false) 을 명시했습니다. 이게 없으면 Hibernate 가
+	//   생성하는 ALTER TABLE 문이 "ALTER TABLE ORDERS ADD HIDDEN_BY_USER NUMBER(1) NOT NULL"
+	//   형태가 되는데, ORDERS 테이블에 이미 주문 데이터가 있는 상태에서는 Oracle 이
+	//   "기본값 없이 NOT NULL 컬럼을 추가"하는 걸 거부합니다(기존 행들이 채울 값이 없으므로).
+	//   ddl-auto:update 는 이런 개별 DDL 실패를 대체로 로그 경고만 남기고 넘어가기 때문에,
+	//   애플리케이션은 정상적으로 뜨는데 실제로는 컬럼이 안 만들어져서 "ORA-00904: 부적합한
+	//   식별자" 에러가 나중에야 발견되는 문제가 있었습니다. columnDefinition 에 DEFAULT 를
+	//   명시하면 Hibernate 가 "ALTER TABLE ORDERS ADD HIDDEN_BY_USER NUMBER(1) DEFAULT 0
+	//   NOT NULL" 형태로 DDL을 생성해서, 기존 행에도 안전하게 기본값이 채워지며 컬럼이
+	//   추가됩니다 - 서버를 완전히 재시작하기만 하면 자동으로 반영됩니다.
+	@Column(name = "HIDDEN_BY_USER", nullable = false, columnDefinition = "NUMBER(1) DEFAULT 0")
 	private boolean hiddenByUser = false;
 
 	// ★주문에 담긴 상품들 - 1:N (Orders 삭제시 상품도 함께 삭제)
