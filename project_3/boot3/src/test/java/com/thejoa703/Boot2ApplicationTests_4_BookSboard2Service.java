@@ -28,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.thejoa703.api.BookNlDto;
 import com.thejoa703.dto.BookDto.BookRequestDto;
 import com.thejoa703.dto.BookDto.BookResponseDto;
 import com.thejoa703.dto.PageResponseDto;
@@ -37,13 +38,10 @@ import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Sboard2;
 import com.thejoa703.exception.ResourceNotFoundException;
 import com.thejoa703.oauth2.CustomOAuth2User;
-import com.thejoa703.repository.AppUserRepository;
-import com.thejoa703.repository.Sboard2Repository;
+import com.thejoa703.mapper.AppUserMapper;
+import com.thejoa703.mapper.Sboard2Mapper;
 import com.thejoa703.service.BookService;
 import com.thejoa703.service.Sboard2Service;
-
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 
 /**
  * BookService / Sboard2Service  (+ DTO 검증, RestController 가 위임하는 실제 로직) 통합테스트
@@ -55,9 +53,8 @@ import jakarta.persistence.PersistenceContext;
  * - 컨트롤러는 인증정보(Authentication)에서 사용자ID를 꺼내 서비스로 그대로 위임하는
  *   얇은 계층이므로, 서비스 계층을 직접 호출해 실제 비즈니스 로직(@PreAuthorize 권한체크,
  *   더티체킹 수정, 조회수 증가, 12개씩 페이징 등)을 검증합니다.
- * - Sboard2Service.getNotice() 의 조회수 증가는 @Modifying 벌크 UPDATE 라서 1차캐시가
- *   낀 상태로는 "실제로 DB에 반영됐는지"를 착각하기 쉽습니다. EntityManager.clear() 로
- *   1차캐시를 비우고 다시 조회해서, 진짜 DB로부터 새로 읽은 값으로 검증합니다.
+ * - Sboard2Service.getNotice() 의 조회수 증가는 MyBatis UPDATE 로 즉시 DB에 반영되고,
+ *   세션 캐시(cacheEnabled: false)도 꺼둬서 별도 캐시 무효화 없이 항상 최신값을 읽습니다.
  * - @Order 는 클래스에 @TestMethodOrder(OrderAnnotation.class) 를 붙여야만 실제로 적용됩니다.
  *   이걸 빠뜨리면 JUnit5 기본 순서(선언순서와 무관)로 실행되면서, 이전 테스트가 마지막에
  *   SecurityContextHolder 에 남겨둔 로그인상태(예: 관리자)가 다음 테스트로 새어나갈 수
@@ -77,14 +74,11 @@ import jakarta.persistence.PersistenceContext;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class Boot2ApplicationTests_4_BookSboard2Service {
 
-	@Autowired private AppUserRepository appUserRepository;
-	@Autowired private Sboard2Repository sboard2Repository;
+	@Autowired private AppUserMapper appUserMapper;
+	@Autowired private Sboard2Mapper sboard2Mapper;
 	@Autowired private BookService       bookService;
 	@Autowired private Sboard2Service    sboard2Service;
 	@Autowired private MockMvc           mockMvc;
-
-	@PersistenceContext
-	private EntityManager entityManager;
 
 	// ------------------------------------------------------------------
 	// 공통 헬퍼 : 관리자 / 일반회원 생성  (provider 로 소셜로그인 계정도 재현)
@@ -97,7 +91,9 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		admin.setRole("ROLE_ADMIN");
 		admin.setProvider(provider);                                   // local / google / kakao / naver
 		admin.setProviderId(provider.equals("local") ? "local" : "social-" + UUID.randomUUID());
-		return appUserRepository.save(admin);
+		admin.setDeleted(false);
+		appUserMapper.insert(admin);
+		return admin;
 	}
 
 	private AppUser createTestUser() {
@@ -108,7 +104,9 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		user.setRole("ROLE_USER");
 		user.setProvider("local");
 		user.setProviderId("local");
-		return appUserRepository.save(user);
+		user.setDeleted(false);
+		appUserMapper.insert(user);
+		return user;
 	}
 
 	// JwtAuthenticationFilter 가 실제 요청때마다 하는 일(=SecurityContext 세팅)을 테스트에서 재현
@@ -132,11 +130,11 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 
 	//-------------------------------------------------------------------
 	// 0. [진단용] @PreAuthorize 자체가 정상 동작하는지 최소단위로 확인
-	//    DTO/파일업로드/DB쓰기 등 다른 변수를 모두 제거하고, 순수하게
-	//    "ROLE_USER 로 @PreAuthorize(hasRole('ADMIN')) 메서드를 호출하면
-	//     정말로 막히는가?" 만 검증합니다.
-	//    ※ 이 테스트가 실패한다면 SecurityConfig 의 @EnableMethodSecurity 설정이나
-	//      Spring Security 버전/구성 문제이지, Book/Sboard2 쪽 코드 문제가 아닙니다.
+	//   DTO/파일업로드/DB쓰기 등 다른 변수를 모두 제거하고, 순수하게
+	//   "ROLE_USER 로 @PreAuthorize(hasRole('ADMIN')) 메서드를 호출하면
+	//    정말로 막히는가?" 만 검증합니다.
+	//   ※ 이 테스트가 실패한다면 SecurityConfig 의 @EnableMethodSecurity 설정이나
+	//     Spring Security 버전/구성 문제이지, Book/Sboard2 쪽 코드 문제가 아닙니다.
 	//-------------------------------------------------------------------
 	@Test
 	@Order(0)
@@ -191,8 +189,8 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		loginAs(user);
 		// sanity-check: 현재 SecurityContext 가 정말 ROLE_USER 로만 세팅됐는지 먼저 확인
 		// (이 assertion 이 실패한다면 @PreAuthorize 문제가 아니라 로그인상태 세팅/누수 문제입니다.
-		//  이 assertion 은 통과했는데 바로 아래 accessDenied 검증이 실패한다면, 그건 진짜
-		//  @PreAuthorize 자체가 적용되지 않고 있다는 뜻이니 SecurityConfig/버전 문제를 봐야 합니다.)
+		// 이 assertion 은 통과했는데 바로 아래 accessDenied 검증이 실패한다면, 그건 진짜
+		// @PreAuthorize 자체가 적용되지 않고 있다는 뜻이니 SecurityConfig/버전 문제를 봐야 합니다.)
 		System.out.println("[DEBUG][testBookService] Authentication = "
 				+ SecurityContextHolder.getContext().getAuthentication());
 		System.out.println("[DEBUG][testBookService] Authorities   = "
@@ -203,7 +201,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 				.isInstanceOf(AccessDeniedException.class);
 		assertThat(bookService.searchByTitle(uniqueTitle)).isEmpty();
 
-		// ★일반회원이라도 카카오 자동등록은 시도조차 못 해야 함 (관리자 전용)
+		// 일반회원이라도 카카오 자동등록은 시도조차 못 해야 함 (관리자 전용)
 		assertThatThrownBy(() -> bookService.insertFromKakao(uniqueTitle, user.getId()))
 				.as("ROLE_USER 로 카카오 자동등록(insertFromKakao) 호출 시 반드시 AccessDeniedException 이어야 합니다.")
 				.isInstanceOf(AccessDeniedException.class);
@@ -228,7 +226,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		assertThat(bookService.getAllBooks()).extracting(BookResponseDto::getId)
 				.contains(created.getId());
 
-		// 6) ★페이징 조회(12개씩) + 카테고리 필터 - getAllBooksPaged(page, size, category)
+		// 6) 페이징 조회(12개씩) + 카테고리 필터 - getAllBooksPaged(page, size, category)
 		PageResponseDto<BookResponseDto> paged = bookService.getAllBooksPaged(1, 12, uniqueCategory);
 		assertThat(paged.getContent()).extracting(BookResponseDto::getId).containsExactly(created.getId());
 		assertThat(paged.getCurrentPage()).isEqualTo(1);
@@ -301,19 +299,17 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		assertThat(created.getBhit()).isEqualTo(0); // 최초 조회수는 0
 
 		// ---------------------------------------------------------------
-		// ★ 조회수 증가가 "실제로 DB에" 반영되는지 검증
-		//    (1차캐시만 보고 착각하지 않도록 EntityManager.clear() 로 비우고 재조회)
+		// 조회수 증가가 실제로 DB에 반영되는지 검증
+		//  (MyBatis 는 세션 캐시(cacheEnabled: false)를 꺼뒀으므로, 매 조회가
+		//  항상 실제 DB 값을 그대로 가져옵니다)
 		// ---------------------------------------------------------------
 		Long boardId = created.getId();
 
-		// getNotice() 를 3번 호출 → 매번 @Modifying 벌크 UPDATE 로 BHIT + 1
+		// getNotice() 를 3번 호출 → 매번 UPDATE 로 BHIT + 1
 		Sboard2ResponseDto view1 = sboard2Service.getNotice(boardId);
-		assertThat(view1.getBhit()).isEqualTo(1); // 서비스 응답값 확인(메모리상 동기화)
+		assertThat(view1.getBhit()).isEqualTo(1); // 서비스 응답값 확인
 
-		entityManager.flush();
-		entityManager.clear(); // 1차캐시 비우기 → 다음 조회는 무조건 진짜 SELECT
-
-		Sboard2 freshAfterView1 = sboard2Repository.findById(boardId).orElseThrow();
+		Sboard2 freshAfterView1 = sboard2Mapper.selectById(boardId);
 		assertThat(freshAfterView1.getBhit()).isEqualTo(1); // DB에서 새로 읽은 값도 1
 
 		Sboard2ResponseDto view2 = sboard2Service.getNotice(boardId);
@@ -322,10 +318,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		Sboard2ResponseDto view3 = sboard2Service.getNotice(boardId);
 		assertThat(view3.getBhit()).isEqualTo(3);
 
-		entityManager.flush();
-		entityManager.clear();
-
-		Sboard2 freshAfterView3 = sboard2Repository.findById(boardId).orElseThrow();
+		Sboard2 freshAfterView3 = sboard2Mapper.selectById(boardId);
 		assertThat(freshAfterView3.getBhit()).isEqualTo(3); // 3번 조회 → DB에 실제로 3 반영 확인
 		// ---------------------------------------------------------------
 
@@ -335,7 +328,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		assertThat(sboard2Service.searchByTitle(uniqueTitle)).extracting(Sboard2ResponseDto::getId)
 				.contains(boardId);
 
-		// 3-1) ★페이징 조회(12개씩) - getAllNoticesPaged(page, size)
+		// 3-1) 페이징 조회(12개씩) - getAllNoticesPaged(page, size)
 		PageResponseDto<Sboard2ResponseDto> paged = sboard2Service.getAllNoticesPaged(1, 12);
 		assertThat(paged.getContent()).extracting(Sboard2ResponseDto::getId).contains(boardId);
 		assertThat(paged.getCurrentPage()).isEqualTo(1);
@@ -360,9 +353,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		// 6) 관리자 → 삭제 성공
 		loginAs(admin);
 		sboard2Service.deleteNotice(boardId);
-		entityManager.flush();
-		entityManager.clear();
-		assertThat(sboard2Repository.findById(boardId)).isEmpty();
+		assertThat(sboard2Mapper.selectById(boardId)).isNull();
 	}
 
 	//-------------------------------------------------------------------
@@ -409,7 +400,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 
 	//-------------------------------------------------------------------
 	// 4. [Swagger] /v3/api-docs 에 Book/Sboard2 API가 실제로 노출되는지 검증
-	//    (지난번 "swagger에 book/notices 가 안 보인다" 문제의 회귀테스트)
+	//   (지난번 "swagger에 book/notices 가 안 보인다" 문제의 회귀테스트)
 	//-------------------------------------------------------------------
 	@Test
 	@Order(4)
@@ -441,5 +432,43 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 				.contains("Book Api");
 		assertThat(json).as("Notice(Sboard2) Api 태그가 있어야 합니다.")
 				.contains("Notice(Sboard2) Api");
+	}
+
+	//-------------------------------------------------------------------
+	// [출판일 미상] 국립중앙도서관 원본에 발행년도 정보가 없거나 파싱에 실패하면
+	// publishDate 가 1900-01-01 같은 매직넘버가 아니라 null 로 저장되는지 확인
+	//-------------------------------------------------------------------
+	@Test
+	@DisplayName("■ 국립중앙도서관 저장 - 발행년도 정보가 없으면 publishDate 가 1900-01-01 매직넘버가 아니라 null 로 저장되는지")
+	void testSaveNationalLibraryBookWithMissingPublishYear() {
+		AppUser admin = createTestAdmin("local");
+		loginAs(admin);
+
+		BookNlDto nlBook = new BookNlDto();
+		nlBook.setTitle_info("출판일미상테스트도서_" + UUID.randomUUID());
+		nlBook.setAuthor_info("테스트작가");
+		nlBook.setPub_info("테스트출판사");
+		nlBook.setPub_year_info(null); // ★발행년도 정보 자체가 없는 원본 데이터를 재현
+
+		BookResponseDto saved = bookService.saveNationalLibraryBook(nlBook, admin.getId());
+
+		assertThat(saved.getPublishDate()).isNull(); // 1900-01-01 이 아니라 null 이어야 함
+	}
+
+	@Test
+	@DisplayName("■ 국립중앙도서관 저장 - 발행년도가 파싱 불가능한 문자열이어도 publishDate 가 null 로 저장되는지")
+	void testSaveNationalLibraryBookWithUnparsablePublishYear() {
+		AppUser admin = createTestAdmin("local");
+		loginAs(admin);
+
+		BookNlDto nlBook = new BookNlDto();
+		nlBook.setTitle_info("출판일미상테스트도서2_" + UUID.randomUUID());
+		nlBook.setAuthor_info("테스트작가");
+		nlBook.setPub_info("테스트출판사");
+		nlBook.setPub_year_info("연도미상"); // ★숫자 4자리를 뽑을 수 없는 문자열
+
+		BookResponseDto saved = bookService.saveNationalLibraryBook(nlBook, admin.getId());
+
+		assertThat(saved.getPublishDate()).isNull();
 	}
 }

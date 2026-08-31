@@ -4,12 +4,13 @@ import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from "react-redux";
 import { fetchBooksRequest, searchBooksRequest, resetBookState } from "../../reducers/bookReducer";
 import BookList from '../../components/BookList';
+import BestsellerRanking from '../../components/BestsellerRanking';
 
 export default function BooksPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const { books, loading, error, currentPage, totalPages, totalElements } = useSelector((state) => state.book);
-  // ★URL을 직접 수정해서 들어오는 경우(?keyword= 뒤에 공백 등)까지 대비해 여기서도 정리합니다.
+  // URL을 직접 수정해서 들어오는 경우(?keyword= 뒤에 공백 등)까지 대비해 여기서도 정리합니다.
   const keyword = typeof router.query.keyword === 'string' ? router.query.keyword.trim() : router.query.keyword;
 
   // 페이지 진입/쿼리변경시: ?keyword= 있으면 검색키워드 관련 목록조회, 없으면 ?page=(기본1) 로 페이징 조회 (12개씩)
@@ -34,7 +35,10 @@ export default function BooksPage() {
 
   return (
     <div>
-      {/* ★검색키워드 관련 도서 목록 화면 - AJAX 검색(BookSearchBox)에서 이 화면으로 이동합니다 */}
+      {/* 검색 중이 아닐 때만(전체 목록 화면에서만) 베스트셀러 랭킹을 보여줍니다 */}
+      {!keyword && <BestsellerRanking />}
+
+      {/* 검색키워드 관련 도서 목록 화면 - AJAX 검색(BookSearchBox)에서 이 화면으로 이동합니다 */}
       {keyword && (
         <div className="search-result-header">
           <div className="search-result-title">

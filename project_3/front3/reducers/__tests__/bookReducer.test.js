@@ -11,6 +11,7 @@ import bookReducer, {
     nlSearchRequest, nlSearchSuccess, nlSearchFailure,
     selectNlBook, clearNlSelectedBook,
     nlSaveRequest, nlSaveSuccess, nlSaveFailure, resetNlSaveState,
+    fetchBestsellersRequest, fetchBestsellersSuccess, fetchBestsellersFailure,
 } from '../bookReducer';
 
 describe('book slice reducer', () => {
@@ -34,6 +35,9 @@ describe('book slice reducer', () => {
         nlSaveLoading: false,
         nlSaveError: null,
         nlSaveSuccess: false,
+        bestsellers: [],
+        bestsellersLoading: false,
+        bestsellersError: null,
     };
 
     // 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록, 테스트 전용 도서명을 사용합니다.
@@ -106,7 +110,7 @@ describe('book slice reducer', () => {
         expect(state.error).toBe('검색 실패');
     });
 
-    //////////////////////////////////////////// 도서등록 ( ★관리자 전용, 백엔드 @PreAuthorize )
+    //////////////////////////////////////////// 도서등록 ( 관리자 전용, 백엔드 @PreAuthorize )
     it('createBookRequest', () => {
         const state = bookReducer(initialState, createBookRequest());
         expect(state.loading).toBe(true);
@@ -117,7 +121,7 @@ describe('book slice reducer', () => {
         const state = bookReducer(initialState, createBookSuccess(bookA));
         expect(state.loading).toBe(false);
         expect(state.success).toBe(true);
-        expect(state.books).toEqual([]); // ★페이징 도입 이후 로컬 끼워넣기 안 함 (첫 페이지 재조회 방식)
+        expect(state.books).toEqual([]); // 페이징 도입 이후 로컬 끼워넣기 안 함 (첫 페이지 재조회 방식)
     });
 
     it('createBookFailure - 관리자가 아니면 거부되는 상황(403) 등', () => {
@@ -126,7 +130,7 @@ describe('book slice reducer', () => {
         expect(state.error).toBe('접근이 거부되었습니다.');
     });
 
-    //////////////////////////////////////////// 도서수정 ( ★관리자 전용, ★목록 갱신 로직 꼼꼼히 검증 )
+    //////////////////////////////////////////// 도서수정 ( 관리자 전용, 목록 갱신 로직 꼼꼼히 검증 )
     it('updateBookRequest', () => {
         const state = bookReducer(initialState, updateBookRequest());
         expect(state.loading).toBe(true);
@@ -148,7 +152,7 @@ describe('book slice reducer', () => {
         expect(state.error).toBe('수정 권한이 없습니다.');
     });
 
-    //////////////////////////////////////////// 도서삭제 ( ★관리자 전용, ★목록에서 실제로 빠지는지 검증 )
+    //////////////////////////////////////////// 도서삭제 ( 관리자 전용, 목록에서 실제로 빠지는지 검증 )
     it('deleteBookRequest', () => {
         const state = bookReducer(initialState, deleteBookRequest());
         expect(state.loading).toBe(true);
@@ -167,7 +171,7 @@ describe('book slice reducer', () => {
         expect(state.error).toBe('삭제 권한이 없습니다.');
     });
 
-    //////////////////////////////////////////// ★카카오 도서검색 자동등록 (관리자 전용)
+    //////////////////////////////////////////// 카카오 도서검색 자동등록 (관리자 전용)
     it('kakaoInsertRequest', () => {
         const prev = { ...initialState, kakaoInsertedCount: 3 };
         const state = bookReducer(prev, kakaoInsertRequest());
@@ -196,7 +200,7 @@ describe('book slice reducer', () => {
         expect(state.kakaoInsertedCount).toBeNull();
     });
 
-    //////////////////////////////////////////// ★국립중앙도서관 도서검색 (조회전용, 로그인 불필요)
+    //////////////////////////////////////////// 국립중앙도서관 도서검색 (조회전용, 로그인 불필요)
     it('nlSearchRequest', () => {
         const state = bookReducer(initialState, nlSearchRequest());
         expect(state.nlLoading).toBe(true);
@@ -226,7 +230,7 @@ describe('book slice reducer', () => {
         expect(state.nlSelectedBook).toBeNull();
     });
 
-    //////////////////////////////////////////// ★국립중앙도서관 검색결과 저장 (관리자 전용)
+    //////////////////////////////////////////// 국립중앙도서관 검색결과 저장 (관리자 전용)
     it('nlSaveRequest', () => {
         const state = bookReducer(initialState, nlSaveRequest());
         expect(state.nlSaveLoading).toBe(true);
@@ -250,6 +254,31 @@ describe('book slice reducer', () => {
         expect(state.nlSaveLoading).toBe(false);
         expect(state.nlSaveError).toBeNull();
         expect(state.nlSaveSuccess).toBe(false);
+    });
+
+    //////////////////////////////////////////// 베스트셀러(판매량 TOP 10)
+    it('fetchBestsellersRequest', () => {
+        const state = bookReducer(initialState, fetchBestsellersRequest());
+        expect(state.bestsellersLoading).toBe(true);
+        expect(state.bestsellersError).toBeNull();
+    });
+
+    it('fetchBestsellersSuccess - 순위/판매량이 포함된 목록이 그대로 저장되는지', () => {
+        const bestsellers = [
+            { rank: 1, soldQuantity: 15, book: { id: 301, title: '북리듀서테스트도서A' } },
+            { rank: 2, soldQuantity: 9, book: { id: 302, title: '북리듀서테스트도서B' } },
+        ];
+        const state = bookReducer(initialState, fetchBestsellersSuccess(bestsellers));
+        expect(state.bestsellersLoading).toBe(false);
+        expect(state.bestsellers).toEqual(bestsellers);
+        expect(state.bestsellers[0].rank).toBe(1);
+        expect(state.bestsellers[0].soldQuantity).toBe(15);
+    });
+
+    it('fetchBestsellersFailure', () => {
+        const state = bookReducer(initialState, fetchBestsellersFailure('베스트셀러 조회 실패'));
+        expect(state.bestsellersLoading).toBe(false);
+        expect(state.bestsellersError).toBe('베스트셀러 조회 실패');
     });
 });
 // npm test bookReducer

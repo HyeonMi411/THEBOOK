@@ -12,11 +12,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 국립중앙도서관 도서검색 API 연동 서비스
  * boot1(the703) 의 api/NlBookApiService.java 를 그대로 재현했습니다.
  * (국립중앙도서관 오픈API 는 XML 로 응답합니다)
  */
+@Slf4j
 @Service
 public class NlBookApiService {
 
@@ -39,7 +42,7 @@ public class NlBookApiService {
                 .queryParam("apiType", "xml")
                 .queryParam("srchTarget", "total")
                 .queryParam("kwd", keyword)
-                .queryParam("pageSize", 12)   // ★화면에 12개씩 노출과 통일
+                .queryParam("pageSize", 12)   // 화면에 12개씩 노출과 통일
                 .queryParam("pageNum", page)
                 .build()
                 .toUri();
@@ -74,7 +77,7 @@ public class NlBookApiService {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("국립중앙도서관 도서검색 API 호출/파싱 중 오류가 발생했습니다: {}", e.getMessage());
         }
 
         return result;

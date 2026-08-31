@@ -122,7 +122,7 @@ describe('order slice reducer', () => {
         expect(state.error).toBe('본인의 주문만 조회할 수 있습니다.');
     });
 
-    //////////////////////////////////////////// ★주문 삭제 (결제전(PENDING) 주문만 가능)
+    //////////////////////////////////////////// 주문 삭제 (결제전(PENDING) 주문만 가능)
     it('deleteOrderRequest', () => {
         const state = orderReducer(initialState, deleteOrderRequest());
         expect(state.loading).toBe(true);
@@ -144,7 +144,7 @@ describe('order slice reducer', () => {
         expect(state.error).toBe('결제가 진행된 주문은 삭제할 수 없습니다. (현재 상태 : PAID)');
     });
 
-    //////////////////////////////////////////// ★카카오페이 결제준비
+    //////////////////////////////////////////// 카카오페이 결제준비
     it('paymentReadyRequest - redirectUrl 이 초기화되는지', () => {
         const prev = { ...initialState, redirectUrl: '이전URL' };
         const state = orderReducer(prev, paymentReadyRequest());
@@ -166,7 +166,7 @@ describe('order slice reducer', () => {
         expect(state.paymentError).toBe('이미 처리된 주문입니다.');
     });
 
-    //////////////////////////////////////////// ★카카오페이 결제승인 ( ★실제로 상태가 PAID로 바뀌는지 꼼꼼히 검증 )
+    //////////////////////////////////////////// 카카오페이 결제승인 ( 실제로 상태가 PAID로 바뀌는지 꼼꼼히 검증 )
     it('paymentApproveRequest', () => {
         const state = orderReducer(initialState, paymentApproveRequest());
         expect(state.paymentLoading).toBe(true);
@@ -186,7 +186,7 @@ describe('order slice reducer', () => {
         expect(state.paymentError).toBe('재고가 부족합니다.');
     });
 
-    //////////////////////////////////////////// ★카카오페이 결제취소
+    //////////////////////////////////////////// 카카오페이 결제취소
     it('paymentCancelRequest', () => {
         const state = orderReducer(initialState, paymentCancelRequest());
         expect(state.paymentLoading).toBe(true);
@@ -210,7 +210,7 @@ describe('order slice reducer', () => {
         expect(state.paymentError).toBe('본인의 주문만 처리할 수 있습니다.');
     });
 
-    //////////////////////////////////////////// ★카카오페이 결제실패
+    //////////////////////////////////////////// 카카오페이 결제실패
     it('paymentFailRequest', () => {
         const state = orderReducer(initialState, paymentFailRequest());
         expect(state.paymentLoading).toBe(true);

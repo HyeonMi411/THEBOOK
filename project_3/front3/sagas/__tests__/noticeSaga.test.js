@@ -15,9 +15,9 @@ import {
     createNotice, updateNotice, deleteNotice,
 } from '../noticeSaga';
 
-// ★ authSaga.test.js 와 동일한 이유로 jest.mock('axios') 를 쓰지 않습니다.
-//   generator.next() 로 saga 를 한단계씩 직접 실행시키면서 CALL 이펙트에 가짜 응답을
-//   수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
+// authSaga.test.js 와 동일한 이유로 jest.mock('axios') 를 쓰지 않습니다.
+//  generator.next() 로 saga 를 한단계씩 직접 실행시키면서 CALL 이펙트에 가짜 응답을
+//  수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
 
 // 더미SQL 데이터와 겹치지 않도록, 테스트 전용 공지사항 제목을 사용합니다.
 const noticeA = { id: 401, btitle: '공지사가테스트공지A', bcontent: '내용A', bhit: 5 };
@@ -53,7 +53,7 @@ describe('notice(SBOARD2) saga', () => {
         expect(generator.next().done).toBe(true);
     });
 
-    // -- 단건조회 ( ★서버가 BHIT(조회수)를 실제로 +1 해서 내려준 응답이 saga 를 거쳐 정확히 그대로 dispatch 되는지 검증 ) --
+    // -- 단건조회 ( 서버가 BHIT(조회수)를 실제로 +1 해서 내려준 응답이 saga 를 거쳐 정확히 그대로 dispatch 되는지 검증 ) --
     it('fetchNoticeDetail success - 조회수가 +1 증가된 응답이 그대로 전달되는지', () => {
         const action = fetchNoticeDetailRequest(401);
         const generator = fetchNoticeDetail(action);
@@ -68,7 +68,7 @@ describe('notice(SBOARD2) saga', () => {
         const putStep = generator.next(mockResponse).value;
 
         expect(putStep).toEqual(put(fetchNoticeDetailSuccess(mockResponse.data)));
-        // ★saga 가 응답값을 누락/변형 없이 그대로 전달하는지, 증가된 조회수 값으로 재확인
+        // saga 가 응답값을 누락/변형 없이 그대로 전달하는지, 증가된 조회수 값으로 재확인
         expect(mockResponse.data.bhit).toBe(6);
         expect(generator.next().done).toBe(true);
     });
@@ -114,7 +114,7 @@ describe('notice(SBOARD2) saga', () => {
         expect(generator.next().done).toBe(true);
     });
 
-    // -- 공지사항 작성 ( ★관리자 전용, 백엔드 @PreAuthorize("hasRole('ADMIN')") ) --
+    // -- 공지사항 작성 ( 관리자 전용, 백엔드 @PreAuthorize("hasRole('ADMIN')") ) --
     it('createNotice success', () => {
         const payload = { dto: { btitle: '공지사가테스트공지A', bcontent: '내용A' }, file: null };
         const action = createNoticeRequest(payload);
@@ -144,7 +144,7 @@ describe('notice(SBOARD2) saga', () => {
         expect(generator.next().done).toBe(true);
     });
 
-    // -- 공지사항 수정 ( ★관리자 전용 ) --
+    // -- 공지사항 수정 ( 관리자 전용 ) --
     it('updateNotice success', () => {
         const payload = { noticeId: 401, dto: { btitle: '공지사가테스트공지A(수정)' }, file: null };
         const action = updateNoticeRequest(payload);
@@ -175,7 +175,7 @@ describe('notice(SBOARD2) saga', () => {
         expect(generator.next().done).toBe(true);
     });
 
-    // -- 공지사항 삭제 ( ★관리자 전용 ) -- ( ★API 응답값 자체는 안 쓰고 action.payload(id)를 그대로 success에 담아 dispatch )
+    // -- 공지사항 삭제 ( 관리자 전용 ) -- ( API 응답값 자체는 안 쓰고 action.payload(id)를 그대로 success에 담아 dispatch )
     it('deleteNotice success', () => {
         const noticeId = 401;
         const action = deleteNoticeRequest(noticeId);

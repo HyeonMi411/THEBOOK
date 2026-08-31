@@ -75,7 +75,7 @@ export default function NoticeDetailPage() {
         <div className="notice-detail-content">{currentNotice.bcontent}</div>
 
         <div className="notice-detail-footer">
-          {/* ★수정/삭제는 관리자 전용 */}
+          {/* 수정/삭제는 관리자 전용 */}
           {isAdmin && (
             <>
               <button type="button" className="btn btn-outline" onClick={() => setIsEditModalVisible(true)}>

@@ -98,7 +98,7 @@ describe('cart slice reducer', () => {
         expect(state.error).toBe('재고가 부족합니다.');
     });
 
-    //////////////////////////////////////////// 항목삭제 ( ★총액 재계산 로직이 실제로 맞는지 꼼꼼히 검증 )
+    //////////////////////////////////////////// 항목삭제 ( 총액 재계산 로직이 실제로 맞는지 꼼꼼히 검증 )
     it('removeCartItemRequest', () => {
         const state = cartReducer(initialState, removeCartItemRequest());
         expect(state.loading).toBe(true);
@@ -161,6 +161,13 @@ describe('cart slice reducer', () => {
         const prev = { ...initialState, items: [bookA, bookB] };
         const state = cartReducer(prev, selectAllItems());
         expect(state.selectedIds).toEqual([bookA.id, bookB.id]);
+    });
+
+    it('selectAllItems - 판매중단(bookDeleted)된 항목은 전체선택에서 제외되는지', () => {
+        const deletedItem = { ...bookB, bookDeleted: true };
+        const prev = { ...initialState, items: [bookA, deletedItem] };
+        const state = cartReducer(prev, selectAllItems());
+        expect(state.selectedIds).toEqual([bookA.id]); // 판매중단된 deletedItem 은 빠져야 함
     });
 
     it('clearSelection - selectedIds 가 빈 배열로 초기화되는지', () => {

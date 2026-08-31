@@ -33,7 +33,7 @@ export default function MyOrderDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
 
-  // ★결제전(PENDING) 주문만 삭제 가능 - 삭제 성공하면 목록으로 이동
+  // 결제전(PENDING) 주문만 삭제 가능 - 삭제 성공하면 목록으로 이동
   const handleDelete = () => {
     if (window.confirm('이 주문을 삭제하시겠습니까?')) {
       dispatch(deleteOrderRequest(currentOrder.id));
@@ -96,7 +96,7 @@ export default function MyOrderDetailPage() {
           </button>
         )}
 
-        {/* ★모든 상태에서 삭제 가능 - 결제전(PENDING)은 실제 삭제, 결제완료/취소/실패는
+        {/* 모든 상태에서 삭제 가능 - 결제전(PENDING)은 실제 삭제, 결제완료/취소/실패는
             DB에는 그대로 두고 내 목록에서만 안 보이게(숨기기) 처리됩니다. */}
         <button
           type="button"

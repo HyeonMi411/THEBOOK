@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.PostMapper">
+
+    <!-- PostResponseDto.from() 이 post.getUser().getNickname() 을 참조하므로
+         AppUser 를 LEFT JOIN 해서 함께 채웁니다. images/hashtags 는 이 매퍼에서
+         채우지 않고, Service 레이어에서 ImageMapper/HashtagMapper 로 별도 조회해 조립합니다. -->
+    <resultMap id="PostResultMap" type="Post">
+        <id     property="id"        column="ID"/>
+        <result property="deleted"   column="DELETED"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="updatedAt" column="UPDATED_AT"/>
+        <result property="content"   column="CONTENT"/>
+        <association property="user" javaType="AppUser">
+            <id     property="id"       column="U_APP_USER_ID"/>
+            <result property="nickname" column="U_NICKNAME"/>
+        </association>
+    </resultMap>
+
+    <sql id="postJoinColumns">
+        p.*, u.APP_USER_ID AS U_APP_USER_ID, u.NICKNAME AS U_NICKNAME
+    </sql>
+
+    <sql id="postJoinFrom">
+        FROM POSTS p
+        LEFT JOIN APP_USER u ON p.APP_USER_ID = u.APP_USER_ID
+    </sql>
+
+    <select id="findByDeletedFalse" resultMap="PostResultMap">
+        SELECT <include refid="postJoinColumns"/>
+        <include refid="postJoinFrom"/>
+        WHERE p.DELETED = 0
+        ORDER BY p.CREATED_AT DESC
+    </select>
+
+    <select id="findById" parameterType="long" resultMap="PostResultMap">
+        SELECT <include refid="postJoinColumns"/>
+        <include refid="postJoinFrom"/>
+        WHERE p.ID = #{id}
+    </select>
+
+    <insert id="insert" parameterType="Post">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT POST_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO POSTS (ID, APP_USER_ID, CONTENT, DELETED, CREATED_AT, UPDATED_AT)
+        VALUES (#{id}, #{user.id}, #{content, jdbcType=CLOB}, 0, SYSTIMESTAMP, SYSTIMESTAMP)
+    </insert>
+
+    <update id="update" parameterType="Post">
+        UPDATE POSTS
+        SET CONTENT = #{content, jdbcType=CLOB}, UPDATED_AT = SYSTIMESTAMP
+        WHERE ID = #{id}
+    </update>
+
+    <update id="updateDeleted">
+        UPDATE POSTS SET DELETED = #{deleted}, UPDATED_AT = SYSTIMESTAMP WHERE ID = #{id}
+    </update>
+
+</mapper>

@@ -3,18 +3,24 @@ package com.thejoa703.mapper;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import com.thejoa703.entity.CartItem;
 
-/**
- * CartItem MyBatis 매퍼 (★조회전용)
- * ------------------------------------------------------------------
- * 담기/수량변경/삭제는 반드시 JPA(CartItemRepository + Service) 경로로만 처리하세요.
- * ------------------------------------------------------------------
- */
 @Mapper
 public interface CartItemMapper {
 
-	// 장바구니에 담긴 항목 전체조회
 	List<CartItem> findByCartId(Long cartId);
+
+	CartItem findById(Long id);
+
+	CartItem findByCartIdAndBookId(@Param("cartId") Long cartId, @Param("bookId") Long bookId);
+
+	void insert(CartItem item);
+
+	void update(CartItem item);
+
+	void deleteById(Long id);
+
+	void deleteByCartId(Long cartId);
 }

@@ -33,12 +33,12 @@ public class OrderItem {
 	@SequenceGenerator(name = "order_item_seq", sequenceName = "ORDER_ITEM_SEQ", allocationSize = 1)
 	private Long id;
 
-	// ★소속 주문 - N:1
+	// 소속 주문 - N:1
 	@ManyToOne
 	@JoinColumn(name = "ORDER_ID", nullable = false)
 	private Orders order;
 
-	// ★구매한 도서 - N:1
+	// 구매한 도서 - N:1
 	@ManyToOne
 	@JoinColumn(name = "BOOK_ID", nullable = false)
 	private Book book;
@@ -47,8 +47,8 @@ public class OrderItem {
 	private Integer quantity; // 구매수량
 
 	@Column(nullable = false)
-	private Integer price; // ★주문 시점 가격 스냅샷 (도서 가격변동과 무관하게 보존)
+	private Integer price; // 주문 시점 가격 스냅샷 (도서 가격변동과 무관하게 보존)
 
 	@Column(name = "BOOK_TITLE_SNAPSHOT", length = 255)
-	private String bookTitleSnapshot; // ★주문 시점 도서명 스냅샷 (도서 삭제/제목변경과 무관하게 보존)
+	private String bookTitleSnapshot; // 주문 시점 도서명 스냅샷 (도서 삭제/제목변경과 무관하게 보존)
 }

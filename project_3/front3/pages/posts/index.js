@@ -1,10 +1,10 @@
-// pages/index.js
+// pages/posts/index.js
 import React, {useEffect , useState} from 'react'; // 이벤트변경감지 , useState (변수변경)
 import { useSelector, useDispatch }  from "react-redux";  // 전역상태, 스토어알림
-import { fetchPostsRequest  , updatePostRequest , deletePostRequest}  from "../reducers/postReducer";
+import { fetchPostsRequest  , updatePostRequest , deletePostRequest}  from "../../reducers/postReducer";
 import { Spin}  from 'antd';
-import PostList from '../components/PostList';
-import EditPostModal from '../components/EditPostModal';  
+import PostList from '../../components/PostList';
+import EditPostModal from '../../components/EditPostModal';  
 
 export   default function Home(){
     const   dispatch = useDispatch();  

@@ -60,7 +60,7 @@ public class Sboard2 {
 		if (this.bhit == null) { this.bhit = 0; }
 	}
 
-	// ★공지사항 글쓰기는 관리자만 가능하다 - 작성한 관리자 (AppUser)
+	// 공지사항 글쓰기는 관리자만 가능하다 - 작성한 관리자 (AppUser)
 	@ManyToOne
 	@JoinColumn(name = "APP_USER_ID", nullable = false)
 	private AppUser user;

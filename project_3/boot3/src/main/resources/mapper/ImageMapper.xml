@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.ImageMapper">
+
+    <resultMap id="ImageResultMap" type="Image">
+        <id     property="id"  column="ID"/>
+        <result property="src" column="SRC"/>
+    </resultMap>
+
+    <select id="findByPostId" parameterType="long" resultMap="ImageResultMap">
+        SELECT * FROM IMAGES WHERE POST_ID = #{postId} ORDER BY ID ASC
+    </select>
+
+    <select id="findById" parameterType="long" resultMap="ImageResultMap">
+        SELECT * FROM IMAGES WHERE ID = #{id}
+    </select>
+
+    <insert id="insert" parameterType="Image">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT IMAGE_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO IMAGES (ID, POST_ID, SRC)
+        VALUES (#{id}, #{post.id}, #{src})
+    </insert>
+
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM IMAGES WHERE ID = #{id}
+    </delete>
+
+    <delete id="deleteByPostId" parameterType="long">
+        DELETE FROM IMAGES WHERE POST_ID = #{postId}
+    </delete>
+
+</mapper>

@@ -11,9 +11,9 @@ import {
 } from '../../reducers/cartReducer';
 import { fetchCart, addToCart, updateCartItem, removeCartItem, clearCart } from '../cartSaga';
 
-// ★ authSaga.test.js 와 동일한 이유로 jest.mock('axios') 를 쓰지 않습니다.
-//   generator.next() 로 saga 를 한단계씩 직접 실행시키면서 CALL 이펙트에 가짜 응답을
-//   수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
+// authSaga.test.js 와 동일한 이유로 jest.mock('axios') 를 쓰지 않습니다.
+//  generator.next() 로 saga 를 한단계씩 직접 실행시키면서 CALL 이펙트에 가짜 응답을
+//  수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
 
 // 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록, 테스트 전용 도서명을 사용합니다.
 const bookA = { id: 201, bookId: 111, bookTitle: '카트사가테스트도서A', bookCover: null, price: 15000, quantity: 2, subtotal: 30000, stockQuantity: 5 };
@@ -47,7 +47,7 @@ describe('cart saga', () => {
         generator.next(); // CALL 단계 진행
 
         const mockError = { response: { data: { error: '장바구니 조회 실패' } } };
-        const putStep = generator.throw(mockError).value; // ★catch 블록으로 진입시킴
+        const putStep = generator.throw(mockError).value; // catch 블록으로 진입시킴
 
         expect(putStep).toEqual(put(fetchCartFailure('장바구니 조회 실패')));
         expect(generator.next().done).toBe(true);
@@ -114,7 +114,7 @@ describe('cart saga', () => {
         expect(generator.next().done).toBe(true);
     });
 
-    // -- 항목삭제 -- ( ★API 응답값 자체는 안 쓰고 action.payload(itemId)를 그대로 success에 담아 dispatch )
+    // -- 항목삭제 -- ( API 응답값 자체는 안 쓰고 action.payload(itemId)를 그대로 success에 담아 dispatch )
     it('removeCartItem success', () => {
         const itemId = 201;
         const action = removeCartItemRequest(itemId);

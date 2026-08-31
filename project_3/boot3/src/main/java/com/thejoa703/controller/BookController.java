@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.thejoa703.dto.BookDto.BestsellerBookDto;
 import com.thejoa703.dto.BookDto.BookRequestDto;
 import com.thejoa703.dto.BookDto.BookResponseDto;
 import com.thejoa703.dto.BookDto.StockUpdateRequestDto;
@@ -66,6 +67,16 @@ public class BookController {
 			@Parameter(description = "검색 키워드") @RequestParam("keyword") String keyword
 	) {
 		return ResponseEntity.ok(bookService.searchByTitle(keyword));
+	}
+
+	@Operation(
+			summary = "베스트셀러(판매량 TOP 10) 조회 (전체공개)",
+			description = "결제완료(PAID) 주문 기준으로 누적 판매량이 많은 순서대로 TOP 10 도서를 반환합니다. "
+					+ "Redis 에 10분간 캐싱되며, 결제가 새로 완료되면 캐시가 즉시 무효화되어 다음 조회 때 최신 랭킹으로 다시 계산됩니다."
+	)
+	@GetMapping("/bestsellers")
+	public ResponseEntity<List<BestsellerBookDto>> getBestsellers() {
+		return ResponseEntity.ok(bookService.getBestsellers());
 	}
 
 	@Operation(summary = "도서등록 (ROLE_ADMIN 전용)", description = "로그인한 관리자 계정으로 도서를 등록합니다.")

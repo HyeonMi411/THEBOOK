@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
     }
 
     //4. @Valid 유효성 검사 실패시 (@ModelAttribute 방식, multipart/form-data 등록/수정 API)
-    //   @ModelAttribute + @Valid 는 MethodArgumentNotValidException 이 아니라 BindException 이 발생합니다.
+    //  @ModelAttribute + @Valid 는 MethodArgumentNotValidException 이 아니라 BindException 이 발생합니다.
     @ExceptionHandler(BindException.class)
     public ResponseEntity<Map<String, String>> handleBindException(BindException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -60,9 +60,9 @@ public class GlobalExceptionHandler {
     }
 
     //6. 외부 API(카카오페이/카카오 도서검색/국립중앙도서관) 호출 실패 시
-    //   RestClient 가 4xx/5xx 응답을 받으면 HttpClientErrorException/HttpServerErrorException,
-    //   네트워크 자체가 안 되면 ResourceAccessException 을 던집니다. 이걸 안 잡으면 원인을
-    //   전혀 알 수 없는 밋밋한 500(Whitelabel) 으로 그대로 새어나갑니다.
+    //  RestClient 가 4xx/5xx 응답을 받으면 HttpClientErrorException/HttpServerErrorException,
+    //  네트워크 자체가 안 되면 ResourceAccessException 을 던집니다. 이걸 안 잡으면 원인을
+    //  전혀 알 수 없는 밋밋한 500(Whitelabel) 으로 그대로 새어나갑니다.
     @ExceptionHandler(HttpClientErrorException.Unauthorized.class)
     public ResponseEntity<Map<String, String>> handleExternalApiUnauthorized(HttpClientErrorException.Unauthorized ex) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)

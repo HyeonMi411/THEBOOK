@@ -49,12 +49,12 @@ export function* fetchOrderDetail(action) {
     }
 }
 
-// DELETE /api/orders/{id} - 주문 삭제 (action.payload : orderId, ★결제전(PENDING) 주문만 가능)
+// DELETE /api/orders/{id} - 주문 삭제 (action.payload : orderId, 결제전(PENDING) 주문만 가능)
 export const deleteOrderAPI = (id) => api.delete(`${ORDER_API_BASE}/${id}`);
 export function* deleteOrder(action) {
     try {
         yield call(deleteOrderAPI, action.payload);
-        yield put(deleteOrderSuccess(action.payload)); // ★API 응답 body 는 없으므로(204), orderId 를 그대로 담아 dispatch
+        yield put(deleteOrderSuccess(action.payload)); // API 응답 body 는 없으므로(204), orderId 를 그대로 담아 dispatch
     } catch (err) {
         yield put(deleteOrderFailure(err.response?.data?.error || err.message));
     }

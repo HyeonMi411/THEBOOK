@@ -1,7 +1,7 @@
 // api/axios.js 
 import axios from "axios"; 
 const api = axios.create({
-  //  기본 api 서버주소, 환경변수 없으면 로컬서버 사용
+  // 기본 api 서버주소, 환경변수 없으면 로컬서버 사용
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080",  
   // refreshToken 이 HttpOnly 쿠키에 저장이 되어 있으면 자동으로 포함 필요
   withCredentials: true,  
@@ -16,7 +16,7 @@ api.interceptors.request.use(
     if (typeof window !== "undefined") { // CSR 환경에서만 localStoratge접근
       const accessToken = localStorage.getItem("accessToken");  // 저장된 Access Token 가져오기
       if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`; //  Authorization 헤더에 추가
+        config.headers.Authorization = `Bearer ${accessToken}`; // Authorization 헤더에 추가
       }
     }
     return config;  

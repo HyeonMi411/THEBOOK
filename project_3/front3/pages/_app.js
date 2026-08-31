@@ -4,7 +4,7 @@ import { wrapper } from '../store/configureStore'; // 치킨집(전역상태 + �
 import AppLayout from '../components/AppLayout';   // 공통레이아웃
 import 'antd/dist/antd.css';       // ant 디자인
 import '../styles/global.css';     // 전역 css
-import '../styles/bookstore.css';  // ★boot1(BookStore) 디자인 - Book/Notice 전용
+import '../styles/bookstore.css';  // boot1(BookStore) 디자인 - Book/Notice 전용
 
 //부품
 function MyApp({  Component , pageProps }) {  // 부품, 초기설정값

@@ -469,3 +469,15 @@ textarea.bs-form-control { min-height: 160px; resize: vertical; }
 .signup-confirm-card input { width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #ddd; font-size: 15px; box-sizing: border-box; }
 .signup-confirm-card input:focus { outline: none; border-color: #2563eb; }
 .signup-confirm-card button { width: 100%; }
+
+/* ================= 베스트셀러(판매량 TOP 10) 랭킹 위젯 ================= */
+.bestseller-ranking { background: #fff; border-radius: 14px; padding: 24px; margin-bottom: 28px; box-shadow: 0 4px 14px rgba(0,0,0,.05); }
+.bestseller-ranking-title { margin: 0 0 16px; font-size: 18px; }
+.bestseller-ranking-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.bestseller-ranking-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; text-decoration: none; color: inherit; transition: background .15s; }
+.bestseller-ranking-item:hover { background: #f5f6f8; }
+.bestseller-rank-num { flex: 0 0 24px; font-weight: 800; color: #2563eb; text-align: center; }
+.bestseller-cover { flex: 0 0 40px; height: 56px; border-radius: 6px; overflow: hidden; background: #eef1f5; }
+.bestseller-info { min-width: 0; }
+.bestseller-title { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bestseller-sold { font-size: 12px; color: #888; margin-top: 2px; }

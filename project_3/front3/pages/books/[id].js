@@ -29,7 +29,7 @@ export default function BookDetailPage() {
     return () => { dispatch(resetBookState()); };
   }, [id, dispatch]);
 
-  // ★바로구매: 주문 생성 성공하면 결제확인 화면으로 이동
+  // 바로구매: 주문 생성 성공하면 결제확인 화면으로 이동
   useEffect(() => {
     if (currentOrder) {
       router.push(`/order/checkout?orderId=${currentOrder.id}`);
@@ -44,9 +44,9 @@ export default function BookDetailPage() {
     }
   };
 
-  // ★수정모달을 상세페이지 안에서 바로 열고 닫습니다. (페이징 도입 이후, 목록 페이지의
-  //   현재 화면(12개)에 수정대상이 없을 수도 있어 ?edit=id 로 목록에 되돌아가 찾는 방식은
-  //   더 이상 사용하지 않습니다.)
+  // 수정모달을 상세페이지 안에서 바로 열고 닫습니다. (페이징 도입 이후, 목록 페이지의
+  //  현재 화면(12개)에 수정대상이 없을 수도 있어 ?edit=id 로 목록에 되돌아가 찾는 방식은
+  //  더 이상 사용하지 않습니다.)
   const handleEditSubmit = (values, coverFile) => {
     dispatch(updateBookRequest({
       bookId: currentBook.id,
@@ -66,14 +66,14 @@ export default function BookDetailPage() {
     setIsEditModalVisible(false);
   };
 
-  // ★장바구니 담기 (로그인 필요)
+  // 장바구니 담기 (로그인 필요)
   const handleAddToCart = () => {
     if (!user) { router.push('/login'); return; }
     dispatch(addToCartRequest({ bookId: currentBook.id, quantity: buyQuantity }));
     alert('장바구니에 담았습니다.');
   };
 
-  // ★바로구매 (로그인 필요) - 주문 생성 후 결제확인 화면으로 이동
+  // 바로구매 (로그인 필요) - 주문 생성 후 결제확인 화면으로 이동
   const handleBuyNow = () => {
     if (!user) { router.push('/login'); return; }
     dispatch(createOrderRequest({ bookId: currentBook.id, quantity: buyQuantity }));
@@ -94,7 +94,7 @@ export default function BookDetailPage() {
         <div className="row-flex">
           {/* 이미지 */}
           <div className="detail-cover-col">
-            {/* ★표지 없음/링크깨짐 → 자동으로 기본 아이콘 표시 */}
+            {/* 표지 없음/링크깨짐 → 자동으로 기본 아이콘 표시 */}
             <BookCoverImage src={coverSrc} alt={currentBook.title} height={460} iconSize={60} style={{ borderRadius: 12 }} />
           </div>
 
@@ -120,7 +120,7 @@ export default function BookDetailPage() {
 
             <table className="info-table">
               <tbody>
-                <tr><th>출판일</th><td>{currentBook.publishDate}</td></tr>
+                <tr><th>출판일</th><td>{currentBook.publishDate || "출판일 미상"}</td></tr>
                 <tr><th>페이지</th><td>{currentBook.pages != null ? `${currentBook.pages} Page` : "-"}</td></tr>
                 <tr>
                   <th>가격</th>
@@ -137,7 +137,7 @@ export default function BookDetailPage() {
 
             <div className="description-box">{currentBook.description}</div>
 
-            {/* ★장바구니 담기 / 바로구매 - 로그인한 회원이면 누구나 가능 */}
+            {/* 장바구니 담기 / 바로구매 - 로그인한 회원이면 누구나 가능 */}
             <div style={{ marginTop: 20 }}>
               <select
                 className="qty-select"
@@ -164,7 +164,7 @@ export default function BookDetailPage() {
                 목록
               </a>
 
-              {/* ★수정/삭제는 관리자 전용 */}
+              {/* 수정/삭제는 관리자 전용 */}
               {isAdmin && (
                 <>
                   <button type="button" className="btn btn-primary-bs" onClick={() => setIsEditModalVisible(true)}>

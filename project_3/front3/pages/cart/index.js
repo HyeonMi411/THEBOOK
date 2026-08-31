@@ -55,6 +55,12 @@ export default function CartPage() {
       alert('결제할 도서를 선택해주세요.');
       return;
     }
+    // 체크박스 자체를 막아뒀지만, 혹시 모를 상태 불일치에 대비해 한 번 더 방어합니다.
+    const hasDeletedSelected = items.some((item) => selectedIds.includes(item.id) && item.bookDeleted);
+    if (hasDeletedSelected) {
+      alert('판매가 중단된 도서가 포함되어 있어 주문할 수 없습니다. 장바구니에서 삭제해주세요.');
+      return;
+    }
     router.push({ pathname: '/order/checkout', query: { cartItemIds: selectedIds.join(',') } });
   };
 
@@ -103,11 +109,12 @@ export default function CartPage() {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id}>
+                <tr key={item.id} style={item.bookDeleted ? { opacity: 0.6 } : undefined}>
                   <td>
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(item.id)}
+                      disabled={item.bookDeleted}
                       onChange={() => dispatch(toggleSelectItem(item.id))}
                     />
                   </td>
@@ -124,7 +131,12 @@ export default function CartPage() {
                       </div>
                       <div>
                         <div className="cart-item-title">{item.bookTitle}</div>
-                        {item.quantity > item.stockQuantity && (
+                        {item.bookDeleted && (
+                          <div className="cart-item-stock-warn">
+                            ⛔ 판매가 중단된 도서입니다. 삭제해주세요.
+                          </div>
+                        )}
+                        {!item.bookDeleted && item.quantity > item.stockQuantity && (
                           <div className="cart-item-stock-warn">
                             ⚠ 재고 부족 (현재 재고: {item.stockQuantity}권)
                           </div>
@@ -136,7 +148,14 @@ export default function CartPage() {
                     <div className="qty-control">
                       <button type="button" className="qty-btn" onClick={() => handleQuantityChange(item.id, item.quantity, -1, item.stockQuantity)}>−</button>
                       <span>{item.quantity}</span>
-                      <button type="button" className="qty-btn" onClick={() => handleQuantityChange(item.id, item.quantity, 1, item.stockQuantity)}>+</button>
+                      <button
+                        type="button"
+                        className="qty-btn"
+                        disabled={item.bookDeleted}
+                        onClick={() => handleQuantityChange(item.id, item.quantity, 1, item.stockQuantity)}
+                      >
+                        +
+                      </button>
                     </div>
                   </td>
                   <td>{item.subtotal?.toLocaleString()}원</td>

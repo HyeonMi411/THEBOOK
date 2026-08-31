@@ -15,7 +15,7 @@ export default function LoginPage() {
     const {user, loading, error} = useSelector((state)=>state.auth);
 
     //Q3.   로그인 버튼을 누르고나면  -  스토어알림(dispatch) 이용해서 loginRequest 처리
-    //  {email:'1@1', password:'1', provider:'local'}
+    // {email:'1@1', password:'1', provider:'local'}
     const onFinish = (values)=>{   
         console.log( values  );
         dispatch(   loginRequest({ ...values  , provider:'local'})   );

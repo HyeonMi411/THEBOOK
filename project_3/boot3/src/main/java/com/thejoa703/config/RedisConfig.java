@@ -8,7 +8,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.data.redis.core.RedisTemplate;
 
 @Configuration
 public class RedisConfig {
@@ -18,7 +17,7 @@ public class RedisConfig {
 
     @Value("${spring.data.redis.port}")		// 6379
     private int port;
-    //  Redis 연결 생성 관리 ( JWT 저장소) 
+    // Redis 연결 생성 관리 ( JWT 저장소) 
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {  //Lettuce  비동기/반응형 지원
         return new LettuceConnectionFactory(host, port);
@@ -29,8 +28,7 @@ public class RedisConfig {
         return new StringRedisTemplate(factory);
     } // 관리
     
-    // 검색 기능 확장을 위한 객체/JSON 직렬화 템플릿
-    // 최근 검색목록 , 해시태그 검색 결과 REDISD 캐싱할때 사용
+    // 객체/JSON 직렬화 템플릿 - 베스트셀러(판매량 TOP N) 캐싱에 사용 (BookService)
      @Bean
     public RedisTemplate<String, Object> redisTemplate(LettuceConnectionFactory factory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();

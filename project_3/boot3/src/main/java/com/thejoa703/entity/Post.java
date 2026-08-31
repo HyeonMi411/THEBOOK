@@ -4,18 +4,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.SequenceGenerator;
@@ -42,7 +38,7 @@ public class Post {
 	@Column(nullable = false,  name = "UPDATED_At")
 	private LocalDateTime updatedAt;
 	
-	@Lob // 대용량데이터처리 - CLOB(문자열) , BLOB(이미지, 파일, 오디오, 영상,,,,)
+	@Lob // 대용량데이터처리 - CLOB(문자열)
 	@Column(nullable = false)
 	private String content;
 	
@@ -57,29 +53,13 @@ public class Post {
 		this.updatedAt = LocalDateTime.now();
 	}
 	 
-	// 한 사람이 ★여러 글을 쓸수 있다.   (Post)
-	@ManyToOne   //1. 다대일
+	// 한 사람이 여러 글을 쓸수 있다.   (Post)
+	@ManyToOne
 	@JoinColumn(name="APP_USER_ID" , nullable = false)
 	private AppUser user; 
 	
-	// 한 글은 여러 이미지를 갖는다
-	@OneToMany( mappedBy= "post",   cascade = CascadeType.ALL , orphanRemoval = true)
+	// 이 글에 달린 이미지/해시태그 - MyBatis 는 자동 로딩을 안 해주므로,
+	// PostService 에서 ImageMapper/HashtagMapper 로 직접 채워넣습니다.
 	private List<Image>  images = new ArrayList<>();
-	
-	@OneToMany( mappedBy= "post",   cascade = CascadeType.ALL , orphanRemoval = true)
-	private List<PostLike>  likes = new ArrayList<>();
-
-	@OneToMany( mappedBy= "post",   cascade = CascadeType.ALL , orphanRemoval = true)
-	private List<Comment>  comments = new ArrayList<>();
-	
-	@OneToMany( mappedBy= "originalPost",   cascade = CascadeType.ALL , orphanRemoval = true)
-	private List<Retweet>  retweets = new ArrayList<>();
-	
-	
-	@ManyToMany
-	@JoinTable(name="POST_HASHTAG" ,
-		joinColumns = @JoinColumn(name="POST_ID") ,
-		inverseJoinColumns =  @JoinColumn(name="HASHTAG_ID") 
-	)
 	private List<Hashtag>  hashtags = new ArrayList<>();
 }

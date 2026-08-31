@@ -44,6 +44,7 @@ public class CartDto {
 		private Integer quantity;
 		private Integer subtotal;   // price * quantity
 		private Integer stockQuantity; // 현재 재고 (품절/재고부족 표시용)
+		private boolean bookDeleted;   // 담은 이후 관리자가 판매중단(소프트삭제)한 도서인지
 
 		public static CartItemResponseDto from(CartItem item) {
 			CartItemResponseDto dto = new CartItemResponseDto();
@@ -57,6 +58,7 @@ public class CartDto {
 			dto.setStockQuantity(
 					item.getBook().getStock() != null ? item.getBook().getStock().getStockQuantity() : 0
 			);
+			dto.setBookDeleted(item.getBook().isDeleted());
 			return dto;
 		}
 	}
@@ -69,12 +71,7 @@ public class CartDto {
 		private Integer totalAmount;
 		private LocalDateTime createdAt;
 
-		// ★cart.getItems()(엔티티의 메모리상 컬렉션)에 의존하지 않고, 호출 측에서
-		//   CartItemRepository 로 "방금 막" 조회한 목록을 그대로 넘겨받습니다.
-		//   Cart.items 는 addToCart()/removeItem() 등 여러 메서드에서 개별적으로 손대다보니
-		//   항상 실제 DB 상태와 100% 동기화된다고 신뢰하기 어렵습니다(양방향 연관관계 특성상).
-		//   그래서 화면에 보여줄 목록은 항상 자식 테이블(CART_ITEM)에서 새로 조회한 값을
-		//   기준으로 만듭니다 - 이게 가장 확실하게 실제 DB 상태를 반영하는 방법입니다.
+		// 호출 측에서 CartItemMapper 로 방금 막 조회한 목록을 그대로 넘겨받습니다.
 		public static CartResponseDto from(Cart cart, java.util.List<CartItem> freshItems) {
 			CartResponseDto dto = new CartResponseDto();
 			dto.setId(cart.getId());
@@ -83,7 +80,11 @@ public class CartDto {
 					.map(CartItemResponseDto::from)
 					.collect(java.util.stream.Collectors.toList());
 			dto.setItems(items);
-			dto.setTotalAmount(items.stream().mapToInt(CartItemResponseDto::getSubtotal).sum());
+			// 판매중단(삭제)된 도서는 어차피 구매할 수 없으므로 결제예정금액에서 제외합니다.
+			dto.setTotalAmount(items.stream()
+					.filter(i -> !i.isBookDeleted())
+					.mapToInt(CartItemResponseDto::getSubtotal)
+					.sum());
 			return dto;
 		}
 	}

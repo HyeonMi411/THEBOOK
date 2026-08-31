@@ -15,7 +15,7 @@ import lombok.Setter;
 
 public class BookDto {
 
-	// ★재고 수정 요청 Dto (관리자 전용)
+	// 재고 수정 요청 Dto (관리자 전용)
 	@Getter @Setter @AllArgsConstructor @NoArgsConstructor
 	public static class StockUpdateRequestDto {
 		@NotNull(message = "재고수량은 필수입니다.")
@@ -67,7 +67,7 @@ public class BookDto {
 		private String bookCover;
 		private LocalDateTime regDate;
 		private String userNickname; // 등록한 관리자 닉네임
-		private Integer stockQuantity; // ★재고수량 (BookStock 이 아직 없으면 0)
+		private Integer stockQuantity; // 재고수량 (BookStock 이 아직 없으면 0)
 
 		public static BookResponseDto from(Book book) {
 			BookResponseDto dto = new BookResponseDto();
@@ -89,5 +89,13 @@ public class BookDto {
 			dto.setStockQuantity(book.getStock() != null ? book.getStock().getStockQuantity() : 0);
 			return dto;
 		}
+	}
+
+	// 베스트셀러(판매량 TOP N) 응답 Dto - 순위/누적판매량까지 함께 내려줍니다.
+	@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+	public static class BestsellerBookDto {
+		private Integer rank;          // 1위, 2위, ...
+		private Long soldQuantity;     // 결제완료(PAID) 주문 기준 누적 판매량
+		private BookResponseDto book;  // 도서 상세정보
 	}
 }

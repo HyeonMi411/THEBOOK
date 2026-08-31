@@ -39,7 +39,7 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady, user]);
 
-  // ★결제준비 성공 → 카카오페이 결제창(redirectUrl)으로 이동
+  // 결제준비 성공 → 카카오페이 결제창(redirectUrl)으로 이동
   useEffect(() => {
     if (redirectUrl) {
       window.location.href = redirectUrl;

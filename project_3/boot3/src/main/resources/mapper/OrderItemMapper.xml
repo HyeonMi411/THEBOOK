@@ -4,20 +4,39 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.thejoa703.mapper.OrderItemMapper">
 
-    <!-- order/book 연관관계는 조회전용 매퍼에서는 매핑하지 않습니다. -->
+    <!-- OrderItemResponseDto.from() 이 item.getBook().getId()/getBookCover() 를 참조하므로
+         BOOK 을 JOIN 해서 함께 채웁니다. (title/price 는 주문 시점 스냅샷 컬럼을 그대로 씀) -->
     <resultMap id="OrderItemResultMap" type="OrderItem">
         <id     property="id"                column="ID"/>
         <result property="quantity"          column="QUANTITY"/>
         <result property="price"             column="PRICE"/>
         <result property="bookTitleSnapshot" column="BOOK_TITLE_SNAPSHOT"/>
+        <association property="book" javaType="Book">
+            <id     property="id"        column="B_BOOK_ID"/>
+            <result property="bookCover" column="B_BOOK_COVER"/>
+        </association>
     </resultMap>
 
-    <!-- 특정 주문에 담긴 상품목록 -->
     <select id="findByOrderId" parameterType="long" resultMap="OrderItemResultMap">
-        SELECT * FROM ORDER_ITEMS WHERE ORDER_ID = #{orderId}
+        SELECT oi.*, b.BOOK_ID AS B_BOOK_ID, b.BOOK_COVER AS B_BOOK_COVER
+        FROM ORDER_ITEMS oi
+        JOIN BOOK b ON oi.BOOK_ID = b.BOOK_ID
+        WHERE oi.ORDER_ID = #{orderId}
+        ORDER BY oi.ID ASC
     </select>
 
-    <!-- ★베스트셀러/판매통계 - 결제완료(PAID) 주문만 집계해서 판매량 TOP N 조회 -->
+    <insert id="insert" parameterType="OrderItem">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT ORDER_ITEM_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO ORDER_ITEMS (ID, ORDER_ID, BOOK_ID, QUANTITY, PRICE, BOOK_TITLE_SNAPSHOT)
+        VALUES (#{id}, #{order.id}, #{book.id}, #{quantity}, #{price}, #{bookTitleSnapshot})
+    </insert>
+
+    <delete id="deleteByOrderId" parameterType="long">
+        DELETE FROM ORDER_ITEMS WHERE ORDER_ID = #{orderId}
+    </delete>
+
     <select id="findBestSellerBookIds" parameterType="int" resultType="map">
         SELECT oi.BOOK_ID AS BOOK_ID, SUM(oi.QUANTITY) AS TOTAL_QTY
         FROM ORDER_ITEMS oi

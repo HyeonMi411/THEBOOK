@@ -1,13 +1,14 @@
 package com.thejoa703.service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import com.thejoa703.api.ApiKakaoBook;
 import com.thejoa703.api.BookKakaoDto;
 import com.thejoa703.api.BookNlDto;
 import com.thejoa703.api.NlBookApiService;
+import com.thejoa703.dto.BookDto.BestsellerBookDto;
 import com.thejoa703.dto.BookDto.BookRequestDto;
 import com.thejoa703.dto.BookDto.BookResponseDto;
 import com.thejoa703.dto.BookDto.StockUpdateRequestDto;
@@ -25,144 +27,170 @@ import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Book;
 import com.thejoa703.entity.BookStock;
 import com.thejoa703.exception.ResourceNotFoundException;
-import com.thejoa703.repository.AppUserRepository;
-import com.thejoa703.repository.BookRepository;
-import com.thejoa703.repository.BookStockRepository;
+import com.thejoa703.mapper.AppUserMapper;
+import com.thejoa703.mapper.BookMapper;
+import com.thejoa703.mapper.BookStockMapper;
+import com.thejoa703.mapper.OrderItemMapper;
 import com.thejoa703.util.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true) // ##
+@Transactional(readOnly = true)
 public class BookService {
 
-	private final BookRepository      bookRepository;
-	private final BookStockRepository bookStockRepository; // ★재고 관리
-	private final AppUserRepository   appUserRepository;
-	private final FileStorageService  fileStorageService; // 표지이미지 업로드처리
-	private final ApiKakaoBook        apiKakaoBook;        // ★카카오 도서검색 API
-	private final NlBookApiService    nlBookApiService;    // ★국립중앙도서관 도서검색 API
+	private final BookMapper              bookMapper;
+	private final BookStockMapper         bookStockMapper;
+	private final AppUserMapper           appUserMapper;
+	private final OrderItemMapper         orderItemMapper;
+	private final RedisTemplate<String, Object> redisTemplate; // 베스트셀러 캐싱용
+	private final FileStorageService      fileStorageService;
+	private final ApiKakaoBook            apiKakaoBook;
+	private final NlBookApiService        nlBookApiService;
 
-	private static final int DEFAULT_PAGE_SIZE = 12; // ★화면에 12개씩
+	private static final int DEFAULT_PAGE_SIZE = 12;
+	private static final int BESTSELLER_TOP_N = 10;
+	private static final String BESTSELLER_CACHE_KEY = "book:bestsellers:top10";
+	private static final long BESTSELLER_CACHE_TTL_SECONDS = 600; // 10분
 
-	// 1. 전체조회 (최신순) - 목록 전체(비페이징, 내부용/구버전 호환용)
 	public List<BookResponseDto> getAllBooks() {
-		return bookRepository.findAllByOrderByIdDesc().stream()
+		Map<String, Object> params = new HashMap<>();
+		params.put("start", 0);
+		params.put("end", Integer.MAX_VALUE);
+		return bookMapper.findAll(params).stream()
 				.map(BookResponseDto::from)
 				.collect(Collectors.toList());
-	}	
-
-	// 1-1. ★전체조회 - 페이징(화면 12개씩) + 카테고리 선택필터
-	public PageResponseDto<BookResponseDto> getAllBooksPaged(int page, int size, String category) {
-		int currentPage = Math.max(page, 1);       // 1보다 작으면 1페이지로 보정
-		int pageSize     = size > 0 ? size : DEFAULT_PAGE_SIZE;
-		Pageable pageable = PageRequest.of(currentPage - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
-
-		Page<Book> result = (category != null && !category.isBlank())
-				? bookRepository.findByCategoryOrderByIdDesc(category, pageable)
-				: bookRepository.findAllByOrderByIdDesc(pageable);
-
-		List<BookResponseDto> content = result.getContent().stream()
-				.map(BookResponseDto::from)
-				.collect(Collectors.toList());
-
-		return new PageResponseDto<>(content, currentPage, pageSize, result.getTotalElements(), result.getTotalPages());
 	}
 
-	// 2. 단건조회
+	public PageResponseDto<BookResponseDto> getAllBooksPaged(int page, int size, String category) {
+		int currentPage = Math.max(page, 1);
+		int pageSize = size > 0 ? size : DEFAULT_PAGE_SIZE;
+		int start = (currentPage - 1) * pageSize;
+
+		List<Book> books;
+		int totalElements;
+		if (category != null && !category.isBlank()) {
+			Map<String, Object> params = new HashMap<>();
+			params.put("category", category);
+			params.put("start", start);
+			params.put("end", pageSize);
+			books = bookMapper.findByCategory(params);
+			totalElements = bookMapper.findCategoryCnt(category);
+		} else {
+			Map<String, Object> params = new HashMap<>();
+			params.put("start", start);
+			params.put("end", pageSize);
+			books = bookMapper.findAll(params);
+			totalElements = bookMapper.findAllCnt();
+		}
+
+		List<BookResponseDto> content = books.stream()
+				.map(BookResponseDto::from)
+				.collect(Collectors.toList());
+		int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+
+		return new PageResponseDto<>(content, currentPage, pageSize, totalElements, totalPages);
+	}
+
 	public BookResponseDto getBook(Long id) {
-		Book book = bookRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 도서입니다. ID : " + id));
+		Book book = bookMapper.findById(id);
+		if (book == null || book.isDeleted()) {
+			throw new ResourceNotFoundException("존재하지 않는 도서입니다. ID : " + id);
+		}
 		return BookResponseDto.from(book);
 	}
 
-	// 3. 제목검색 ( ★대소문자 구분없이, 앞뒤/중복 공백은 정리해서 검색 )
 	public List<BookResponseDto> searchByTitle(String keyword) {
 		String cleaned = cleanKeyword(keyword);
-		return bookRepository.findByTitleContainingIgnoreCaseOrderByIdDesc(cleaned).stream()
+		Map<String, Object> params = new HashMap<>();
+		params.put("searchType", "title");
+		params.put("keyword", cleaned);
+		return bookMapper.searchBooks(params).stream()
 				.map(BookResponseDto::from)
 				.collect(Collectors.toList());
 	}
 
-	// ★검색어 앞뒤 공백 제거 + 단어 사이 중복 공백(스페이스바 두번 등)을 하나로 정리
-	//   (예: "  자바   프로그래밍  " → "자바 프로그래밍")
 	private String cleanKeyword(String keyword) {
 		if (keyword == null) { return ""; }
 		return keyword.trim().replaceAll("\\s+", " ");
 	}
 
-	// 4. 도서등록 ( ★관리자 전용 )
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public BookResponseDto createBook(Long userId, BookRequestDto dto, MultipartFile cover) {
-		AppUser user = appUserRepository.findById(userId)
+		AppUser user = appUserMapper.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 사용자입니다. ID : " + userId));
 
-		Book book = new Book();
-		book.setTitle(dto.getTitle());
-		book.setAuthor(dto.getAuthor());
-		book.setPublisher(dto.getPublisher());
-		book.setPublishDate(dto.getPublishDate());
-		book.setCategory(dto.getCategory());
-		book.setRanking(dto.getRanking());
-		book.setReviewCount(dto.getReviewCount() != null ? dto.getReviewCount() : 0);
-		book.setRating(dto.getRating());
-		book.setDescription(dto.getDescription());
-		book.setPages(dto.getPages());
-		book.setPrice(dto.getPrice());
-		book.setBookCover(
-				cover != null && !cover.isEmpty()
-						? fileStorageService.upload(cover)
-						: "uploads/default_book.png"
-		);
-		book.setUser(user);
+		Map<String, Object> params = new HashMap<>();
+		params.put("title", dto.getTitle());
+		params.put("author", dto.getAuthor());
+		params.put("publisher", dto.getPublisher());
+		params.put("publishDate", dto.getPublishDate());
+		params.put("category", dto.getCategory());
+		params.put("ranking", dto.getRanking());
+		params.put("reviewCount", dto.getReviewCount() != null ? dto.getReviewCount() : 0);
+		params.put("rating", dto.getRating());
+		params.put("description", dto.getDescription());
+		params.put("pages", dto.getPages());
+		params.put("price", dto.getPrice());
+		params.put("bookCover", cover != null && !cover.isEmpty()
+				? fileStorageService.upload(cover)
+				: "uploads/default_book.png");
+		params.put("appUserId", user.getId());
 
-		return BookResponseDto.from(bookRepository.save(book));
+		bookMapper.insert(params); // selectKey 로 채번된 bookId 가 params 에 다시 채워짐
+		Long newId = (Long) params.get("bookId");
+		return getBook(newId);
 	}
 
-	// 5. 도서수정 ( ★관리자 전용 - 더티체킹으로 update 반영 )
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public BookResponseDto updateBook(Long bookId, BookRequestDto dto, MultipartFile cover) {
-		Book book = bookRepository.findById(bookId)
-				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 도서입니다. ID : " + bookId));
-
-		book.setTitle(dto.getTitle());
-		book.setAuthor(dto.getAuthor());
-		book.setPublisher(dto.getPublisher());
-		book.setPublishDate(dto.getPublishDate());
-		book.setCategory(dto.getCategory());
-		book.setRanking(dto.getRanking());
-		if (dto.getReviewCount() != null) { book.setReviewCount(dto.getReviewCount()); }
-		book.setRating(dto.getRating());
-		book.setDescription(dto.getDescription());
-		book.setPages(dto.getPages());
-		book.setPrice(dto.getPrice());
-
-		if (cover != null && !cover.isEmpty()) {
-			book.setBookCover(fileStorageService.upload(cover));
+		Book book = bookMapper.findById(bookId);
+		if (book == null) {
+			throw new ResourceNotFoundException("존재하지 않는 도서입니다. ID : " + bookId);
 		}
-		return BookResponseDto.from(book); // 더티체킹(Dirty Checking)으로 자동 update
+
+		Map<String, Object> params = new HashMap<>();
+		params.put("bookId", bookId);
+		params.put("title", dto.getTitle());
+		params.put("author", dto.getAuthor());
+		params.put("publisher", dto.getPublisher());
+		params.put("publishDate", dto.getPublishDate());
+		params.put("category", dto.getCategory());
+		params.put("ranking", dto.getRanking());
+		params.put("reviewCount", dto.getReviewCount());
+		params.put("rating", dto.getRating());
+		params.put("description", dto.getDescription());
+		params.put("pages", dto.getPages());
+		params.put("price", dto.getPrice());
+		if (cover != null && !cover.isEmpty()) {
+			params.put("bookCover", fileStorageService.upload(cover));
+		}
+
+		bookMapper.update(params);
+		return getBook(bookId);
 	}
 
-	// 6. 도서삭제 ( ★관리자 전용 )
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public void deleteBook(Long bookId) {
-		if (!bookRepository.existsById(bookId)) {
+		Book book = bookMapper.findById(bookId);
+		if (book == null || book.isDeleted()) {
 			throw new ResourceNotFoundException("존재하지 않는 도서입니다. ID : " + bookId);
 		}
-		bookRepository.deleteById(bookId);
+		// 소프트 삭제 - 실제로 지우지 않고 DELETED 플래그만 세웁니다. CART_ITEM/ORDER_ITEMS 가
+		// BOOK_ID 를 FK 로 참조하고 있어서, 장바구니에 담겼거나 한 번이라도 주문된 도서를 하드
+		// 삭제하면 FK 제약조건 위반(ORA-02292)이 발생합니다. 재고(BOOK_STOCK)도 그대로 둡니다
+		// (판매내역 통계 등에서 필요할 수 있고, 삭제된 도서는 목록/검색에서 어차피 제외됩니다).
+		bookMapper.updateDeleted(bookId, true);
 	}
 
-	// 7. ★카카오 도서검색 API에서 가져와 DB에 자동저장 ( ★관리자 전용 )
-	//    boot1(the703) 의 BookController.kakaoinsert() + BookServiceImpl.insert() 를 그대로 재현했습니다.
-	//    (검색버튼을 누르면 카카오 API 에서 도서를 가져와 자동으로 DB에 저장한 후, 도서 목록 페이지로 이동)
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public int insertFromKakao(String search, Long adminUserId) {
-		AppUser admin = appUserRepository.findById(adminUserId)
+		AppUser admin = appUserMapper.findById(adminUserId)
 				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 사용자입니다. ID : " + adminUserId));
 
 		List<BookKakaoDto> kakaoBooks = apiKakaoBook.getBooks(search);
@@ -171,102 +199,106 @@ public class BookService {
 		for (BookKakaoDto kakaoBook : kakaoBooks) {
 			String title = kakaoBook.getTitle();
 			if (title == null || title.isBlank()) { continue; }
-
-			// 이미 등록된 제목이면 중복저장 방지 (boot1 원본에는 없던 안전장치를 추가했습니다)
-			if (bookRepository.existsByTitle(title)) { continue; }
-
-			Book book = new Book();
-			book.setTitle(title);
+			if (bookMapper.existsByTitle(title)) { continue; }
 
 			String author = (kakaoBook.getAuthors() != null && !kakaoBook.getAuthors().isEmpty())
 					? String.join(", ", kakaoBook.getAuthors())
 					: "미상";
-			book.setAuthor(author);
 
 			String publisher = kakaoBook.getPublisher();
-			book.setPublisher((publisher == null || publisher.isBlank()) ? "미상" : publisher);
 
-			// 날짜 형식 가공 (ISO8601의 앞 10자리 YYYY-MM-DD만 추출)
 			String date = kakaoBook.getDatetime();
-			LocalDate publishDate;
+			// 파싱에 실패하면 null 로 둡니다("출판일 미상"). 예전에는 1900-01-01 같은
+			// 매직넘버를 채워넣었는데, 이건 실제 1900년도 도서와 구분이 안 되는 잘못된
+			// 정보라 그냥 비워두는 게 정직합니다.
+			LocalDate publishDate = null;
 			try {
-				publishDate = (date != null && date.length() >= 10)
-						? LocalDate.parse(date.substring(0, 10))
-						: LocalDate.of(1900, 1, 1);
+				if (date != null && date.length() >= 10) {
+					publishDate = LocalDate.parse(date.substring(0, 10));
+				}
 			} catch (Exception e) {
-				publishDate = LocalDate.of(1900, 1, 1); // 파싱 실패시 기본값
+				publishDate = null;
 			}
-			book.setPublishDate(publishDate);
 
-			book.setCategory("카카오검색");
-			book.setDescription(kakaoBook.getContents());
-			book.setPrice(kakaoBook.getPrice());
-			book.setBookCover(
+			Map<String, Object> params = new HashMap<>();
+			params.put("title", title);
+			params.put("author", author);
+			params.put("publisher", (publisher == null || publisher.isBlank()) ? "미상" : publisher);
+			params.put("publishDate", publishDate);
+			params.put("category", "카카오검색");
+			params.put("ranking", null);
+			params.put("reviewCount", 0);
+			params.put("rating", null);
+			params.put("description", kakaoBook.getContents());
+			params.put("pages", null);
+			params.put("price", kakaoBook.getPrice());
+			params.put("bookCover",
 					(kakaoBook.getThumbnail() != null && !kakaoBook.getThumbnail().isBlank())
 							? kakaoBook.getThumbnail()
-							: "uploads/default_book.png"
-			);
-			book.setUser(admin); // 등록한 관리자로 저장
+							: "uploads/default_book.png");
+			params.put("appUserId", admin.getId());
 
-			bookRepository.save(book);
+			bookMapper.insert(params);
 			cnt++;
 		}
 
 		return cnt;
 	}
 
-	// 8. ★국립중앙도서관 도서검색 ( 조회전용, DB에 저장하지 않음 - 누구나 검색 가능 )
-	//    boot1(the703) 의 BookController.searchNl()/searchNlCategory() 를 그대로 재현했습니다.
-	//    (목록화면에서 키워드 또는 KDC 분류로 검색 → 화면에 결과를 보여줌)
 	public List<BookNlDto> searchNationalLibrary(String keyword, int page) {
 		return nlBookApiService.search(keyword, page);
 	}
 
-	// 9. ★국립중앙도서관 검색결과 중 선택한 도서 1권을 DB에 저장 ( ★관리자 전용 )
-	//    boot1(the703) 의 BookController.saveFromApi() (/book/save) 를 그대로 재현했습니다.
-	//    (상세페이지에서 "저장" 버튼을 누르면 그 도서만 DB에 저장)
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public BookResponseDto saveNationalLibraryBook(BookNlDto nlBook, Long adminUserId) {
-		AppUser admin = appUserRepository.findById(adminUserId)
+		AppUser admin = appUserMapper.findById(adminUserId)
 				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 사용자입니다. ID : " + adminUserId));
 
 		String title = nlBook.getTitle_info();
 		if (title == null || title.isBlank()) {
 			throw new IllegalArgumentException("도서 제목이 없어 저장할 수 없습니다.");
 		}
-		// 이미 등록된 제목이면 저장 거부 (boot1 원본에는 없던 안전장치를 추가했습니다)
-		if (bookRepository.existsByTitle(title)) {
+		if (bookMapper.existsByTitle(title)) {
 			throw new IllegalStateException("이미 등록된 도서입니다: " + title);
 		}
 
-		Book book = new Book();
-		book.setTitle(title);
-		book.setAuthor(blankToDefault(nlBook.getAuthor_info(), "미상"));
-		book.setPublisher(blankToDefault(nlBook.getPub_info(), "미상"));
-		book.setPublishDate(parseNlPublishDate(nlBook.getPub_year_info()));
-		book.setCategory(blankToDefault(nlBook.getKdc_name_1s(), "국립중앙도서관검색"));
-		book.setDescription(nlBook.getSubject_info());
-		book.setBookCover(nlBook.getBookCover() != null ? nlBook.getBookCover() : "uploads/default_book.png");
-		book.setUser(admin); // 저장한 관리자로 등록
+		Map<String, Object> params = new HashMap<>();
+		params.put("title", title);
+		params.put("author", blankToDefault(nlBook.getAuthor_info(), "미상"));
+		params.put("publisher", blankToDefault(nlBook.getPub_info(), "미상"));
+		params.put("publishDate", parseNlPublishDate(nlBook.getPub_year_info()));
+		params.put("category", blankToDefault(nlBook.getKdc_name_1s(), "국립중앙도서관검색"));
+		params.put("ranking", null);
+		params.put("reviewCount", 0);
+		params.put("rating", null);
+		params.put("description", nlBook.getSubject_info());
+		params.put("pages", null);
+		params.put("price", null);
+		params.put("bookCover", nlBook.getBookCover() != null ? nlBook.getBookCover() : "uploads/default_book.png");
+		params.put("appUserId", admin.getId());
 
-		return BookResponseDto.from(bookRepository.save(book));
+		bookMapper.insert(params);
+		Long newId = (Long) params.get("bookId");
+		return getBook(newId);
 	}
 
-	// 국립중앙도서관 pub_year_info("2021" 등 문자열)를 LocalDate 로 안전하게 변환
+	// 국립중앙도서관 원본의 출판연도 정보가 없거나 파싱에 실패하면 null 을 반환합니다
+	// ("출판일 미상"). 1900-01-01 같은 매직넘버는 실제 1900년도 도서와 구분이 안 되는
+	// 잘못된 정보라 쓰지 않습니다.
 	private LocalDate parseNlPublishDate(String pubYearInfo) {
 		try {
 			if (pubYearInfo == null || pubYearInfo.isBlank()) {
-				return LocalDate.of(1900, 1, 1);
+				return null;
 			}
 			String digits = pubYearInfo.replaceAll("[^0-9]", "");
 			if (digits.length() < 4) {
-				return LocalDate.of(1900, 1, 1);
+				return null;
 			}
 			int year = Integer.parseInt(digits.substring(0, 4));
 			return LocalDate.of(year, 1, 1);
 		} catch (Exception e) {
-			return LocalDate.of(1900, 1, 1); // 파싱 실패시 기본값
+			return null;
 		}
 	}
 
@@ -274,27 +306,64 @@ public class BookService {
 		return (value == null || value.isBlank()) ? defaultValue : value;
 	}
 
-	// ★재고 수정 ( 관리자 전용 ) - BookStock 이 아직 없으면 새로 만들고, 있으면 값만 갱신
-	//   Swagger 에서 결제기능(장바구니/주문/결제)을 테스트하려면 재고가 있어야 하므로,
-	//   테스트 전에 이 API로 원하는 도서의 재고를 먼저 세팅해주세요.
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public BookResponseDto updateStock(Long bookId, StockUpdateRequestDto dto) {
-		Book book = bookRepository.findById(bookId)
-				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 도서입니다. ID : " + bookId));
-
-		BookStock stock = bookStockRepository.findById(bookId).orElse(null);
-		if (stock == null) {
-			stock = new BookStock();
-			stock.setBook(book); // ★같은 트랜잭션 안이므로 book 이 매니지드 상태 - @MapsId 안전
-			stock.setStockQuantity(dto.getStockQuantity());
-			bookStockRepository.save(stock);
-			book.setStock(stock); // ★양방향 동기화
-		} else {
-			stock.setStockQuantity(dto.getStockQuantity());
-			bookStockRepository.save(stock);
+		Book book = bookMapper.findById(bookId);
+		if (book == null) {
+			throw new ResourceNotFoundException("존재하지 않는 도서입니다. ID : " + bookId);
 		}
 
-		return BookResponseDto.from(book);
+		BookStock stock = bookStockMapper.findByBookId(bookId);
+		if (stock == null) {
+			BookStock newStock = new BookStock();
+			newStock.setBookId(bookId);
+			newStock.setStockQuantity(dto.getStockQuantity());
+			bookStockMapper.insert(newStock);
+		} else {
+			stock.setStockQuantity(dto.getStockQuantity());
+			int updated = bookStockMapper.updateWithVersionCheck(stock);
+			if (updated == 0) {
+				throw new IllegalStateException("다른 요청이 먼저 재고를 변경했습니다. 다시 시도해주세요.");
+			}
+		}
+
+		return getBook(bookId);
+	}
+
+	// 베스트셀러(판매량 TOP 10) 조회 - Redis 캐시 우선, 없으면 DB 집계 후 캐싱
+	// 결제완료(PAID) 주문만 집계하므로 결제전/취소/실패 주문은 랭킹에 영향을 주지 않습니다.
+	@SuppressWarnings("unchecked")
+	public List<BestsellerBookDto> getBestsellers() {
+		List<BestsellerBookDto> cached = (List<BestsellerBookDto>) redisTemplate.opsForValue().get(BESTSELLER_CACHE_KEY);
+		if (cached != null) {
+			return cached;
+		}
+
+		List<Map<String, Object>> rows = orderItemMapper.findBestSellerBookIds(BESTSELLER_TOP_N);
+		List<BestsellerBookDto> result = new ArrayList<>();
+		int rank = 1;
+		for (Map<String, Object> row : rows) {
+			Long bookId = ((Number) row.get("BOOK_ID")).longValue();
+			Long soldQuantity = ((Number) row.get("TOTAL_QTY")).longValue();
+			Book book = bookMapper.findById(bookId);
+			if (book == null || book.isDeleted()) { continue; } // 집계 이후 삭제된 도서는 건너뜀
+
+			BestsellerBookDto dto = new BestsellerBookDto();
+			dto.setRank(rank++);
+			dto.setSoldQuantity(soldQuantity);
+			dto.setBook(BookResponseDto.from(book));
+			result.add(dto);
+		}
+
+		redisTemplate.opsForValue().set(BESTSELLER_CACHE_KEY, result, BESTSELLER_CACHE_TTL_SECONDS, TimeUnit.SECONDS);
+		return result;
+	}
+
+	// 결제가 새로 완료되면(PaymentService.approve) 캐시가 낡아지므로 여기서 무효화합니다.
+	// TTL(10분)이 지나면 자동으로도 사라지지만, 결제 직후 바로 최신 랭킹을 반영하기 위해
+	// 명시적으로 지웁니다.
+	public void evictBestsellerCache() {
+		redisTemplate.delete(BESTSELLER_CACHE_KEY);
 	}
 }

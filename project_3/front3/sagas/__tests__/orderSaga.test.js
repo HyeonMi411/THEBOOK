@@ -17,9 +17,9 @@ import {
     paymentReady, paymentApprove, paymentCancel, paymentFail,
 } from '../orderSaga';
 
-// ★ authSaga.test.js 와 동일한 이유로 jest.mock('axios') 를 쓰지 않습니다.
-//   generator.next() 로 saga 를 한단계씩 직접 실행시키면서 CALL 이펙트에 가짜 응답을
-//   수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
+// authSaga.test.js 와 동일한 이유로 jest.mock('axios') 를 쓰지 않습니다.
+//  generator.next() 로 saga 를 한단계씩 직접 실행시키면서 CALL 이펙트에 가짜 응답을
+//  수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
 
 // 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록, 테스트 전용 도서명을 사용합니다.
 const orderItem = { id: 901, bookId: 301, bookTitle: '오더사가테스트도서A', bookCover: null, price: 15000, quantity: 3 };
@@ -119,7 +119,7 @@ describe('order saga', () => {
         expect(generator.next().done).toBe(true);
     });
 
-    // -- ★주문 삭제 (결제전(PENDING) 주문만 가능) -- ( ★API 응답값(204, body없음)은 안 쓰고 orderId 를 그대로 담아 dispatch )
+    // -- 주문 삭제 (결제전(PENDING) 주문만 가능) -- ( API 응답값(204, body없음)은 안 쓰고 orderId 를 그대로 담아 dispatch )
     it('deleteOrder success', () => {
         const orderId = 601;
         const action = deleteOrderRequest(orderId);
@@ -147,7 +147,7 @@ describe('order saga', () => {
         expect(generator.next().done).toBe(true);
     });
 
-    // -- ★카카오페이 결제준비 --
+    // -- 카카오페이 결제준비 --
     it('paymentReady success - tid/redirectUrl 을 받아오는지', () => {
         const action = paymentReadyRequest(601);
         const generator = paymentReady(action);
@@ -177,7 +177,7 @@ describe('order saga', () => {
         expect(generator.next().done).toBe(true);
     });
 
-    // -- ★카카오페이 결제승인 ( ★재고차감 결과가 반영된 주문상태(PAID)가 정확히 dispatch 되는지 검증 ) --
+    // -- 카카오페이 결제승인 ( 재고차감 결과가 반영된 주문상태(PAID)가 정확히 dispatch 되는지 검증 ) --
     it('paymentApprove success - 결제승인 후 주문상태가 PAID 로 반영된 응답이 정확히 dispatch 되는지', () => {
         const payload = { orderId: 601, pgToken: 'pg_token_test_saga' };
         const action = paymentApproveRequest(payload);
@@ -186,15 +186,15 @@ describe('order saga', () => {
         const callStep = generator.next().value;
         expect(callStep.type).toBe('CALL');
 
-        // ★백엔드에서 결제승인 시 재고가 실제로 차감되고, 그 결과 주문상태가 PAID 로
-        //   바뀐 응답을 돌려줍니다. 이 응답이 saga 를 통해 정확히 그대로 dispatch 되는지 확인합니다.
+        // 백엔드에서 결제승인 시 재고가 실제로 차감되고, 그 결과 주문상태가 PAID 로
+        //  바뀐 응답을 돌려줍니다. 이 응답이 saga 를 통해 정확히 그대로 dispatch 되는지 확인합니다.
         const paidOrder = { ...pendingOrder, orderStatus: 'PAID', tid: 'T_test_saga_123', approvedAt: '2026-01-01T00:05:00' };
         const mockResponse = { data: paidOrder };
         const putStep = generator.next(mockResponse).value;
 
         expect(putStep).toEqual(put(paymentApproveSuccess(mockResponse.data)));
-        // ★toEqual() 이 payload 전체(=paidOrder, orderStatus:'PAID' 포함)를 이미 검증하지만,
-        //   "재고차감 결과가 PAID 로 정확히 반영됐는지"를 명시적으로 한 번 더 확인합니다.
+        // toEqual() 이 payload 전체(=paidOrder, orderStatus:'PAID' 포함)를 이미 검증하지만,
+        //  "재고차감 결과가 PAID 로 정확히 반영됐는지"를 명시적으로 한 번 더 확인합니다.
         expect(mockResponse.data.orderStatus).toBe('PAID');
         expect(generator.next().done).toBe(true);
     });
@@ -213,7 +213,7 @@ describe('order saga', () => {
         expect(generator.next().done).toBe(true);
     });
 
-    // -- ★카카오페이 결제취소 -- ( ★API 응답값 자체는 안 쓰고 성공 여부만 dispatch )
+    // -- 카카오페이 결제취소 -- ( API 응답값 자체는 안 쓰고 성공 여부만 dispatch )
     it('paymentCancel success', () => {
         const action = paymentCancelRequest(601);
         const generator = paymentCancel(action);
@@ -240,7 +240,7 @@ describe('order saga', () => {
         expect(generator.next().done).toBe(true);
     });
 
-    // -- ★카카오페이 결제실패 --
+    // -- 카카오페이 결제실패 --
     it('paymentFail success', () => {
         const action = paymentFailRequest(601);
         const generator = paymentFail(action);

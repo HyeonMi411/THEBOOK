@@ -1,6 +1,6 @@
 // sagas/__tests__/postSaga.test.js  
 import { call, put }  from 'redux-saga/effects';
-import   {  fetchPostsRequest , fetchPostsSuccess, fetchPostsFailure ,   //  전체글
+import   {  fetchPostsRequest , fetchPostsSuccess, fetchPostsFailure ,   // 전체글
     fetchPostDetailRequest  , fetchPostDetailSuccess  , fetchPostDetailFailure,  //상세글 
     createPostRequest , createPostSuccess , createPostFailure ,  // 글쓰기
     updatePostRequest ,  updatePostSuccess ,  updatePostFailure ,  // 글수정
@@ -9,14 +9,14 @@ import   {  fetchPostsRequest , fetchPostsSuccess, fetchPostsFailure ,   //  전
 import { fetchPosts , fetchPostDetail , 
          createPost, updatePost, deletePost }  from  '../postSaga';
 
-// ★ jest.mock('axios') 로 axios 모듈 전체를 자동목(auto-mock) 하면 axios.create() 가
-//   undefined 를 반환하게 되어, api/axios.js 안의 axios.create(...).interceptors... 에서
-//   "Cannot read properties of undefined (reading 'interceptors')" 로 즉시 크래시났었습니다.
-//   아래 테스트들은 generator.next() 로 saga 를 직접 한단계씩 실행시키면서 CALL 이펙트에
-//   가짜 응답을 수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
-//   따라서 axios 를 모킹할 필요가 없어 jest.mock('axios') 를 제거했습니다.
+// jest.mock('axios') 로 axios 모듈 전체를 자동목(auto-mock) 하면 axios.create() 가
+//  undefined 를 반환하게 되어, api/axios.js 안의 axios.create(...).interceptors... 에서
+//  "Cannot read properties of undefined (reading 'interceptors')" 로 즉시 크래시났었습니다.
+//  아래 테스트들은 generator.next() 로 saga 를 직접 한단계씩 실행시키면서 CALL 이펙트에
+//  가짜 응답을 수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
+//  따라서 axios 를 모킹할 필요가 없어 jest.mock('axios') 를 제거했습니다.
 describe('auth saga' , ()=>{
-    afterEach(()=>{  jest.clearAllMocks()  });  //  afterEach  
+    afterEach(()=>{  jest.clearAllMocks()  });  // afterEach  
     // --- 전체글 게시글조회 ---  
     it('fetchUser' , ()=>{
         //1. 화면요청

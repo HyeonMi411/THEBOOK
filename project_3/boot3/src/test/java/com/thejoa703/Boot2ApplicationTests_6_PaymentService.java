@@ -6,7 +6,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -33,17 +35,14 @@ import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Book;
 import com.thejoa703.entity.BookStock;
 import com.thejoa703.entity.OrderStatus;
-import com.thejoa703.repository.AppUserRepository;
-import com.thejoa703.repository.BookRepository;
-import com.thejoa703.repository.BookStockRepository;
-import com.thejoa703.repository.CartItemRepository;
-import com.thejoa703.repository.CartRepository;
+import com.thejoa703.mapper.AppUserMapper;
+import com.thejoa703.mapper.BookMapper;
+import com.thejoa703.mapper.BookStockMapper;
+import com.thejoa703.mapper.CartItemMapper;
 import com.thejoa703.service.CartService;
 import com.thejoa703.service.OrderService;
 import com.thejoa703.service.PaymentService;
-
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import com.thejoa703.service.BookService;
 
 /**
  * 결제 기능(CartService/OrderService/PaymentService + RestController) 통합테스트
@@ -52,12 +51,11 @@ import jakarta.persistence.PersistenceContext;
  *   검증)을 참고하되, 결제 도메인 특성에 맞게 다음을 반영했습니다.
  * - 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록 도서명은 전부 UUID 를 붙여
  *   매번 고유하게 생성합니다.
- * - ★카카오페이는 외부 실제 서버를 호출하는 API 라서, 테스트에서 진짜로 호출할 수 없습니다
+ * - 카카오페이는 외부 실제 서버를 호출하는 API 라서, 테스트에서 진짜로 호출할 수 없습니다
  *   (네트워크가 없는 CI 환경에서도 안정적으로 돌아가야 함). @MockBean 으로 KakaoPayApiService
  *   를 가짜 응답으로 대체해서, "우리 서비스 로직"(재고차감/주문상태변경/CLOB저장)만 검증합니다.
- * - ★"재고차감이 실제로 DB에 반영되는지" 검증은, 이전 Sboard2 조회수 검증과 동일한 방식으로
- *   합니다: EntityManager.flush()+clear() 로 1차캐시를 비운 뒤 다시 조회해서, 진짜 DB로부터
- *   새로 읽은 재고값으로 확인합니다.
+ * - "재고차감이 실제로 DB에 반영되는지" 검증은 BookStockMapper 로 직접 재조회해서 확인합니다
+ *   (MyBatis 는 세션 캐시를 꺼뒀으므로(cacheEnabled: false), 매 조회가 항상 실제 DB 값입니다).
  * - 클래스에 @Transactional 을 걸어 각 테스트 종료 후 자동 롤백되므로, 더미데이터 SQL과
  *   테스트 데이터가 서로 섞이지 않습니다.
  * ------------------------------------------------------------------------------
@@ -67,22 +65,19 @@ import jakarta.persistence.PersistenceContext;
 @Transactional
 class Boot2ApplicationTests_6_PaymentService {
 
-	@Autowired private AppUserRepository   appUserRepository;
-	@Autowired private BookRepository      bookRepository;
-	@Autowired private BookStockRepository bookStockRepository;
-	@Autowired private CartRepository      cartRepository;
-	@Autowired private CartItemRepository  cartItemRepository;
+	@Autowired private AppUserMapper   appUserMapper;
+	@Autowired private BookMapper      bookMapper;
+	@Autowired private BookStockMapper bookStockMapper;
+	@Autowired private CartItemMapper  cartItemMapper;
 
 	@Autowired private CartService    cartService;
 	@Autowired private OrderService   orderService;
 	@Autowired private PaymentService paymentService;
+	@Autowired private BookService    bookService;
 
 	@Autowired private MockMvc mockMvc;
 
-	@PersistenceContext
-	private EntityManager entityManager;
-
-	// ★카카오페이 실제 API 호출 대신 가짜 응답을 돌려주는 Mock (외부망 없이도 항상 동작)
+	// 카카오페이 실제 API 호출 대신 가짜 응답을 돌려주는 Mock (외부망 없이도 항상 동작)
 	@MockBean
 	private KakaoPayApiService kakaoPayApiService;
 
@@ -97,7 +92,9 @@ class Boot2ApplicationTests_6_PaymentService {
 		admin.setRole("ROLE_ADMIN");
 		admin.setProvider("local");
 		admin.setProviderId("local");
-		return appUserRepository.save(admin);
+		admin.setDeleted(false);
+		appUserMapper.insert(admin);
+		return admin;
 	}
 
 	private AppUser createBuyer(String provider) {
@@ -108,28 +105,36 @@ class Boot2ApplicationTests_6_PaymentService {
 		user.setRole("ROLE_USER");
 		user.setProvider(provider); // local / kakao / naver / google - 소셜로그인 구매자도 검증
 		user.setProviderId(provider.equals("local") ? "local" : "social-" + UUID.randomUUID());
-		return appUserRepository.save(user);
+		user.setDeleted(false);
+		appUserMapper.insert(user);
+		return user;
 	}
 
 	// 더미SQL 데이터와 겹치지 않도록 UUID 로 고유 도서명 생성 + 재고까지 함께 등록
 	private Book createBookWithStock(AppUser admin, String title, int price, int stockQuantity) {
-		Book book = new Book();
-		book.setTitle(title);
-		book.setAuthor("결제서비스테스트작가");
-		book.setPublisher("결제서비스테스트출판사");
-		book.setPublishDate(LocalDate.of(2024, 1, 1));
-		book.setCategory("결제서비스테스트카테고리");
-		book.setPrice(price);
-		book.setUser(admin);
-		bookRepository.save(book);
+		Map<String, Object> params = new HashMap<>();
+		params.put("title", title);
+		params.put("author", "결제서비스테스트작가");
+		params.put("publisher", "결제서비스테스트출판사");
+		params.put("publishDate", LocalDate.of(2024, 1, 1));
+		params.put("category", "결제서비스테스트카테고리");
+		params.put("ranking", null);
+		params.put("reviewCount", 0);
+		params.put("rating", null);
+		params.put("description", null);
+		params.put("pages", null);
+		params.put("price", price);
+		params.put("bookCover", "uploads/default_book.png");
+		params.put("appUserId", admin.getId());
+		bookMapper.insert(params);
+		Long bookId = (Long) params.get("bookId");
 
 		BookStock stock = new BookStock();
-		stock.setBook(book);          // ★같은 트랜잭션 안이라 book 이 계속 매니지드 상태 - @MapsId 안전
+		stock.setBookId(bookId);
 		stock.setStockQuantity(stockQuantity);
-		bookStockRepository.save(stock);
-		book.setStock(stock);         // ★양방향 동기화
+		bookStockMapper.insert(stock);
 
-		return book;
+		return bookMapper.findById(bookId);
 	}
 
 	//-------------------------------------------------------------------
@@ -201,8 +206,8 @@ class Boot2ApplicationTests_6_PaymentService {
 		assertThat(order1.getOrderStatus()).isEqualTo(OrderStatus.PENDING);
 		assertThat(order1.getTotalAmount()).isEqualTo(40000);
 		assertThat(order1.getItems()).hasSize(1);
-		assertThat(order1.getItems().get(0).getBookTitle()).isEqualTo(titleA); // ★제목 스냅샷
-		assertThat(order1.getItems().get(0).getPrice()).isEqualTo(20000);      // ★가격 스냅샷
+		assertThat(order1.getItems().get(0).getBookTitle()).isEqualTo(titleA); // 제목 스냅샷
+		assertThat(order1.getItems().get(0).getPrice()).isEqualTo(20000);      // 가격 스냅샷
 
 		// 2) 바로구매 - 재고(3권) 초과 시도 → 거부, 주문 생성 안됨
 		assertThatThrownBy(() -> orderService.createOrder(buyer.getId(), new OrderCreateRequestDto(null, bookA.getId(), 100)))
@@ -217,16 +222,9 @@ class Boot2ApplicationTests_6_PaymentService {
 		assertThat(order2.getTotalAmount()).isEqualTo(36000);
 		assertThat(order2.getItems().get(0).getBookTitle()).isEqualTo(titleB);
 
-		// ★주문에 사용된 장바구니 항목은 제거되어야 함
-		//   OrderService 내부에서 cartItemRepository.deleteAllInBatch() 로 DB에는 실제로
-		//   삭제 SQL이 실행되지만, deleteAllInBatch() 는 벌크(bulk) 연산이라 Hibernate의
-		//   1차캐시(영속성 컨텍스트)에는 반영되지 않습니다. 그래서 바로 findById() 를 호출하면
-		//   DB를 다시 조회하지 않고 1차캐시에 남아있던(이미 DB에서는 삭제된) 객체를 그대로
-		//   돌려줘서 "아직 있다"고 착각하게 됩니다. flush()+clear() 로 1차캐시를 비운 뒤
-		//   재조회해서, 진짜 DB 상태로 검증합니다.
-		entityManager.flush();
-		entityManager.clear();
-		assertThat(cartItemRepository.findById(cartItemId)).isEmpty();
+		// 주문에 사용된 장바구니 항목은 제거되어야 함 (MyBatis 는 매 조회가 항상 실제
+		//  DB 값을 그대로 가져오므로, JPA 의 1차캐시/벌크연산 관련 주의사항은 해당 없습니다)
+		assertThat(cartItemMapper.findById(cartItemId)).isNull();
 		assertThat(cartService.getCart(buyer.getId()).getItems()).isEmpty();
 
 		// 4) 잘못된 요청 - cartItemIds 도 bookId 도 없으면 예외
@@ -244,7 +242,7 @@ class Boot2ApplicationTests_6_PaymentService {
 	}
 
 	//-------------------------------------------------------------------
-	// 3. PaymentService - 결제준비/승인, ★재고차감이 실제로 DB에 반영되는지 검증
+	// 3. PaymentService - 결제준비/승인, 재고차감이 실제로 DB에 반영되는지 검증
 	//-------------------------------------------------------------------
 	@Test
 	@DisplayName("■ PaymentService - 결제준비(tid발급)/승인, 재고차감 DB반영 검증, CLOB(카카오응답) 저장 확인")
@@ -271,9 +269,7 @@ class Boot2ApplicationTests_6_PaymentService {
 		assertThat(readyDto.getRedirectUrl()).isEqualTo(fakeReady.getNext_redirect_pc_url());
 
 		// 결제준비 단계에서는 재고가 아직 차감되면 안 됨
-		entityManager.flush();
-		entityManager.clear();
-		BookStock stockAfterReady = bookStockRepository.findById(book.getId()).orElseThrow();
+		BookStock stockAfterReady = bookStockMapper.findByBookId(book.getId());
 		assertThat(stockAfterReady.getStockQuantity()).isEqualTo(10);
 
 		// ---- 2) 결제 승인 - 카카오 API는 Mock 이 가짜 승인 응답을 돌려줌 ----
@@ -289,17 +285,14 @@ class Boot2ApplicationTests_6_PaymentService {
 		assertThat(approved.getOrderStatus()).isEqualTo(OrderStatus.PAID);
 
 		// ---------------------------------------------------------------
-		// ★ 재고차감이 "실제로 DB에" 반영되는지 검증
-		//    (1차캐시만 보고 착각하지 않도록 EntityManager.clear() 로 비우고 재조회)
+		// 재고차감이 실제로 DB에 반영되는지 검증 (MyBatis 는 세션 캐시를 꺼뒀으므로
+		//  bookStockMapper.findByBookId() 는 항상 실제 DB 값을 그대로 가져옵니다)
 		// ---------------------------------------------------------------
-		entityManager.flush();
-		entityManager.clear();
-
-		BookStock stockAfterApprove = bookStockRepository.findById(book.getId()).orElseThrow();
-		assertThat(stockAfterApprove.getStockQuantity()).isEqualTo(7); // 10 - 3 = 7, DB에서 새로 읽은 값
+		BookStock stockAfterApprove = bookStockMapper.findByBookId(book.getId());
+		assertThat(stockAfterApprove.getStockQuantity()).isEqualTo(7); // 10 - 3 = 7
 		// ---------------------------------------------------------------
 
-		// ★카카오 응답 원문(CLOB) 저장 확인
+		// 카카오 응답 원문(CLOB) 저장 확인
 		var savedOrder = orderService.getOrder(buyer.getId(), orderId);
 		assertThat(savedOrder.getOrderStatus()).isEqualTo(OrderStatus.PAID);
 
@@ -328,9 +321,9 @@ class Boot2ApplicationTests_6_PaymentService {
 		paymentService.ready(buyer.getId(), order.getId());
 
 		// 결제승인 직전에 다른 경로로 재고가 0으로 소진된 상황을 재현
-		BookStock stock = bookStockRepository.findById(book.getId()).orElseThrow();
+		BookStock stock = bookStockMapper.findByBookId(book.getId());
 		stock.setStockQuantity(0);
-		bookStockRepository.save(stock);
+		bookStockMapper.updateWithVersionCheck(stock);
 
 		Mockito.when(kakaoPayApiService.approve(
 				Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString()
@@ -360,14 +353,63 @@ class Boot2ApplicationTests_6_PaymentService {
 		assertThat(orderService.getOrder(buyer.getId(), order2.getId()).getOrderStatus()).isEqualTo(OrderStatus.FAILED);
 
 		// 취소/실패된 재고는 차감되지 않아야 함
-		entityManager.flush();
-		entityManager.clear();
-		BookStock stock = bookStockRepository.findById(book.getId()).orElseThrow();
+		BookStock stock = bookStockMapper.findByBookId(book.getId());
 		assertThat(stock.getStockQuantity()).isEqualTo(5);
 	}
 
 	//-------------------------------------------------------------------
-	// 6. [Swagger] /v3/api-docs 에 Cart/Order/Payment API가 실제로 노출되는지 검증
+	// 6. [소프트 삭제] 이미 장바구니에 담긴 도서가 이후 삭제(판매중단)되면 어떻게 되는지
+	//-------------------------------------------------------------------
+	@Test
+	@DisplayName("■ 소프트삭제 - 장바구니에 담긴 도서가 이후 삭제되면 수량증가/신규담기/주문은 거부되고, 기존 항목 조회/삭제는 계속 가능한지")
+	void testSoftDeleteBookAlreadyInCart() {
+		AppUser admin = createAdmin();
+		AppUser buyer = createBuyer("local");
+		String title = "소프트삭제테스트도서_" + UUID.randomUUID();
+		Book book = createBookWithStock(admin, title, 10000, 10);
+
+		// 1) 먼저 장바구니에 담아둠 (아직 삭제되기 전)
+		CartResponseDto cart = cartService.addToCart(buyer.getId(), new CartItemRequestDto(book.getId(), 2));
+		Long itemId = cart.getItems().get(0).getId();
+		assertThat(cart.getItems().get(0).isBookDeleted()).isFalse();
+
+		// 2) 관리자가 도서를 삭제(소프트) - 실제 행은 남고 DELETED 플래그만 세워짐
+		bookService.deleteBook(book.getId());
+
+		// 3) 삭제된 도서는 목록/상세조회/검색에서 더 이상 보이지 않아야 함
+		assertThatThrownBy(() -> bookService.getBook(book.getId()))
+				.isInstanceOf(com.thejoa703.exception.ResourceNotFoundException.class);
+
+		// 4) 장바구니를 다시 조회하면, 이미 담아둔 항목은 여전히 보이되 "판매중단" 표시가 되어야 함
+		CartResponseDto cartAfterDelete = cartService.getCart(buyer.getId());
+		assertThat(cartAfterDelete.getItems()).hasSize(1);
+		assertThat(cartAfterDelete.getItems().get(0).isBookDeleted()).isTrue();
+		// 판매중단된 항목은 결제예정금액(totalAmount)에서 제외되어야 함
+		assertThat(cartAfterDelete.getTotalAmount()).isEqualTo(0);
+
+		// 5) 판매중단된 도서를 새로 담으려 하면 거부되어야 함
+		assertThatThrownBy(() -> cartService.addToCart(buyer.getId(), new CartItemRequestDto(book.getId(), 1)))
+				.isInstanceOf(com.thejoa703.exception.ResourceNotFoundException.class);
+
+		// 6) 이미 담긴 항목의 수량을 "늘리는" 시도는 거부되어야 함
+		assertThatThrownBy(() -> cartService.updateQuantity(buyer.getId(), itemId, 5))
+				.isInstanceOf(IllegalStateException.class);
+
+		// 7) 반대로 수량을 "줄이는" 것은 허용되어야 함 (2 -> 1)
+		CartResponseDto afterDecrease = cartService.updateQuantity(buyer.getId(), itemId, 1);
+		assertThat(afterDecrease.getItems().get(0).getQuantity()).isEqualTo(1);
+
+		// 8) 이 항목으로 주문을 생성하려 하면(장바구니결제) 거부되어야 함
+		assertThatThrownBy(() -> orderService.createOrder(buyer.getId(), new OrderCreateRequestDto(List.of(itemId), null, null)))
+				.isInstanceOf(IllegalStateException.class);
+
+		// 9) 항목 삭제(장바구니에서 제거)는 언제나 허용되어야 함
+		cartService.removeItem(buyer.getId(), itemId);
+		assertThat(cartService.getCart(buyer.getId()).getItems()).isEmpty();
+	}
+
+	//-------------------------------------------------------------------
+	// 7. [Swagger] /v3/api-docs 에 Cart/Order/Payment API가 실제로 노출되는지 검증
 	//-------------------------------------------------------------------
 	@Test
 	@DisplayName("■ [Swagger] /v3/api-docs 에 Cart/Order/Payment API가 정상 노출되는지 확인")

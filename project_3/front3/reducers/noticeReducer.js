@@ -4,7 +4,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
     notices: [],           // 현재 페이지의 공지사항목록
     currentNotice: null,   // 단건 조회된 상세 공지사항 (조회시 BHIT 증가)
-    // ★페이징 정보 (백엔드 PageResponseDto 와 대응, 12개씩)
+    // 페이징 정보 (백엔드 PageResponseDto 와 대응, 12개씩)
     currentPage: 1,
     totalPages: 1,
     totalElements: 0,
@@ -30,7 +30,7 @@ const noticeReducer = createSlice({
             state.loading = true;
             state.error = null;
         },
-        // ★payload : 백엔드 PageResponseDto { content, currentPage, pageSize, totalElements, totalPages }
+        // payload : 백엔드 PageResponseDto { content, currentPage, pageSize, totalElements, totalPages }
         fetchNoticesSuccess: (state, action) => {
             state.loading = false;
             state.notices = action.payload.content;
@@ -80,8 +80,8 @@ const noticeReducer = createSlice({
         },
         createNoticeSuccess: (state, action) => {
             state.loading = false;
-            // ★페이징 도입 이후: 로컬에서 목록에 끼워넣지 않고, 작성 후 첫 페이지를 다시
-            //   불러오는 방식(pages/notices/new.js 에서 router.push('/notices'))으로 처리합니다.
+            // 페이징 도입 이후: 로컬에서 목록에 끼워넣지 않고, 작성 후 첫 페이지를 다시
+            //  불러오는 방식(pages/notices/new.js 에서 router.push('/notices'))으로 처리합니다.
             state.success = true;
         },
         createNoticeFailure: (state, action) => {

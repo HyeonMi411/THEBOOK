@@ -99,7 +99,7 @@ const postReducer=  createSlice({
 
     }
 }); 
-export const {  fetchPostsRequest , fetchPostsSuccess, fetchPostsFailure ,   //  전체글
+export const {  fetchPostsRequest , fetchPostsSuccess, fetchPostsFailure ,   // 전체글
                 fetchPostDetailRequest  , fetchPostDetailSuccess  , fetchPostDetailFailure,  //상세글 
                 createPostRequest , createPostSuccess , createPostFailure ,  // 글쓰기
                 updatePostRequest ,  updatePostSuccess ,  updatePostFailure ,  // 글수정

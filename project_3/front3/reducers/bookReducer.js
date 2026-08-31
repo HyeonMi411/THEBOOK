@@ -4,7 +4,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
     books: [],        // 현재 페이지의 도서목록
     currentBook: null, // 단건 조회된 상세 도서
-    // ★페이징 정보 (백엔드 PageResponseDto 와 대응, 12개씩)
+    // 페이징 정보 (백엔드 PageResponseDto 와 대응, 12개씩)
     currentPage: 1,
     totalPages: 1,
     totalElements: 0,
@@ -12,11 +12,11 @@ const initialState = {
     loading: false,
     error: null,
     success: false,
-    // ★카카오 도서검색 자동등록 관련 상태
+    // 카카오 도서검색 자동등록 관련 상태
     kakaoLoading: false,
     kakaoError: null,
     kakaoInsertedCount: null, // 마지막 카카오검색 등록 결과(등록된 건수)
-    // ★국립중앙도서관 도서검색 관련 상태
+    // 국립중앙도서관 도서검색 관련 상태
     nlResults: [],          // 검색결과 목록
     nlLoading: false,
     nlError: null,
@@ -24,6 +24,10 @@ const initialState = {
     nlSaveLoading: false,
     nlSaveError: null,
     nlSaveSuccess: false,
+    // 베스트셀러(판매량 TOP 10) 관련 상태
+    bestsellers: [],
+    bestsellersLoading: false,
+    bestsellersError: null,
 };
 
 const bookReducer = createSlice({
@@ -42,7 +46,7 @@ const bookReducer = createSlice({
             state.loading = true;
             state.error = null;
         },
-        // ★payload : 백엔드 PageResponseDto { content, currentPage, pageSize, totalElements, totalPages }
+        // payload : 백엔드 PageResponseDto { content, currentPage, pageSize, totalElements, totalPages }
         fetchBooksSuccess: (state, action) => {
             state.loading = false;
             state.books = action.payload.content;
@@ -92,8 +96,8 @@ const bookReducer = createSlice({
         },
         createBookSuccess: (state, action) => {
             state.loading = false;
-            // ★페이징 도입 이후: 로컬에서 목록에 끼워넣지 않고, 등록 후 첫 페이지를 다시
-            //   불러오는 방식(pages/books/new.js 에서 router.push('/books'))으로 처리합니다.
+            // 페이징 도입 이후: 로컬에서 목록에 끼워넣지 않고, 등록 후 첫 페이지를 다시
+            //  불러오는 방식(pages/books/new.js 에서 router.push('/books'))으로 처리합니다.
             state.success = true;
         },
         createBookFailure: (state, action) => {
@@ -132,9 +136,9 @@ const bookReducer = createSlice({
             state.error = action.payload;
         },
 
-        // --- ★카카오 도서검색 자동등록 (관리자 전용) ---
-        //    검색버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후,
-        //    성공시 도서 목록 페이지로 이동합니다. (pages/books/new.js 에서 처리)
+        // --- 카카오 도서검색 자동등록 (관리자 전용) ---
+        //   검색버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후,
+        //   성공시 도서 목록 페이지로 이동합니다. (pages/books/new.js 에서 처리)
         kakaoInsertRequest: (state) => {
             state.kakaoLoading = true;
             state.kakaoError = null;
@@ -154,7 +158,7 @@ const bookReducer = createSlice({
             state.kakaoInsertedCount = null;
         },
 
-        // --- ★국립중앙도서관 도서검색 (조회전용, 로그인 없이도 검색 가능) ---
+        // --- 국립중앙도서관 도서검색 (조회전용, 로그인 없이도 검색 가능) ---
         nlSearchRequest: (state) => {
             state.nlLoading = true;
             state.nlError = null;
@@ -176,7 +180,7 @@ const bookReducer = createSlice({
             state.nlSelectedBook = null;
         },
 
-        // --- ★국립중앙도서관 검색결과 저장 (관리자 전용) ---
+        // --- 국립중앙도서관 검색결과 저장 (관리자 전용) ---
         nlSaveRequest: (state) => {
             state.nlSaveLoading = true;
             state.nlSaveError = null;
@@ -195,6 +199,20 @@ const bookReducer = createSlice({
             state.nlSaveError = null;
             state.nlSaveSuccess = false;
         },
+
+        // --- 베스트셀러(판매량 TOP 10) 조회 ---
+        fetchBestsellersRequest: (state) => {
+            state.bestsellersLoading = true;
+            state.bestsellersError = null;
+        },
+        fetchBestsellersSuccess: (state, action) => {
+            state.bestsellersLoading = false;
+            state.bestsellers = action.payload;
+        },
+        fetchBestsellersFailure: (state, action) => {
+            state.bestsellersLoading = false;
+            state.bestsellersError = action.payload;
+        },
     },
 });
 
@@ -210,6 +228,7 @@ export const {
     nlSearchRequest, nlSearchSuccess, nlSearchFailure,
     selectNlBook, clearNlSelectedBook,
     nlSaveRequest, nlSaveSuccess, nlSaveFailure, resetNlSaveState,
+    fetchBestsellersRequest, fetchBestsellersSuccess, fetchBestsellersFailure,
 } = bookReducer.actions;
 
 export default bookReducer.reducer;

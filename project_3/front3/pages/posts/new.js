@@ -1,4 +1,4 @@
-//  pages/posts/new.js
+// pages/posts/new.js
 //1. import
 import React, { useState , useEffect }  from  "react";   //5. 변수  4.이벤트알림 
 import { Card, Form, Input, Button , message , Upload , Select }  from "antd";
@@ -35,7 +35,7 @@ export default function NewPostPage(){
             message.success("게시글이 성공적으로 작성되었습니다.");
             setFileList([]); 
             dispatch(resetPostState());
-            router.push("/");
+            router.push("/posts");
         } 
         return ()=>{
             if(success) {  dispatch(resetPostState());  }
@@ -43,7 +43,7 @@ export default function NewPostPage(){
 
     } , [success, router, dispatch]);
 
-    ////////////////////////  Q1. view
+    //////////////////////// Q1. view
     return (
         <Card  title="게시글 작성"   style={{maxWidth:600 , margin:"0 auto"}}>
             <Form  onFinish={onFinish}  layout="vertical">
@@ -80,5 +80,5 @@ export default function NewPostPage(){
 
 
 // export default function NewPostPage(){
-//     return "NewPostPage";
+//    return "NewPostPage";
 // }

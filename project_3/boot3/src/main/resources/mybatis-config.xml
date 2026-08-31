@@ -15,10 +15,6 @@
     		<!-- timeout -->
         <setting name="defaultStatementTimeout" value="30"/>
     </settings>
-    
- 	<!--<typeAliases>
- 		<typeAlias alias="DeptUser"  type="com.thejoa703.domain.DeptUser" />
- 	</typeAliases>-->
 </configuration>
 
 

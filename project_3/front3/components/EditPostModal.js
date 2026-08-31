@@ -1,7 +1,7 @@
 // components/EditPostModal
 import {Modal , Form , Input , Button , Upload, Select }  from 'antd'; 
 export default function   EditPostModal({
-    visible, onCancel,  editPost, onSubmit , uploadFiles, setUploadFiles  //  ##4.   uploadFiles, setUploadFiles 
+    visible, onCancel,  editPost, onSubmit , uploadFiles, setUploadFiles  // ##4.   uploadFiles, setUploadFiles 
 }){ 
    ////////////////////////////////////////
     return(<Modal  title="글 수정"   open={visible}  onCancel={onCancel}  footer={null}  >

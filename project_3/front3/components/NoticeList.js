@@ -74,7 +74,7 @@ export default function NoticeList({ notices = [], currentPage = 1, totalPages, 
         </table>
       </div>
 
-      {/* ★페이징 - boot1 board/list.html 과 동일하게 하단에 페이지번호 노출 */}
+      {/* 페이징 - boot1 board/list.html 과 동일하게 하단에 페이지번호 노출 */}
       <Pagination currentPage={currentPage} totalPages={totalPages} onChange={onPageChange} />
     </div>
   );

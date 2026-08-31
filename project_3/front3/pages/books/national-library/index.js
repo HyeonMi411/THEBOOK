@@ -3,10 +3,10 @@
 // search-nl_list.html(검색결과 카드) 을 하나의 화면으로 재현했습니다.
 // (DB에는 저장하지 않고 검색결과만 보여주는 화면이며, 상세보기 클릭시 상세페이지로 이동합니다)
 //
-// ★boot1 원본은 부트스트랩 아코디언(data-bs-toggle="collapse")으로 되어있는데,
-//   부트스트랩 JS 번들이 제대로 로드/초기화되지 않으면 "대분류를 클릭해도 하위
-//   키워드 목록이 안 펼쳐지는" 증상이 그대로 나타납니다. 그래서 React 자체 상태로
-//   여닫는 진짜 아코디언을 직접 구현했습니다(외부 JS 라이브러리 의존 없이 항상 동작).
+// boot1 원본은 부트스트랩 아코디언(data-bs-toggle="collapse")으로 되어있는데,
+//  부트스트랩 JS 번들이 제대로 로드/초기화되지 않으면 "대분류를 클릭해도 하위
+//  키워드 목록이 안 펼쳐지는" 증상이 그대로 나타납니다. 그래서 React 자체 상태로
+//  여닫는 진짜 아코디언을 직접 구현했습니다(외부 JS 라이브러리 의존 없이 항상 동작).
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from 'react-redux';
@@ -34,7 +34,7 @@ export default function NationalLibrarySearchPage() {
 
   const [keyword, setKeyword] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  // ★boot1 원본처럼 "000 총류"만 기본으로 펼쳐진 상태로 시작 (accordion-collapse show)
+  // boot1 원본처럼 "000 총류"만 기본으로 펼쳐진 상태로 시작 (accordion-collapse show)
   const [expandedGroup, setExpandedGroup] = useState('000 총류');
 
   const toggleGroup = (title) => {
@@ -52,14 +52,14 @@ export default function NationalLibrarySearchPage() {
     runSearch(keyword.trim());
   };
 
-  // ★키워드(하위 분류) 클릭 → 국립중앙도서관 검색 실행 → 결과목록 노출
+  // 키워드(하위 분류) 클릭 → 국립중앙도서관 검색 실행 → 결과목록 노출
   const onKeywordClick = (keywordText) => {
     setKeyword('');
     setSelectedCategory(keywordText);
     dispatch(nlSearchRequest({ keyword: keywordText, page: 1 }));
   };
 
-  // ★검색결과 카드 클릭 → 상세페이지로 이동
+  // 검색결과 카드 클릭 → 상세페이지로 이동
   const goDetail = (book) => {
     dispatch(selectNlBook(book));
     router.push(`/books/national-library/${encodeURIComponent(book.id || book.isbn || book.title_info)}`);
@@ -84,7 +84,7 @@ export default function NationalLibrarySearchPage() {
         <button type="submit" className="btn btn-primary-bs">검색</button>
       </form>
 
-      {/* ★KDC 분류 아코디언 - 대분류 클릭시 하위 키워드 목록이 펼쳐짐 */}
+      {/* KDC 분류 아코디언 - 대분류 클릭시 하위 키워드 목록이 펼쳐짐 */}
       <div className="nl-kdc-title">📖 KDC 전체 분류 체계</div>
       <div className="nl-accordion">
         {KDC_GROUPS.map((group) => {
@@ -139,7 +139,7 @@ export default function NationalLibrarySearchPage() {
               {nlResults.map((book, idx) => (
                 <div key={book.id || idx} className="nl-card" onClick={() => goDetail(book)}>
                   <div className="nl-card-cover">
-                    {/* ★표지 없음/링크깨짐 → 자동으로 기본 아이콘 표시 */}
+                    {/* 표지 없음/링크깨짐 → 자동으로 기본 아이콘 표시 */}
                     <BookCoverImage src={book.bookCover} alt={book.title_info} iconSize={36} />
                   </div>
                   <div className="nl-card-body">

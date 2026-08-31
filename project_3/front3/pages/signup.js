@@ -1,9 +1,9 @@
 //1. require / import
 import { Row, Col, Form, Input, Button, Upload, Spin, message } from "antd";    
 import { UploadOutlined } from "@ant-design/icons";   
-//  store : useSelector(전역)      , useDispatch(스토어이벤트알림)  
-//  감지 : useEffect(이벤트변경감지) , useState( 변수 ) 
-//  경로 : useRouter
+// store : useSelector(전역)      , useDispatch(스토어이벤트알림)  
+// 감지 : useEffect(이벤트변경감지) , useState( 변수 ) 
+// 경로 : useRouter
 import React , {useState , useEffect , useRef}  from  "react";
 import {useSelector , useDispatch}  from  "react-redux";
 import {useRouter} from "next/router";
@@ -46,8 +46,8 @@ function   SignupPage(){
 
     } , [success, router , dispatch]);
 
-    ///////////////////////  Layout > Row >  Col  Col
-    //  모바일제일작은사이즈 : 24 xm={}   모바일2: 16  sm={}  태블릿:8  md={} / lg={}
+    /////////////////////// Layout > Row >  Col  Col
+    // 모바일제일작은사이즈 : 24 xm={}   모바일2: 16  sm={}  태블릿:8  md={} / lg={}
     return (<Row  justify="center">
         <Col xm={24}  sm={16}  md={8}   >
         {  loading  && <Spin/>  }
@@ -142,5 +142,5 @@ export default SignupPage;
 
 ///// ver-0
 // export default function SignupPage(){
-//     return "SIGNUP";
+//    return "SIGNUP";
 // }

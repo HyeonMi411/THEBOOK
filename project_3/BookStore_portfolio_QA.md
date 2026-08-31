@@ -223,7 +223,7 @@ public ResponseEntity<Map<String, String>> handleExternalApiNetworkError(...) { 
 
 ### Q7. JPA & 영속성 컨텍스트 1차 캐시
 
-**참고 파일**: `boot3/src/main/java/com/thejoa703/entity/BookStock.java`(`@MapsId` 사례), `boot3/src/main/java/com/thejoa703/entity/Orders.java`(양방향 연관관계 사례), `boot3/src/test/java/com/thejoa703/Boot2ApplicationTests_5_PaymentEntity.java`(실제 재현 테스트)
+**참고 파일**: `boot3/src/main/java/com/thejoa703/entity/BookStock.java`(`@MapsId` 사례), `boot3/src/main/java/com/thejoa703/entity/Orders.java`(양방향 연관관계 사례), `boot3/src/main/java/com/thejoa703/service/OrderService.java`(`@Transactional` 중복 오류 수정 이력), `boot3/src/test/java/com/thejoa703/Boot2ApplicationTests_5_PaymentEntity.java`(실제 재현 테스트)
 
 **개념**: 영속성 컨텍스트(1차 캐시)는 하나의 트랜잭션(EntityManager) 생명주기 안에서, 같은 PK로 조회한 엔티티를 **항상 동일한 자바 객체 인스턴스로** 재사용하게 해주는 Hibernate의 캐시입니다. 이 덕분에 같은 트랜잭션 안에서 같은 엔티티를 여러 번 조회해도 실제 DB 쿼리는 한 번만 나갑니다.
 
@@ -235,20 +235,22 @@ public ResponseEntity<Map<String, String>> handleExternalApiNetworkError(...) { 
 
 3. **캐시된 인스턴스로 인한 "삭제됐는데도 조회되는" 문제**: `deleteAllInBatch()`(벌크 연산)로 DB에서는 실제로 삭제됐는데, 같은 트랜잭션 안에서 곧바로 `findById()`를 호출하면 Hibernate가 DB를 다시 조회하지 않고 **1차 캐시에 남아있던(이미 삭제된) 객체를 그대로** 반환해서 "삭제가 안 된 것처럼" 보이는 문제가 있었습니다. `entityManager.flush(); entityManager.clear();`로 1차 캐시를 강제로 비우고 재조회해서 실제 DB 상태를 검증하도록 테스트를 개선했습니다.
 
+4. **(참고: 어노테이션 중복 컴파일 오류)** JPA 자체는 아니지만 관련해서, 기능을 점진적으로 확장하다가 같은 메서드 위에 `@Transactional`을 실수로 두 번 붙인 적이 있습니다(옛 버전 주석+어노테이션을 지우지 않고 그 위에 새 버전을 덧붙임). `@Transactional`은 `@Repeatable`이 아니라서 IDE가 "Duplicate annotation of non-repeatable type" 컴파일 에러로 즉시 잡아줬습니다. **점진적으로 기능을 확장할 때는 기존 코드를 완전히 지우고 새로 쓰는지, 옛 코드 위에 겹쳐 쓰는지를 항상 의식해야 한다**는 걸 다시 확인한 사례입니다.
+
 **이 경험에서 얻은 결론**: JPA는 "객체지향적으로 편하게" 써지지만, 그 편리함의 이면에 있는 영속성 컨텍스트의 생명주기(트랜잭션 경계, 1차 캐시, 더티체킹)를 정확히 이해하지 못하면 오히려 디버깅이 훨씬 어려워진다는 걸 체감했습니다.
 
 ---
 
 ### Q8. 소프트 삭제(Soft Delete)
 
-**참고 파일**: `boot3/src/main/java/com/thejoa703/entity/Orders.java`(`hiddenByUser` 필드), `boot3/src/main/java/com/thejoa703/service/OrderService.java`(`deleteOrder`), `boot3/src/main/java/com/thejoa703/repository/OrdersRepository.java`
+**참고 파일**: `boot3/src/main/java/com/thejoa703/entity/Orders.java`(`hiddenByUser` 필드, `columnDefinition` 설정 포함), `boot3/src/main/java/com/thejoa703/service/OrderService.java`(`deleteOrder`), `boot3/src/main/java/com/thejoa703/repository/OrdersRepository.java`, `boot3/src/main/java/com/thejoa703/controller/OrderController.java`(`DELETE /api/orders/{id}`)
 
 **실제 적용 사례 — 주문(Orders) 삭제**
 
 이 프로젝트는 상태에 따라 **하드 삭제와 소프트 삭제를 분기**해서 적용했습니다.
 
 ```java
-@Column(name = "HIDDEN_BY_USER", nullable = false)
+@Column(name = "HIDDEN_BY_USER", nullable = false, columnDefinition = "NUMBER(1) DEFAULT 0")
 private boolean hiddenByUser = false;
 ```
 
@@ -268,6 +270,8 @@ public void deleteOrder(Long userId, Long orderId) {
 ```
 
 목록 조회 시에는 `findByUser_IdAndHiddenByUserFalseOrderByIdDesc`처럼 조건에 `hiddenByUser = false`를 포함시켜서, 숨긴 주문은 사용자 화면에 다시 안 나오게 합니다.
+
+**소프트 삭제 컬럼을 실제로 추가하면서 겪은 스키마 마이그레이션 버그(면접에서 이야기하기 좋은 실전 경험)**: 이 `hiddenByUser` 필드를 처음 추가했을 때는 `columnDefinition` 없이 `@Column(nullable = false)`만 붙였는데, 이미 주문 데이터가 쌓여있는 `ORDERS` 테이블에 배포하니 `ORA-00904: 부적합한 식별자` 에러가 났습니다. 원인을 추적해보니, `ddl-auto: update`가 생성한 DDL이 `ALTER TABLE ORDERS ADD HIDDEN_BY_USER NUMBER(1) NOT NULL` 형태였는데, **Oracle은 기존 행이 있는 테이블에 기본값 없이 NOT NULL 컬럼을 추가하는 걸 거부합니다**(기존 행들이 채울 값이 없으므로). 문제는 Hibernate의 `update` 모드가 이 개별 DDL 실행 실패를 애플리케이션 기동 자체를 막지 않고 로그 경고로만 넘겨서, "서버는 정상적으로 떴는데 실제로는 컬럼이 없는" 상태가 되어 원인 파악이 까다로웠습니다. `@Column(columnDefinition = "NUMBER(1) DEFAULT 0")`으로 DDL 자체에 기본값을 명시해서, 기존 행에도 안전하게 `0`이 채워지며 컬럼이 추가되도록 고쳐서 해결했습니다. **"자동 스키마 생성(`ddl-auto`)에 의존할 때는, 이미 운영 데이터가 있는 테이블에 컬럼을 추가하는 경우를 항상 염두에 둬야 한다"**는 걸 체감한 사례입니다.
 
 **왜 이렇게 나눴는가**: 결제전(PENDING) 주문은 실제로 돈이 오가거나 재고가 차감된 적이 없는 "빈 기록"이라 지워도 무방하지만, 결제완료 건은 실제 거래·재고차감 이력이라 **회계/감사(audit) 목적으로 DB에서 완전히 지우면 안 된다**고 판단했습니다. 이건 "사용자에게 보여지는 것"과 "실제로 존재하는 것"을 분리하는 소프트 삭제의 전형적인 사용 사례입니다.
 
@@ -586,7 +590,7 @@ public class OrderService {
 
 ### Q22. DML 개념 및 DDL/DCL과의 차이
 
-**참고 파일**: `boot3/src/main/resources/application.yml`(`ddl-auto: update` 설정)
+**참고 파일**: `boot3/src/main/resources/application.yml`(`ddl-auto: update` 설정), `boot3/src/main/java/com/thejoa703/entity/Orders.java`(`columnDefinition` 실전 이슈)
 
 SQL 명령어는 목적에 따라 세 가지로 분류됩니다.
 

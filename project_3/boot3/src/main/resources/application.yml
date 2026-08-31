@@ -7,7 +7,13 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update  #  test환경  create-drop 매번초기화 / update 부분수정  
+      ddl-auto: create-drop  # 임시 설정 - PUBLISH_DATE 컬럼을 nullable 로 완전히 새로 만들기
+      # 위해 한 번만 create-drop 으로 켜뒀습니다. 서버를 한 번 실행/종료하고 나면 스키마가
+      # 최신 엔티티 정의(모든 컬럼 nullable 반영)로 새로 생성됩니다. 주의: create-drop 은
+      # 서버가 켜지고 꺼질 때마다 데이터베이스 전체(회원/도서/주문 등 모든 데이터)를 지우고
+      # 다시 만듭니다. 스키마가 정리되고 나면 반드시 다시 update 로 되돌려서 그 이후부터는
+      # 데이터가 보존되도록 해주세요. (원래 설정: update  #  test환경  create-drop 매번초기화
+      # / update 부분수정)
     properties:
       hibernate:
         format_sql: true
@@ -33,7 +39,7 @@ spring:
 mybatis:
   config-location: classpath:mybatis-config.xml
   mapper-locations: classpath:mapper/**/*.xml
-  type-aliases-package: com.thejoa703.domain,com.thejoa703.entity   # ★Book, Sboard2 매퍼 alias용 entity 패키지 추가
+  type-aliases-package: com.thejoa703.entity
 
 jwt:
   issuer: thejoa703

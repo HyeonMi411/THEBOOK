@@ -8,7 +8,7 @@ import {useRouter}  from  "next/router";
 import {updateNicknameRequest , updateProfileImageRequest}  from "../reducers/authReducer"; 
 import { UploadOutlined } from "@ant-design/icons";
 
-//////   SSR 연동 
+//////  SSR 연동 
 import { END } from "redux-saga";
 import { loadUserRequest } from "../reducers/authReducer";
 import { wrapper } from "../store/configureStore";
@@ -94,10 +94,10 @@ export default function MyPage(){//2. 부품 + export
 // 1) 사용자가 마이페이지(/mypage) 주소로 접속합니다.
 // 2) 서버에서 getServerSideProps가 실행되면서 loadUserRequest 액션을 디스패치합니다.
 // 3) 문제점: Redux-Saga는 비동기(Asynchronous)로 동작하기 때문에, 
-//           서버는 사가가 백그라운드에서 백엔드 API(/auth/me)를 부르든 말든 기다리지 않고 
-//           곧바로 return { props: {} }를 실행해버립니다.
+//          서버는 사가가 백그라운드에서 백엔드 API(/auth/me)를 부르든 말든 기다리지 않고 
+//          곧바로 return { props: {} }를 실행해버립니다.
 // 4) 결과적으로 브라우저는 유저 정보가 아직 담기지 않은 텅 빈 스토어 상태로 페이지를 먼저 그려버리게 되므로, 
-//            새로고침 시 로그인 정보가 안 뜬 것처럼 보이거나 깜빡임 현상이 발생합니다.
+//           새로고침 시 로그인 정보가 안 뜬 것처럼 보이거나 깜빡임 현상이 발생합니다.
 
 // 직접 API를 부르지 않고 , loadUserRequest 디스패치해서 사가완료 기다림
 export const getServerSideProps = wrapper.getServerSideProps((store) => async (ctx) => { 

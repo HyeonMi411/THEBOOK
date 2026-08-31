@@ -13,12 +13,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 카카오 도서검색 API 연동 서비스
  * boot1(the703) 의 api/ApiKakaoBook.java 를 그대로 재현했습니다.
  * (카카오 개발자센터의 REST API 키 하나로 로그인/도서검색 둘 다 사용 가능합니다.
  *  이미 소셜로그인에 등록해두신 KAKAO_CLIENT_ID 를 재사용하도록 기본값을 잡아뒀습니다.)
  */
+@Slf4j
 @Service
 public class ApiKakaoBook {
 
@@ -75,7 +78,7 @@ public class ApiKakaoBook {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("카카오 도서검색 API 호출/파싱 중 오류가 발생했습니다: {}", e.getMessage());
         }
 
         return result;

@@ -29,12 +29,12 @@ public class CartItem {
 	@SequenceGenerator(name = "cart_item_seq", sequenceName = "CART_ITEM_SEQ", allocationSize = 1)
 	private Long id;
 
-	// ★소속 장바구니 - N:1
+	// 소속 장바구니 - N:1
 	@ManyToOne
 	@JoinColumn(name = "CART_ID", nullable = false)
 	private Cart cart;
 
-	// ★담긴 도서 - N:1
+	// 담긴 도서 - N:1
 	@ManyToOne
 	@JoinColumn(name = "BOOK_ID", nullable = false)
 	private Book book;

@@ -1,12 +1,10 @@
 package com.thejoa703.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,115 +16,124 @@ import com.thejoa703.dto.Sboard2Dto.Sboard2ResponseDto;
 import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Sboard2;
 import com.thejoa703.exception.ResourceNotFoundException;
-import com.thejoa703.repository.AppUserRepository;
-import com.thejoa703.repository.Sboard2Repository;
+import com.thejoa703.mapper.AppUserMapper;
+import com.thejoa703.mapper.Sboard2Mapper;
 import com.thejoa703.util.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true) // ##
+@Transactional(readOnly = true)
 public class Sboard2Service {
 
-	private final Sboard2Repository  sboard2Repository;
-	private final AppUserRepository  appUserRepository;
-	private final FileStorageService fileStorageService; // 첨부파일 업로드처리
+	private final Sboard2Mapper      sboard2Mapper;
+	private final AppUserMapper      appUserMapper;
+	private final FileStorageService fileStorageService;
 
-	private static final int DEFAULT_PAGE_SIZE = 12; // ★화면에 12개씩
+	private static final int DEFAULT_PAGE_SIZE = 12;
 
-	// 1. 전체조회 (최신순) - 비페이징(내부용/구버전 호환용)
 	public List<Sboard2ResponseDto> getAllNotices() {
-		return sboard2Repository.findAllByOrderByIdDesc().stream()
+		return sboard2Mapper.selectAll().stream()
 				.map(Sboard2ResponseDto::from)
 				.collect(Collectors.toList());
 	}
 
-	// 1-1. ★전체조회 - 페이징(화면 12개씩)
 	public PageResponseDto<Sboard2ResponseDto> getAllNoticesPaged(int page, int size) {
 		int currentPage = Math.max(page, 1);
-		int pageSize     = size > 0 ? size : DEFAULT_PAGE_SIZE;
-		Pageable pageable = PageRequest.of(currentPage - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+		int pageSize = size > 0 ? size : DEFAULT_PAGE_SIZE;
 
-		Page<Sboard2> result = sboard2Repository.findAllByOrderByIdDesc(pageable);
+		Map<String, Object> params = new HashMap<>();
+		params.put("start", (currentPage - 1) * pageSize);
+		params.put("end", pageSize);
 
-		List<Sboard2ResponseDto> content = result.getContent().stream()
+		List<Sboard2> boards = sboard2Mapper.selectPaging(params);
+		int totalElements = sboard2Mapper.selectCnt();
+		int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+
+		List<Sboard2ResponseDto> content = boards.stream()
 				.map(Sboard2ResponseDto::from)
 				.collect(Collectors.toList());
 
-		return new PageResponseDto<>(content, currentPage, pageSize, result.getTotalElements(), result.getTotalPages());
+		return new PageResponseDto<>(content, currentPage, pageSize, totalElements, totalPages);
 	}
 
-	// 2. 단건조회 ( 조회수 +1 )
 	@Transactional
 	public Sboard2ResponseDto getNotice(Long id) {
-		Sboard2 board = sboard2Repository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 공지사항입니다. ID : " + id));
+		Sboard2 board = sboard2Mapper.selectById(id);
+		if (board == null) {
+			throw new ResourceNotFoundException("존재하지 않는 공지사항입니다. ID : " + id);
+		}
 
-		sboard2Repository.increaseHit(id); // DB 조회수 +1
-		board.setBhit(board.getBhit() + 1); // 응답용 값도 +1 반영
+		sboard2Mapper.updateHit(id);
+		board.setBhit(board.getBhit() + 1);
 
 		return Sboard2ResponseDto.from(board);
 	}
 
-	// 3. 제목검색 ( ★대소문자 구분없이, 앞뒤/중복 공백은 정리해서 검색 )
 	public List<Sboard2ResponseDto> searchByTitle(String keyword) {
 		String cleaned = cleanKeyword(keyword);
-		return sboard2Repository.findByBtitleContainingIgnoreCaseOrderByIdDesc(cleaned).stream()
+		return sboard2Mapper.searchByTitle(cleaned).stream()
 				.map(Sboard2ResponseDto::from)
 				.collect(Collectors.toList());
 	}
 
-	// ★검색어 앞뒤 공백 제거 + 단어 사이 중복 공백을 하나로 정리 (BookService 와 동일한 이유)
 	private String cleanKeyword(String keyword) {
 		if (keyword == null) { return ""; }
 		return keyword.trim().replaceAll("\\s+", " ");
 	}
 
-	// 4. 공지사항 작성 ( ★관리자 전용 )
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public Sboard2ResponseDto createNotice(Long userId, Sboard2RequestDto dto, MultipartFile file, String ip) {
-		AppUser user = appUserRepository.findById(userId)
+		AppUser user = appUserMapper.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 사용자입니다. ID : " + userId));
 
-		Sboard2 board = new Sboard2();
-		board.setBtitle(dto.getBtitle());
-		board.setBcontent(dto.getBcontent());
-		board.setBip(ip != null ? ip : "0:0:0:0:0:0:0:1");
-		board.setUser(user);
-
+		Map<String, Object> params = new HashMap<>();
+		params.put("btitle", dto.getBtitle());
+		params.put("bcontent", dto.getBcontent());
+		params.put("bip", ip != null ? ip : "0:0:0:0:0:0:0:1");
+		params.put("appUserId", user.getId());
 		if (file != null && !file.isEmpty()) {
-			board.setBfile(fileStorageService.upload(file));
+			params.put("bfile", fileStorageService.upload(file));
 		}
 
-		return Sboard2ResponseDto.from(sboard2Repository.save(board));
+		sboard2Mapper.insert(params);
+		Long newId = (Long) params.get("id");
+		return getNoticeWithoutHitIncrease(newId);
 	}
 
-	// 5. 공지사항 수정 ( ★관리자 전용 - 더티체킹으로 update 반영 )
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public Sboard2ResponseDto updateNotice(Long id, Sboard2RequestDto dto, MultipartFile file) {
-		Sboard2 board = sboard2Repository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 공지사항입니다. ID : " + id));
-
-		board.setBtitle(dto.getBtitle());
-		board.setBcontent(dto.getBcontent());
-
-		if (file != null && !file.isEmpty()) {
-			board.setBfile(fileStorageService.upload(file));
+		if (sboard2Mapper.selectById(id) == null) {
+			throw new ResourceNotFoundException("존재하지 않는 공지사항입니다. ID : " + id);
 		}
 
-		return Sboard2ResponseDto.from(board); // 더티체킹(Dirty Checking)으로 자동 update
+		Map<String, Object> params = new HashMap<>();
+		params.put("id", id);
+		params.put("btitle", dto.getBtitle());
+		params.put("bcontent", dto.getBcontent());
+		if (file != null && !file.isEmpty()) {
+			params.put("bfile", fileStorageService.upload(file));
+		}
+
+		sboard2Mapper.update(params);
+		return getNoticeWithoutHitIncrease(id);
 	}
 
-	// 6. 공지사항 삭제 ( ★관리자 전용 )
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public void deleteNotice(Long id) {
-		if (!sboard2Repository.existsById(id)) {
+		if (sboard2Mapper.selectById(id) == null) {
 			throw new ResourceNotFoundException("존재하지 않는 공지사항입니다. ID : " + id);
 		}
-		sboard2Repository.deleteById(id);
+		sboard2Mapper.delete(id);
+	}
+
+	// 등록/수정 직후 응답용 조회 - 조회수를 증가시키지 않습니다 (getNotice()는 상세조회 전용)
+	private Sboard2ResponseDto getNoticeWithoutHitIncrease(Long id) {
+		Sboard2 board = sboard2Mapper.selectById(id);
+		return Sboard2ResponseDto.from(board);
 	}
 }

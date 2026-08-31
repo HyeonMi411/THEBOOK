@@ -58,7 +58,7 @@ describe('notice(SBOARD2) slice reducer', () => {
         expect(state.error).toBe('공지사항 목록 조회 실패');
     });
 
-    //////////////////////////////////////////// 단건조회 ( ★서버에서 BHIT(조회수) +1 된 값이 정확히 반영되는지 검증 )
+    //////////////////////////////////////////// 단건조회 ( 서버에서 BHIT(조회수) +1 된 값이 정확히 반영되는지 검증 )
     it('fetchNoticeDetailRequest', () => {
         const state = noticeReducer(initialState, fetchNoticeDetailRequest());
         expect(state.loading).toBe(true);
@@ -71,7 +71,7 @@ describe('notice(SBOARD2) slice reducer', () => {
         const state = noticeReducer(initialState, fetchNoticeDetailSuccess(noticeAfterView));
         expect(state.loading).toBe(false);
         expect(state.currentNotice).toEqual(noticeAfterView);
-        expect(state.currentNotice.bhit).toBe(4); // ★조회수가 실제로 증가된 값으로 반영됐는지 확인
+        expect(state.currentNotice.bhit).toBe(4); // 조회수가 실제로 증가된 값으로 반영됐는지 확인
     });
 
     it('fetchNoticeDetailFailure', () => {
@@ -96,7 +96,7 @@ describe('notice(SBOARD2) slice reducer', () => {
         expect(state.error).toBe('검색 실패');
     });
 
-    //////////////////////////////////////////// 공지사항 작성 ( ★관리자 전용, 백엔드 @PreAuthorize )
+    //////////////////////////////////////////// 공지사항 작성 ( 관리자 전용, 백엔드 @PreAuthorize )
     it('createNoticeRequest', () => {
         const state = noticeReducer(initialState, createNoticeRequest());
         expect(state.loading).toBe(true);
@@ -107,7 +107,7 @@ describe('notice(SBOARD2) slice reducer', () => {
         const state = noticeReducer(initialState, createNoticeSuccess(noticeA));
         expect(state.loading).toBe(false);
         expect(state.success).toBe(true);
-        expect(state.notices).toEqual([]); // ★페이징 도입 이후 로컬 끼워넣기 안 함 (첫 페이지 재조회 방식)
+        expect(state.notices).toEqual([]); // 페이징 도입 이후 로컬 끼워넣기 안 함 (첫 페이지 재조회 방식)
     });
 
     it('createNoticeFailure - 관리자가 아니면 거부되는 상황(403) 등', () => {
@@ -116,7 +116,7 @@ describe('notice(SBOARD2) slice reducer', () => {
         expect(state.error).toBe('접근이 거부되었습니다.');
     });
 
-    //////////////////////////////////////////// 공지사항 수정 ( ★관리자 전용, ★목록 갱신 로직 꼼꼼히 검증 )
+    //////////////////////////////////////////// 공지사항 수정 ( 관리자 전용, 목록 갱신 로직 꼼꼼히 검증 )
     it('updateNoticeRequest', () => {
         const state = noticeReducer(initialState, updateNoticeRequest());
         expect(state.loading).toBe(true);
@@ -138,7 +138,7 @@ describe('notice(SBOARD2) slice reducer', () => {
         expect(state.error).toBe('수정 권한이 없습니다.');
     });
 
-    //////////////////////////////////////////// 공지사항 삭제 ( ★관리자 전용, ★목록에서 실제로 빠지는지 검증 )
+    //////////////////////////////////////////// 공지사항 삭제 ( 관리자 전용, 목록에서 실제로 빠지는지 검증 )
     it('deleteNoticeRequest', () => {
         const state = noticeReducer(initialState, deleteNoticeRequest());
         expect(state.loading).toBe(true);

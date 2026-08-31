@@ -4,18 +4,20 @@ import org.apache.ibatis.annotations.Mapper;
 
 import com.thejoa703.entity.BookStock;
 
-/**
- * BookStock MyBatis 매퍼 (★조회전용)
- * ------------------------------------------------------------------
- * BookStock 은 @Version(낙관적 락)이 걸려있는 엔티티입니다. MyBatis 로 직접 UPDATE 를 하면
- * Hibernate 의 버전체크를 완전히 우회하게 되어 동시성 제어가 깨집니다. 그래서 이 매퍼는
- * 조회 전용 메서드만 제공하며, 재고 등록/변경/차감은 반드시 JPA(BookStockRepository +
- * Service) 경로로만 처리하세요.
- * ------------------------------------------------------------------
- */
 @Mapper
 public interface BookStockMapper {
 
-	// 도서 재고 단건조회
 	BookStock findByBookId(Long bookId);
+
+	// 결제승인(재고차감) 시점에 이 행을 잠급니다 (Oracle: SELECT ... FOR UPDATE)
+	BookStock findByBookIdForUpdate(Long bookId);
+
+	void insert(BookStock stock);
+
+	// 버전(version) 값이 일치하는 행만 갱신됩니다. 영향받은 행이 0이면 다른 트랜잭션이
+	// 먼저 수정한 것이므로, 호출부(Service)에서 낙관적 락 충돌로 처리합니다.
+	int updateWithVersionCheck(BookStock stock);
+
+	// 도서 삭제 시, BOOK_STOCK 이 BOOK 을 FK 로 참조하고 있어서 먼저 지워야 합니다.
+	void deleteByBookId(Long bookId);
 }

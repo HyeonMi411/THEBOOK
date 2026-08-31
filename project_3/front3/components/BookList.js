@@ -39,7 +39,7 @@ export default function BookList({ books = [], currentPage, totalPages, onPageCh
               onClick={() => router.push(`/books/${book.id}`)}
             >
               <div className="book-cover">
-                {/* ★표지 없음/링크깨짐 → 자동으로 기본 아이콘 표시 */}
+                {/* 표지 없음/링크깨짐 → 자동으로 기본 아이콘 표시 */}
                 <BookCoverImage
                   src={book.bookCover
                     ? (book.bookCover.startsWith('http') ? book.bookCover : `http://localhost:8080/${book.bookCover}`)
@@ -47,7 +47,7 @@ export default function BookList({ books = [], currentPage, totalPages, onPageCh
                   alt={book.title}
                   iconSize={40}
                 />
-                {/* ★재고 0이면 품절 뱃지 표시 (요구사항정의서 8-13) */}
+                {/* 재고 0이면 품절 뱃지 표시 (요구사항정의서 8-13) */}
                 {book.stockQuantity === 0 && (
                   <span className="stock-badge out-of-stock" style={{ position: 'absolute', top: 10, right: 10, margin: 0 }}>
                     품절
@@ -74,7 +74,7 @@ export default function BookList({ books = [], currentPage, totalPages, onPageCh
         </div>
       )}
 
-      {/* ★페이징 - boot1 book/list.html 과 동일하게 하단에 페이지번호 노출 */}
+      {/* 페이징 - boot1 book/list.html 과 동일하게 하단에 페이지번호 노출 */}
       <Pagination currentPage={currentPage} totalPages={totalPages} onChange={onPageChange} />
     </div>
   );

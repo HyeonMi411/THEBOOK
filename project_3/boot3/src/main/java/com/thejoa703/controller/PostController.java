@@ -78,7 +78,7 @@ public class PostController {
 	
 	// Patch   /api/posts/{postId}
 	//	@Operation(summary = "게시글 수정" , description = "게시글 수정시")   // 수정 put(전체데이트 수정) , patch( 데이터 일부분수정)
-	//	@PatchMapping("/{postId}")   //  Put  ( 리소스의 전체 교체 )  /  Patch ( 부분수정 )
+	//	@PatchMapping("/{postId}")   // Put  ( 리소스의 전체 교체 )  /  Patch ( 부분수정 )
 	//	public ResponseEntity<PostResponseDto>  getUpdatePost(
 	//			@PathVariable("id")  Long id , 
 	//			@RequestBody PostRequestDto requestDto
@@ -89,7 +89,7 @@ public class PostController {
 	//	} 
 	
 	@Operation(summary = "게시글 수정" , description = "게시글 수정시")   // 수정 put(전체데이트 수정) , patch( 데이터 일부분수정)
-	@PatchMapping(value="/{postId}" , consumes= MediaType.MULTIPART_FORM_DATA_VALUE     )   //  Put  ( 리소스의 전체 교체 )  /  Patch ( 리소스의 부분수정 )
+	@PatchMapping(value="/{postId}" , consumes= MediaType.MULTIPART_FORM_DATA_VALUE     )   // Put  ( 리소스의 전체 교체 )  /  Patch ( 리소스의 부분수정 )
 	public ResponseEntity<PostResponseDto>  getUpdatePost(
 			Authentication   authentication,
 			//@Parameter(description = "작성자 사용자 ID")  @RequestParam("userId")  Long userId,

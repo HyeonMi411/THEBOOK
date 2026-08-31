@@ -4,8 +4,8 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.thejoa703.mapper.BookMapper">
 
-    <!-- BOOK_ID 컬럼 → id 필드 로 매핑해야 하므로(자동 camelCase 매핑은 bookId 로 변환되어 매칭 실패)
-         resultMap 을 명시적으로 선언합니다. user(AppUser) 연관관계는 이 매퍼에서는 매핑하지 않습니다. -->
+    <!-- BookResponseDto.from() 이 book.getUser().getNickname(), book.getStock().getStockQuantity()
+         를 참조하므로, AppUser/BookStock 을 LEFT JOIN 해서 함께 채웁니다. -->
     <resultMap id="BookResultMap" type="Book">
         <id     property="id"          column="BOOK_ID"/>
         <result property="title"       column="TITLE"/>
@@ -21,99 +21,123 @@
         <result property="price"       column="PRICE"/>
         <result property="regDate"     column="REG_DATE"/>
         <result property="bookCover"   column="BOOK_COVER"/>
+        <result property="deleted"     column="DELETED"/>
+        <association property="user" javaType="AppUser">
+            <id     property="id"       column="U_APP_USER_ID"/>
+            <result property="nickname" column="U_NICKNAME"/>
+        </association>
+        <association property="stock" javaType="BookStock">
+            <id     property="bookId"        column="BOOK_ID"/>
+            <result property="stockQuantity" column="S_STOCK_QUANTITY"/>
+        </association>
     </resultMap>
 
-    <!-- ==================== 조회 ==================== -->
+    <sql id="bookJoinColumns">
+        b.*, u.APP_USER_ID AS U_APP_USER_ID, u.NICKNAME AS U_NICKNAME,
+        s.STOCK_QUANTITY AS S_STOCK_QUANTITY
+    </sql>
 
-    <!-- 📘 전체조회 (오라클 네이티브 페이징) -->
+    <sql id="bookJoinFrom">
+        FROM BOOK b
+        LEFT JOIN APP_USER u ON b.APP_USER_ID = u.APP_USER_ID
+        LEFT JOIN BOOK_STOCK s ON b.BOOK_ID = s.BOOK_ID
+    </sql>
+
+    <!-- ==================== 조회 (공개 목록/검색 - 소프트 삭제된 도서는 제외) ==================== -->
+
     <select id="findAll" parameterType="java.util.Map" resultMap="BookResultMap">
-        SELECT *
-        FROM BOOK
-        ORDER BY BOOK_ID DESC
+        SELECT <include refid="bookJoinColumns"/>
+        <include refid="bookJoinFrom"/>
+        WHERE b.DELETED = 0
+        ORDER BY b.BOOK_ID DESC
         OFFSET #{start} ROWS FETCH NEXT #{end} ROWS ONLY
     </select>
 
     <select id="findAllCnt" resultType="int">
-        SELECT COUNT(*) FROM BOOK
+        SELECT COUNT(*) FROM BOOK WHERE DELETED = 0
     </select>
 
-    <!-- 📘 단건조회 -->
+    <!-- 단건조회는 삭제여부와 무관하게 항상 실제 행을 그대로 돌려줍니다. 장바구니/주문 검증처럼
+         "이 도서가 삭제됐는지" 자체를 확인해야 하는 내부 로직에서 필요하기 때문입니다.
+         공개 상세조회 API(BookService.getBook())는 이 결과를 받아 deleted 여부를 직접 확인해서
+         삭제된 도서면 별도로 거부 처리합니다. -->
     <select id="findById" parameterType="long" resultMap="BookResultMap">
-        SELECT *
-        FROM BOOK
-        WHERE BOOK_ID = #{bookId}
+        SELECT <include refid="bookJoinColumns"/>
+        <include refid="bookJoinFrom"/>
+        WHERE b.BOOK_ID = #{bookId}
     </select>
 
-    <!-- 📘 카테고리별 조회 (페이징) -->
     <select id="findByCategory" parameterType="java.util.Map" resultMap="BookResultMap">
-        SELECT *
-        FROM BOOK
-        WHERE CATEGORY LIKE '%' || #{category} || '%'
-        ORDER BY BOOK_ID DESC
+        SELECT <include refid="bookJoinColumns"/>
+        <include refid="bookJoinFrom"/>
+        WHERE b.DELETED = 0
+          AND b.CATEGORY LIKE '%' || #{category} || '%'
+        ORDER BY b.BOOK_ID DESC
         OFFSET #{start} ROWS FETCH NEXT #{end} ROWS ONLY
     </select>
 
     <select id="findCategoryCnt" parameterType="string" resultType="int">
         SELECT COUNT(*)
         FROM BOOK
-        WHERE CATEGORY LIKE '%' || #{category} || '%'
+        WHERE DELETED = 0
+          AND CATEGORY LIKE '%' || #{category} || '%'
     </select>
 
-    <!-- 🔍 제목/저자/카테고리 통합검색 -->
     <select id="searchBooks" parameterType="java.util.Map" resultMap="BookResultMap">
-        SELECT *
-        FROM BOOK
+        SELECT <include refid="bookJoinColumns"/>
+        <include refid="bookJoinFrom"/>
         <where>
+            b.DELETED = 0
             <choose>
                 <when test="searchType == 'title'">
-                    TITLE LIKE '%' || #{keyword} || '%'
+                    AND UPPER(b.TITLE) LIKE '%' || UPPER(#{keyword}) || '%'
                 </when>
                 <when test="searchType == 'author'">
-                    AUTHOR LIKE '%' || #{keyword} || '%'
+                    AND UPPER(b.AUTHOR) LIKE '%' || UPPER(#{keyword}) || '%'
                 </when>
                 <when test="searchType == 'category'">
-                    CATEGORY LIKE '%' || #{keyword} || '%'
+                    AND UPPER(b.CATEGORY) LIKE '%' || UPPER(#{keyword}) || '%'
                 </when>
                 <otherwise>
-                    TITLE LIKE '%' || #{keyword} || '%'
+                    AND UPPER(b.TITLE) LIKE '%' || UPPER(#{keyword}) || '%'
                 </otherwise>
             </choose>
         </where>
-        ORDER BY BOOK_ID DESC
+        ORDER BY b.BOOK_ID DESC
     </select>
 
-    <!-- 제목중복확인(AJAX) -->
+    <!-- 삭제된 도서와 같은 제목으로는 다시 등록할 수 있어야 하므로, 활성(DELETED=0) 도서만 검사합니다 -->
     <select id="existsByTitle" parameterType="string" resultType="boolean">
         SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
         FROM BOOK
-        WHERE TITLE = #{title}
+        WHERE TITLE = #{title} AND DELETED = 0
     </select>
 
-    <!-- 특정 관리자가 등록한 도서목록 -->
     <select id="findByAppUserId" parameterType="long" resultMap="BookResultMap">
-        SELECT *
-        FROM BOOK
-        WHERE APP_USER_ID = #{appUserId}
-        ORDER BY BOOK_ID DESC
+        SELECT <include refid="bookJoinColumns"/>
+        <include refid="bookJoinFrom"/>
+        WHERE b.APP_USER_ID = #{appUserId}
+          AND b.DELETED = 0
+        ORDER BY b.BOOK_ID DESC
     </select>
 
-    <!-- ==================== 등록 / 수정 / 삭제 ==================== -->
-    <!-- ★도서등록은 관리자(ROLE_ADMIN)만 가능해야 하므로, 아래 insert/update/delete 는
-         컨트롤러에서 바로 사용하지 말고 BookService(JPA, @PreAuthorize) 경로를 사용하세요. -->
+    <!-- ==================== 등록 / 수정 / 삭제(소프트) ==================== -->
 
-    <!-- 📘 등록 -->
     <insert id="insert" parameterType="java.util.Map">
+        <selectKey keyProperty="bookId" resultType="long" order="BEFORE">
+            SELECT BOOK_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
         INSERT INTO BOOK (
             BOOK_ID, TITLE, AUTHOR, PUBLISHER, PUBLISH_DATE, CATEGORY,
             RANKING, REVIEW_COUNT, RATING, DESCRIPTION, PAGES, PRICE,
-            REG_DATE, BOOK_COVER, APP_USER_ID
+            REG_DATE, BOOK_COVER, APP_USER_ID, DELETED
         )
         VALUES (
-            BOOK_SEQ.NEXTVAL,
+            #{bookId},
             #{title},
             #{author},
             #{publisher},
-            #{publishDate},
+            #{publishDate, jdbcType=DATE},
             #{category},
             #{ranking, jdbcType=VARCHAR},
             #{reviewCount, jdbcType=INTEGER},
@@ -123,11 +147,11 @@
             #{price, jdbcType=INTEGER},
             SYSTIMESTAMP,
             #{bookCover, jdbcType=VARCHAR},
-            #{appUserId}
+            #{appUserId},
+            0
         )
     </insert>
 
-    <!-- 📘 수정 (null 인 항목은 미반영) -->
     <update id="update" parameterType="java.util.Map">
         UPDATE BOOK
         <set>
@@ -147,10 +171,18 @@
         WHERE BOOK_ID = #{bookId}
     </update>
 
-    <!-- 📘 삭제 -->
-    <delete id="delete" parameterType="long">
-        DELETE FROM BOOK
-        WHERE BOOK_ID = #{bookId}
+    <!-- 소프트 삭제 - CART_ITEM/ORDER_ITEMS 가 BOOK_ID 를 FK 로 참조하고 있어서, 장바구니에
+         담겼거나 한 번이라도 주문된 도서를 실제로 DELETE 하면 FK 제약조건 위반(ORA-02292)이
+         발생합니다. 그래서 실제로 지우지 않고 DELETED 플래그만 세워서, 공개 목록/검색/상세
+         조회에서만 제외되도록 합니다. -->
+    <update id="updateDeleted">
+        UPDATE BOOK SET DELETED = #{deleted} WHERE BOOK_ID = #{bookId}
+    </update>
+
+    <!-- 테스트/배치 정리용 - 실제 행 삭제. CART_ITEM/ORDER_ITEMS 가 이 도서를 참조하고
+         있으면 FK 제약조건 위반으로 실패합니다(의도된 동작입니다). -->
+    <delete id="hardDelete" parameterType="long">
+        DELETE FROM BOOK WHERE BOOK_ID = #{bookId}
     </delete>
 
 </mapper>

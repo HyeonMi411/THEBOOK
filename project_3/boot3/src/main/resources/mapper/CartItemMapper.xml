@@ -4,14 +4,76 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.thejoa703.mapper.CartItemMapper">
 
-    <!-- cart/book 연관관계는 조회전용 매퍼에서는 매핑하지 않습니다. -->
+    <!-- CartItemResponseDto.from() 이 item.getBook() 의 title/bookCover/price/stock 을
+         참조하므로, BOOK/BOOK_STOCK 을 함께 조회합니다. JOIN 이 아니라 INNER JOIN 이지만
+         소프트삭제(DELETED 플래그)라 실제 행은 그대로 남아있어서 계속 조회됩니다 - 그래야
+         "이미 담아둔 도서가 이후에 판매중단됐다"는 사실을 사용자에게 보여줄 수 있습니다. -->
     <resultMap id="CartItemResultMap" type="CartItem">
         <id     property="id"       column="ID"/>
         <result property="quantity" column="QUANTITY"/>
+        <association property="book" javaType="Book">
+            <id     property="id"        column="B_BOOK_ID"/>
+            <result property="title"     column="B_TITLE"/>
+            <result property="bookCover" column="B_BOOK_COVER"/>
+            <result property="price"     column="B_PRICE"/>
+            <result property="deleted"   column="B_DELETED"/>
+            <association property="stock" javaType="BookStock">
+                <id     property="bookId"        column="B_BOOK_ID"/>
+                <result property="stockQuantity" column="S_STOCK_QUANTITY"/>
+            </association>
+        </association>
     </resultMap>
 
+    <sql id="cartItemJoinColumns">
+        ci.ID, ci.QUANTITY, ci.CART_ID,
+        b.BOOK_ID AS B_BOOK_ID, b.TITLE AS B_TITLE, b.BOOK_COVER AS B_BOOK_COVER, b.PRICE AS B_PRICE,
+        b.DELETED AS B_DELETED,
+        s.STOCK_QUANTITY AS S_STOCK_QUANTITY
+    </sql>
+
+    <sql id="cartItemJoinFrom">
+        FROM CART_ITEM ci
+        JOIN BOOK b ON ci.BOOK_ID = b.BOOK_ID
+        LEFT JOIN BOOK_STOCK s ON b.BOOK_ID = s.BOOK_ID
+    </sql>
+
     <select id="findByCartId" parameterType="long" resultMap="CartItemResultMap">
-        SELECT * FROM CART_ITEM WHERE CART_ID = #{cartId} ORDER BY ID ASC
+        SELECT <include refid="cartItemJoinColumns"/>
+        <include refid="cartItemJoinFrom"/>
+        WHERE ci.CART_ID = #{cartId}
+        ORDER BY ci.ID ASC
     </select>
+
+    <select id="findById" parameterType="long" resultMap="CartItemResultMap">
+        SELECT <include refid="cartItemJoinColumns"/>
+        <include refid="cartItemJoinFrom"/>
+        WHERE ci.ID = #{id}
+    </select>
+
+    <select id="findByCartIdAndBookId" resultMap="CartItemResultMap">
+        SELECT <include refid="cartItemJoinColumns"/>
+        <include refid="cartItemJoinFrom"/>
+        WHERE ci.CART_ID = #{cartId} AND ci.BOOK_ID = #{bookId}
+    </select>
+
+    <insert id="insert" parameterType="CartItem">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT CART_ITEM_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO CART_ITEM (ID, CART_ID, BOOK_ID, QUANTITY)
+        VALUES (#{id}, #{cart.id}, #{book.id}, #{quantity})
+    </insert>
+
+    <update id="update" parameterType="CartItem">
+        UPDATE CART_ITEM SET QUANTITY = #{quantity} WHERE ID = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM CART_ITEM WHERE ID = #{id}
+    </delete>
+
+    <delete id="deleteByCartId" parameterType="long">
+        DELETE FROM CART_ITEM WHERE CART_ID = #{cartId}
+    </delete>
 
 </mapper>

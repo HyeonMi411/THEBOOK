@@ -17,12 +17,12 @@ export default function MyOrdersPage() {
   const dispatch = useDispatch();
   const { orders, currentPage, totalPages, loading, error } = useSelector((state) => state.order);
   const { user } = useSelector((state) => state.auth);
-  const orderList = orders || []; // ★orders 가 어떤 이유로든 배열이 아닐 때도 화면이 깨지지 않도록 방어
+  const orderList = orders || []; // orders 가 어떤 이유로든 배열이 아닐 때도 화면이 깨지지 않도록 방어
 
   useEffect(() => {
-    // ★AppLayout 에서 accessToken 으로 user 를 다시 불러오는 중(loadUserRequest)일 수 있으므로,
-    //   진짜 비로그인(토큰 자체가 없음)일 때만 즉시 로그인 화면으로 보냅니다. 토큰은 있는데
-    //   user 복원이 아직 안 끝난 경우엔 여기서 섣불리 로그인으로 튕기지 않고 기다립니다.
+    // AppLayout 에서 accessToken 으로 user 를 다시 불러오는 중(loadUserRequest)일 수 있으므로,
+    //  진짜 비로그인(토큰 자체가 없음)일 때만 즉시 로그인 화면으로 보냅니다. 토큰은 있는데
+    //  user 복원이 아직 안 끝난 경우엔 여기서 섣불리 로그인으로 튕기지 않고 기다립니다.
     const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
     if (!user && !hasToken) { router.replace('/login'); return; }
     if (!user) return; // user 복원 대기중
@@ -37,7 +37,7 @@ export default function MyOrdersPage() {
     router.push({ pathname: '/mypage/orders', query: { page } }, undefined, { scroll: true });
   };
 
-  // ★결제전(PENDING) 주문만 삭제 가능 - 목록 클릭(상세이동)과 이벤트가 겹치지 않도록 stopPropagation
+  // 결제전(PENDING) 주문만 삭제 가능 - 목록 클릭(상세이동)과 이벤트가 겹치지 않도록 stopPropagation
   const handleDelete = (e, orderId) => {
     e.stopPropagation();
     if (window.confirm('이 주문을 삭제하시겠습니까?')) {
@@ -74,7 +74,7 @@ export default function MyOrdersPage() {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="myorder-total">{order.totalAmount?.toLocaleString()}원</div>
-            {/* ★모든 상태에서 삭제 가능 - 결제전(PENDING)은 실제 삭제, 결제완료/취소/실패는
+            {/* 모든 상태에서 삭제 가능 - 결제전(PENDING)은 실제 삭제, 결제완료/취소/실패는
                 DB에는 그대로 두고 내 목록에서만 안 보이게(숨기기) 처리됩니다. */}
             <button
               type="button"
