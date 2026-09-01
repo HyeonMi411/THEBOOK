@@ -28,6 +28,4 @@ public class Boot3Application {
 2. project - clean
 3. Boot3Application - run as
 4. http://localhost:8080/swagger-ui/index.html 	
-
-eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0aGVqb2E3MDMiLCJzdWIiOiIzIiwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc4NjM1Mjc2MywiZXhwIjoxNzg2MzUzNjYzfQ.uWU6mAGfTSN67J8lT7C9ymyaFXn1WiuTUVhmfNfEBK0
 */

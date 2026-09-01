@@ -18,12 +18,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Book;
 import com.thejoa703.entity.Sboard2;
-import com.thejoa703.mapper.AppUserMapper;
 import com.thejoa703.mapper.BookMapper;
 import com.thejoa703.mapper.Sboard2Mapper;
+import com.thejoa703.repository.AppUserRepository;
 
 /**
- * Book / Sboard2 - AppUserMapper / BookMapper / Sboard2Mapper (MyBatis) 검증 테스트
+ * Book / Sboard2 - BookMapper / Sboard2Mapper (MyBatis) 검증 테스트
  * ------------------------------------------------------------------------------
  * - 클래스에 @Transactional 을 걸어 자동롤백시키는 대신, 매 테스트가 끝난 뒤
  *   @AfterEach 에서 이 테스트가 생성한 데이터만 정확히 지워서 초기화합니다.
@@ -33,7 +33,7 @@ import com.thejoa703.mapper.Sboard2Mapper;
 @SpringBootTest
 class Boot2ApplicationTests_3_BookSboard2Entity {
 
-	@Autowired private AppUserMapper appUserMapper;
+	@Autowired private AppUserRepository appUserRepository;
 	@Autowired private BookMapper    bookMapper;
 	@Autowired private Sboard2Mapper sboard2Mapper;
 
@@ -50,7 +50,7 @@ class Boot2ApplicationTests_3_BookSboard2Entity {
 		admin.setProvider(provider);
 		admin.setProviderId(provider.equals("local") ? "local" : "social-" + UUID.randomUUID());
 		admin.setDeleted(false);
-		appUserMapper.insert(admin);
+		appUserRepository.save(admin);
 		createdAdminIds.add(admin.getId());
 		return admin;
 	}
@@ -59,7 +59,7 @@ class Boot2ApplicationTests_3_BookSboard2Entity {
 	void tearDown() {
 		createdBookIds.forEach(bookMapper::hardDelete);
 		createdBoardIds.forEach(sboard2Mapper::delete);
-		createdAdminIds.forEach(appUserMapper::deleteById);
+		createdAdminIds.forEach(appUserRepository::deleteById);
 	}
 
 	//-------------------------------------------------------------------

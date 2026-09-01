@@ -16,19 +16,19 @@ import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Hashtag;
 import com.thejoa703.entity.Image;
 import com.thejoa703.entity.Post;
-import com.thejoa703.mapper.AppUserMapper;
 import com.thejoa703.mapper.HashtagMapper;
-import com.thejoa703.mapper.ImageMapper;
-import com.thejoa703.mapper.PostMapper;
+import com.thejoa703.repository.AppUserRepository;
+import com.thejoa703.repository.ImageRepository;
+import com.thejoa703.repository.PostRepository;
 
 
 @SpringBootTest
 @Transactional   // org.springframework.transaction.annotation.Transactional
 class Boot2ApplicationTests_1_Entity {
-	@Autowired  private  AppUserMapper  appUserMapper;
-	@Autowired  private  PostMapper     postMapper;
-	@Autowired  private  ImageMapper    imageMapper;
-	@Autowired  private  HashtagMapper  hashtagMapper;
+	@Autowired  private  AppUserRepository  appUserRepository;
+	@Autowired  private  PostRepository     postRepository;
+	@Autowired  private  ImageRepository    imageRepository;
+	@Autowired  private  HashtagMapper      hashtagMapper;
 	
 
 	
@@ -58,49 +58,49 @@ class Boot2ApplicationTests_1_Entity {
       user2.setProvider("local");
       user2.setDeleted(false);
       
-      appUserMapper.insert(user1);
-      appUserMapper.insert(user2);
+      appUserRepository.save(user1);
+      appUserRepository.save(user2);
        
       //게시글 생성 
       post = new Post();
       post.setContent("테스트 게시글");
       post.setUser(user1);
-      postMapper.insert(post);
+      postRepository.save(post);
     }
 	//-------------------------------------------------------------------
-    // AppUserMapper
+    // AppUserRepository
 	//-------------------------------------------------------------------
 	@Test 
-	@DisplayName("■ AppUserMapper-CRUD")
-	void testAppUserMapper() {
+	@DisplayName("■ AppUserRepository-CRUD")
+	void testAppUserRepository() {
 		// 이메일 중복검사
-		assertThat(   appUserMapper.findByEmail(  user1.getEmail()  ).get().getEmail()  )
+		assertThat(   appUserRepository.findByEmail(  user1.getEmail()  ).get().getEmail()  )
 		          .isEqualTo(  user1.getEmail()  );
 	}
 	
 	
 	
 	//-------------------------------------------------------------------
-    // ImageMapper
+    // ImageRepository
 	//-------------------------------------------------------------------
-	// insert / select:findById / delete:deleteById
+	// insert : save / select:findById / delete:deleteById
 	@Test 
-	@DisplayName("■ ImageMapper-CRUD")
-	void testImageMapper() {
+	@DisplayName("■ ImageRepository-CRUD")
+	void testImageRepository() {
 		// 이미지생성가능
 		Image image = new Image();
 		image.setSrc("1.png");
 		image.setPost(post);  
-		imageMapper.insert(image);
+		imageRepository.save(image);
 		
 		// 단건조회
-		assertThat( imageMapper.findById(image.getId()).getSrc()  )
+		assertThat( imageRepository.findById(image.getId()).get().getSrc()  )
 				 .isEqualTo("1.png");
 		
 		// 삭제후조회불가확인
-		imageMapper.deleteById(image.getId());
-		assertThat( imageMapper.findById(image.getId()) )
-		 		 .isNull();
+		imageRepository.deleteById(image.getId());
+		assertThat( imageRepository.findById(image.getId()) )
+		 		 .isEmpty();
 	}
 	
 	
@@ -108,7 +108,7 @@ class Boot2ApplicationTests_1_Entity {
 	
 	
 	//-------------------------------------------------------------------
-    // HashtagMapper
+    // HashtagMapper (다대다 조인테이블 관리라 Mapper 유지)
 	//-------------------------------------------------------------------
 	// insert / select:findByName / 연결 : linkPostHashtag
 	@Test 

@@ -38,8 +38,8 @@ import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Sboard2;
 import com.thejoa703.exception.ResourceNotFoundException;
 import com.thejoa703.oauth2.CustomOAuth2User;
-import com.thejoa703.mapper.AppUserMapper;
 import com.thejoa703.mapper.Sboard2Mapper;
+import com.thejoa703.repository.AppUserRepository;
 import com.thejoa703.service.BookService;
 import com.thejoa703.service.Sboard2Service;
 
@@ -74,7 +74,7 @@ import com.thejoa703.service.Sboard2Service;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class Boot2ApplicationTests_4_BookSboard2Service {
 
-	@Autowired private AppUserMapper appUserMapper;
+	@Autowired private AppUserRepository appUserRepository;
 	@Autowired private Sboard2Mapper sboard2Mapper;
 	@Autowired private BookService       bookService;
 	@Autowired private Sboard2Service    sboard2Service;
@@ -92,7 +92,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		admin.setProvider(provider);                                   // local / google / kakao / naver
 		admin.setProviderId(provider.equals("local") ? "local" : "social-" + UUID.randomUUID());
 		admin.setDeleted(false);
-		appUserMapper.insert(admin);
+		appUserRepository.save(admin);
 		return admin;
 	}
 
@@ -105,7 +105,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		user.setProvider("local");
 		user.setProviderId("local");
 		user.setDeleted(false);
-		appUserMapper.insert(user);
+		appUserRepository.save(user);
 		return user;
 	}
 

@@ -15,46 +15,50 @@ import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Hashtag;
 import com.thejoa703.entity.Image;
 import com.thejoa703.entity.Post;
-import com.thejoa703.mapper.AppUserMapper;
 import com.thejoa703.mapper.HashtagMapper;
-import com.thejoa703.mapper.ImageMapper;
-import com.thejoa703.mapper.PostMapper;
+import com.thejoa703.repository.AppUserRepository;
+import com.thejoa703.repository.ImageRepository;
+import com.thejoa703.repository.PostRepository;
 import com.thejoa703.util.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 게시글 서비스
+ * - Post/Image 는 단순 CRUD 라 JPA Repository 를 사용합니다.
+ * - Hashtag/POST_HASHTAG(다대다 조인테이블) 관리는 복잡해서 Mapper(HashtagMapper)를 그대로 사용합니다.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PostService {
 
-	private final PostMapper         postMapper;
-	private final ImageMapper        imageMapper;
+	private final PostRepository     postRepository;
+	private final ImageRepository    imageRepository;
 	private final HashtagMapper      hashtagMapper;
-	private final AppUserMapper      appUserMapper;
+	private final AppUserRepository  appUserRepository;
 	private final FileStorageService fileStorageService;
 
-	// MyBatis 는 JPA 의 @OneToMany/@ManyToMany 자동 로딩이 없으므로, Post 를 조회할 때마다
-	// images/hashtags 를 직접 채워서 완전한 객체로 만들어줍니다.
+	// Post.images 는 JPA 로 자동 로딩되지만, hashtags 는 여전히 Mapper(HashtagMapper) 로
+	// 수동으로 채워야 합니다. 트랜잭션 범위 밖에서의 지연로딩 예외를 피하기 위해
+	// images 도 명시적으로 다시 채워서 완전한 객체로 만들어줍니다.
 	private Post loadPostWithDetails(Post post) {
 		if (post == null) { return null; }
-		post.setImages(imageMapper.findByPostId(post.getId()));
+		post.setImages(imageRepository.findByPost_Id(post.getId()));
 		post.setHashtags(hashtagMapper.findByPostId(post.getId()));
 		return post;
 	}
 
 	public List<PostResponseDto> getAllPosts() {
-		return postMapper.findByDeletedFalse().stream()
+		return postRepository.findByDeletedFalse().stream()
 				.map(this::loadPostWithDetails)
 				.map(PostResponseDto::from)
 				.collect(Collectors.toList());
 	}
 
 	public Post getPostById(Long id) {
-		Post post = postMapper.findById(id);
-		if (post == null) {
-			throw new IllegalArgumentException("존재하지 않는 게시글입니다 ID:" + id);
-		}
+		Post post = postRepository.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다 ID:" + id));
 		if (post.isDeleted()) {
 			throw new IllegalArgumentException("삭제된 게시글 입니다.");
 		}
@@ -63,13 +67,13 @@ public class PostService {
 
 	@Transactional
 	public PostResponseDto createPost(Long userId, PostRequestDto dto, List<MultipartFile> files) {
-		AppUser user = appUserMapper.findById(userId)
+		AppUser user = appUserRepository.findById(userId)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. ID : " + userId));
 
 		Post post = new Post();
 		post.setContent(dto.getContent());
 		post.setUser(user);
-		postMapper.insert(post);
+		postRepository.save(post);
 
 		if (files != null && !files.isEmpty()) {
 			for (MultipartFile file : files) {
@@ -77,7 +81,7 @@ public class PostService {
 				Image image = new Image();
 				image.setSrc(url);
 				image.setPost(post);
-				imageMapper.insert(image);
+				imageRepository.save(image);
 			}
 		}
 
@@ -88,25 +92,22 @@ public class PostService {
 
 	@Transactional
 	public PostResponseDto updatePost(Long userId, Long postId, PostRequestDto dto, List<MultipartFile> files) {
-		Post post = postMapper.findById(postId);
-		if (post == null) {
-			throw new IllegalArgumentException("존재하지 않는 게시글입니다 ID:" + postId);
-		}
+		Post post = postRepository.findById(postId)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다 ID:" + postId));
 		if (!post.getUser().getId().equals(userId)) {
 			throw new IllegalArgumentException("본인 글만 수정할수 있습니다.");
 		}
 
-		post.setContent(dto.getContent());
-		postMapper.update(post);
+		post.setContent(dto.getContent()); // 더티체킹으로 트랜잭션 커밋시 자동 UPDATE
 
 		if (files != null && !files.isEmpty()) {
-			imageMapper.deleteByPostId(postId);
+			imageRepository.deleteByPost_Id(postId);
 			for (MultipartFile file : files) {
 				String url = fileStorageService.upload(file);
 				Image image = new Image();
 				image.setSrc(url);
 				image.setPost(post);
-				imageMapper.insert(image);
+				imageRepository.save(image);
 			}
 		}
 
@@ -142,13 +143,11 @@ public class PostService {
 
 	@Transactional
 	public void deletePost(Long userId, Long postId) {
-		Post post = postMapper.findById(postId);
-		if (post == null) {
-			throw new IllegalArgumentException("존재하지 않는 게시글입니다 ID:" + postId);
-		}
+		Post post = postRepository.findById(postId)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다 ID:" + postId));
 		if (!post.getUser().getId().equals(userId)) {
 			throw new SecurityException("본인 글만 삭제 할수 있습니다.");
 		}
-		postMapper.updateDeleted(postId, true); // 소프트삭제
+		post.setDeleted(true); // 더티체킹으로 트랜잭션 커밋시 자동 UPDATE (소프트삭제)
 	}
 }

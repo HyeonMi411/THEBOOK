@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,12 +28,13 @@ import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Book;
 import com.thejoa703.entity.BookStock;
 import com.thejoa703.exception.ResourceNotFoundException;
-import com.thejoa703.mapper.AppUserMapper;
 import com.thejoa703.mapper.BookMapper;
-import com.thejoa703.mapper.BookStockMapper;
 import com.thejoa703.mapper.OrderItemMapper;
+import com.thejoa703.repository.AppUserRepository;
+import com.thejoa703.repository.BookStockRepository;
 import com.thejoa703.util.FileStorageService;
 
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -41,8 +43,8 @@ import lombok.RequiredArgsConstructor;
 public class BookService {
 
 	private final BookMapper              bookMapper;
-	private final BookStockMapper         bookStockMapper;
-	private final AppUserMapper           appUserMapper;
+	private final BookStockRepository     bookStockRepository;
+	private final AppUserRepository       appUserRepository;
 	private final OrderItemMapper         orderItemMapper;
 	private final RedisTemplate<String, Object> redisTemplate; // 베스트셀러 캐싱용
 	private final FileStorageService      fileStorageService;
@@ -119,7 +121,7 @@ public class BookService {
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public BookResponseDto createBook(Long userId, BookRequestDto dto, MultipartFile cover) {
-		AppUser user = appUserMapper.findById(userId)
+		AppUser user = appUserRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 사용자입니다. ID : " + userId));
 
 		Map<String, Object> params = new HashMap<>();
@@ -190,7 +192,7 @@ public class BookService {
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public int insertFromKakao(String search, Long adminUserId) {
-		AppUser admin = appUserMapper.findById(adminUserId)
+		AppUser admin = appUserRepository.findById(adminUserId)
 				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 사용자입니다. ID : " + adminUserId));
 
 		List<BookKakaoDto> kakaoBooks = apiKakaoBook.getBooks(search);
@@ -252,7 +254,7 @@ public class BookService {
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public BookResponseDto saveNationalLibraryBook(BookNlDto nlBook, Long adminUserId) {
-		AppUser admin = appUserMapper.findById(adminUserId)
+		AppUser admin = appUserRepository.findById(adminUserId)
 				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 사용자입니다. ID : " + adminUserId));
 
 		String title = nlBook.getTitle_info();
@@ -314,16 +316,18 @@ public class BookService {
 			throw new ResourceNotFoundException("존재하지 않는 도서입니다. ID : " + bookId);
 		}
 
-		BookStock stock = bookStockMapper.findByBookId(bookId);
+		BookStock stock = bookStockRepository.findById(bookId).orElse(null);
 		if (stock == null) {
 			BookStock newStock = new BookStock();
-			newStock.setBookId(bookId);
+			newStock.setBook(book); // @MapsId - book 의 PK 가 그대로 BookStock 의 PK 로 채워짐
 			newStock.setStockQuantity(dto.getStockQuantity());
-			bookStockMapper.insert(newStock);
+			bookStockRepository.save(newStock);
 		} else {
 			stock.setStockQuantity(dto.getStockQuantity());
-			int updated = bookStockMapper.updateWithVersionCheck(stock);
-			if (updated == 0) {
+			try {
+				// saveAndFlush 로 즉시 반영시켜서, 낙관적 락(@Version) 충돌을 이 시점에 바로 감지합니다.
+				bookStockRepository.saveAndFlush(stock);
+			} catch (OptimisticLockException | ObjectOptimisticLockingFailureException e) {
 				throw new IllegalStateException("다른 요청이 먼저 재고를 변경했습니다. 다시 시도해주세요.");
 			}
 		}

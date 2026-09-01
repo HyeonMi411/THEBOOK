@@ -35,10 +35,10 @@ import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Book;
 import com.thejoa703.entity.BookStock;
 import com.thejoa703.entity.OrderStatus;
-import com.thejoa703.mapper.AppUserMapper;
 import com.thejoa703.mapper.BookMapper;
-import com.thejoa703.mapper.BookStockMapper;
-import com.thejoa703.mapper.CartItemMapper;
+import com.thejoa703.repository.AppUserRepository;
+import com.thejoa703.repository.BookStockRepository;
+import com.thejoa703.repository.CartItemRepository;
 import com.thejoa703.service.CartService;
 import com.thejoa703.service.OrderService;
 import com.thejoa703.service.PaymentService;
@@ -54,8 +54,8 @@ import com.thejoa703.service.BookService;
  * - 카카오페이는 외부 실제 서버를 호출하는 API 라서, 테스트에서 진짜로 호출할 수 없습니다
  *   (네트워크가 없는 CI 환경에서도 안정적으로 돌아가야 함). @MockBean 으로 KakaoPayApiService
  *   를 가짜 응답으로 대체해서, "우리 서비스 로직"(재고차감/주문상태변경/CLOB저장)만 검증합니다.
- * - "재고차감이 실제로 DB에 반영되는지" 검증은 BookStockMapper 로 직접 재조회해서 확인합니다
- *   (MyBatis 는 세션 캐시를 꺼뒀으므로(cacheEnabled: false), 매 조회가 항상 실제 DB 값입니다).
+ * - "재고차감이 실제로 DB에 반영되는지" 검증은 BookStockRepository 로 saveAndFlush 하고
+ *   재조회해서 확인합니다.
  * - 클래스에 @Transactional 을 걸어 각 테스트 종료 후 자동 롤백되므로, 더미데이터 SQL과
  *   테스트 데이터가 서로 섞이지 않습니다.
  * ------------------------------------------------------------------------------
@@ -65,10 +65,10 @@ import com.thejoa703.service.BookService;
 @Transactional
 class Boot2ApplicationTests_6_PaymentService {
 
-	@Autowired private AppUserMapper   appUserMapper;
-	@Autowired private BookMapper      bookMapper;
-	@Autowired private BookStockMapper bookStockMapper;
-	@Autowired private CartItemMapper  cartItemMapper;
+	@Autowired private AppUserRepository   appUserRepository;
+	@Autowired private BookMapper          bookMapper;
+	@Autowired private BookStockRepository bookStockRepository;
+	@Autowired private CartItemRepository  cartItemRepository;
 
 	@Autowired private CartService    cartService;
 	@Autowired private OrderService   orderService;
@@ -93,7 +93,7 @@ class Boot2ApplicationTests_6_PaymentService {
 		admin.setProvider("local");
 		admin.setProviderId("local");
 		admin.setDeleted(false);
-		appUserMapper.insert(admin);
+		appUserRepository.save(admin);
 		return admin;
 	}
 
@@ -106,7 +106,7 @@ class Boot2ApplicationTests_6_PaymentService {
 		user.setProvider(provider); // local / kakao / naver / google - 소셜로그인 구매자도 검증
 		user.setProviderId(provider.equals("local") ? "local" : "social-" + UUID.randomUUID());
 		user.setDeleted(false);
-		appUserMapper.insert(user);
+		appUserRepository.save(user);
 		return user;
 	}
 
@@ -128,11 +128,12 @@ class Boot2ApplicationTests_6_PaymentService {
 		params.put("appUserId", admin.getId());
 		bookMapper.insert(params);
 		Long bookId = (Long) params.get("bookId");
+		Book book = bookMapper.findById(bookId);
 
 		BookStock stock = new BookStock();
-		stock.setBookId(bookId);
+		stock.setBook(book); // @MapsId - book 의 PK 가 그대로 BookStock 의 PK 로 채워짐
 		stock.setStockQuantity(stockQuantity);
-		bookStockMapper.insert(stock);
+		bookStockRepository.saveAndFlush(stock);
 
 		return bookMapper.findById(bookId);
 	}
@@ -224,7 +225,7 @@ class Boot2ApplicationTests_6_PaymentService {
 
 		// 주문에 사용된 장바구니 항목은 제거되어야 함 (MyBatis 는 매 조회가 항상 실제
 		//  DB 값을 그대로 가져오므로, JPA 의 1차캐시/벌크연산 관련 주의사항은 해당 없습니다)
-		assertThat(cartItemMapper.findById(cartItemId)).isNull();
+		assertThat(cartItemRepository.findById(cartItemId)).isEmpty();
 		assertThat(cartService.getCart(buyer.getId()).getItems()).isEmpty();
 
 		// 4) 잘못된 요청 - cartItemIds 도 bookId 도 없으면 예외
@@ -269,7 +270,7 @@ class Boot2ApplicationTests_6_PaymentService {
 		assertThat(readyDto.getRedirectUrl()).isEqualTo(fakeReady.getNext_redirect_pc_url());
 
 		// 결제준비 단계에서는 재고가 아직 차감되면 안 됨
-		BookStock stockAfterReady = bookStockMapper.findByBookId(book.getId());
+		BookStock stockAfterReady = bookStockRepository.findById(book.getId()).orElseThrow();
 		assertThat(stockAfterReady.getStockQuantity()).isEqualTo(10);
 
 		// ---- 2) 결제 승인 - 카카오 API는 Mock 이 가짜 승인 응답을 돌려줌 ----
@@ -285,10 +286,9 @@ class Boot2ApplicationTests_6_PaymentService {
 		assertThat(approved.getOrderStatus()).isEqualTo(OrderStatus.PAID);
 
 		// ---------------------------------------------------------------
-		// 재고차감이 실제로 DB에 반영되는지 검증 (MyBatis 는 세션 캐시를 꺼뒀으므로
-		//  bookStockMapper.findByBookId() 는 항상 실제 DB 값을 그대로 가져옵니다)
+		// 재고차감이 실제로 DB에 반영되는지 검증
 		// ---------------------------------------------------------------
-		BookStock stockAfterApprove = bookStockMapper.findByBookId(book.getId());
+		BookStock stockAfterApprove = bookStockRepository.findById(book.getId()).orElseThrow();
 		assertThat(stockAfterApprove.getStockQuantity()).isEqualTo(7); // 10 - 3 = 7
 		// ---------------------------------------------------------------
 
@@ -321,9 +321,9 @@ class Boot2ApplicationTests_6_PaymentService {
 		paymentService.ready(buyer.getId(), order.getId());
 
 		// 결제승인 직전에 다른 경로로 재고가 0으로 소진된 상황을 재현
-		BookStock stock = bookStockMapper.findByBookId(book.getId());
+		BookStock stock = bookStockRepository.findById(book.getId()).orElseThrow();
 		stock.setStockQuantity(0);
-		bookStockMapper.updateWithVersionCheck(stock);
+		bookStockRepository.saveAndFlush(stock);
 
 		Mockito.when(kakaoPayApiService.approve(
 				Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString()
@@ -353,7 +353,7 @@ class Boot2ApplicationTests_6_PaymentService {
 		assertThat(orderService.getOrder(buyer.getId(), order2.getId()).getOrderStatus()).isEqualTo(OrderStatus.FAILED);
 
 		// 취소/실패된 재고는 차감되지 않아야 함
-		BookStock stock = bookStockMapper.findByBookId(book.getId());
+		BookStock stock = bookStockRepository.findById(book.getId()).orElseThrow();
 		assertThat(stock.getStockQuantity()).isEqualTo(5);
 	}
 

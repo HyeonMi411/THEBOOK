@@ -5,12 +5,14 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.SequenceGenerator;
@@ -104,7 +106,9 @@ public class Book {
 	@JoinColumn(name = "APP_USER_ID", nullable = false)
 	private AppUser user;
 
-	// 이 도서의 재고 - MyBatis 는 자동 로딩을 안 해주므로, BookMapper.xml 의
-	// resultMap(association)이 BOOK_STOCK 을 JOIN 해서 직접 채워줍니다.
+	// 이 도서의 재고 - Book 이 부모, BookStock 이 자식(같은 PK 공유)이라 여기서는
+	// 조회 편의를 위한 역방향 매핑만 둡니다. CartItem/OrderItem 처럼 Book 을 JPA
+	// 로 참조하는 다른 엔티티가 book.getStock() 을 쓸 수 있어야 하기 때문입니다.
+	@OneToOne(mappedBy = "book", fetch = FetchType.EAGER)
 	private BookStock stock;
 }

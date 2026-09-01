@@ -16,8 +16,8 @@ import com.thejoa703.dto.Sboard2Dto.Sboard2ResponseDto;
 import com.thejoa703.entity.AppUser;
 import com.thejoa703.entity.Sboard2;
 import com.thejoa703.exception.ResourceNotFoundException;
-import com.thejoa703.mapper.AppUserMapper;
 import com.thejoa703.mapper.Sboard2Mapper;
+import com.thejoa703.repository.AppUserRepository;
 import com.thejoa703.util.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class Sboard2Service {
 
 	private final Sboard2Mapper      sboard2Mapper;
-	private final AppUserMapper      appUserMapper;
+	private final AppUserRepository  appUserRepository;
 	private final FileStorageService fileStorageService;
 
 	private static final int DEFAULT_PAGE_SIZE = 12;
@@ -86,7 +86,7 @@ public class Sboard2Service {
 	@PreAuthorize("hasRole('ADMIN')")
 	@Transactional
 	public Sboard2ResponseDto createNotice(Long userId, Sboard2RequestDto dto, MultipartFile file, String ip) {
-		AppUser user = appUserMapper.findById(userId)
+		AppUser user = appUserRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 사용자입니다. ID : " + userId));
 
 		Map<String, Object> params = new HashMap<>();
