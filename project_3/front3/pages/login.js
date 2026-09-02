@@ -17,7 +17,6 @@ export default function LoginPage() {
     //Q3.   로그인 버튼을 누르고나면  -  스토어알림(dispatch) 이용해서 loginRequest 처리
     // {email:'1@1', password:'1', provider:'local'}
     const onFinish = (values)=>{   
-        console.log( values  );
         dispatch(   loginRequest({ ...values  , provider:'local'})   );
     }; 
     //Q4.   로그인 성공시 oo님 환영합니다 메시지 띄우고 (message),  마이페이지로 이동 (router.push)

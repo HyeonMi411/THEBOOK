@@ -97,7 +97,7 @@ const bookReducer = createSlice({
         createBookSuccess: (state, action) => {
             state.loading = false;
             // 페이징 도입 이후: 로컬에서 목록에 끼워넣지 않고, 등록 후 첫 페이지를 다시
-            //  불러오는 방식(pages/books/new.js 에서 router.push('/books'))으로 처리합니다.
+            // 불러오는 방식(pages/books/new.js 에서 router.push('/books'))으로 처리합니다.
             state.success = true;
         },
         createBookFailure: (state, action) => {
@@ -137,8 +137,8 @@ const bookReducer = createSlice({
         },
 
         // --- 카카오 도서검색 자동등록 (관리자 전용) ---
-        //   검색버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후,
-        //   성공시 도서 목록 페이지로 이동합니다. (pages/books/new.js 에서 처리)
+        //  검색버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후,
+        //  성공시 도서 목록 페이지로 이동합니다. (pages/books/new.js 에서 처리)
         kakaoInsertRequest: (state) => {
             state.kakaoLoading = true;
             state.kakaoError = null;

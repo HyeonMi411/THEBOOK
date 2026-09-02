@@ -11,7 +11,7 @@ import { fetchPostsRequest , fetchPostsSuccess, fetchPostsFailure ,   // 전체�
 
 const POST_API_BASE = '/api/posts';
 
-//  watchFetchPosts      -   GET      /api/posts      전체 게시글 조회  
+// watchFetchPosts      -   GET      /api/posts      전체 게시글 조회  
 export  const fetchPostsAPI   = ()=> api.get(POST_API_BASE);
 export  function* fetchPosts(){
     try{
@@ -22,7 +22,7 @@ export  function* fetchPosts(){
     }
 }
 
-//  watchFetchPostDetail - GET      /api/posts/{id}      게시글 단건 조회   /api/posts/1
+// watchFetchPostDetail - GET      /api/posts/{id}      게시글 단건 조회   /api/posts/1
 export  const fetchPostDetailAPI = (id)=> api.get(`${POST_API_BASE}/${id}`);
 export  function* fetchPostDetail(action){
     // action = { type:   , payload:{}}
@@ -34,7 +34,7 @@ export  function* fetchPostDetail(action){
     }
 }
 
-//  watchCreatePost      -   POST     /api/posts      게시글 작성   
+// watchCreatePost      -   POST     /api/posts      게시글 작성   
 export  function createPostAPI(payload){
     const {userId, dto, files } =  payload;   // 1. boot의 컨트롤러  - controller 
     const formData = new FormData();       // 2. form 만들기
@@ -60,8 +60,8 @@ export  function* createPost( action ){
     }
 }
 
-//  watchUpdatePost      -   PUT      /api/posts/{id} 게시글 수정  
-//  => 줄바꿈
+// watchUpdatePost      -   PUT      /api/posts/{id} 게시글 수정  
+// => 줄바꿈
 export function updatePostAPI(payload){
     const {userId , postId , dto, files } =  payload;   // 1. boot의 컨트롤러  - controller 
     const formData = new FormData();       // 2. form 만들기
@@ -87,7 +87,7 @@ export  function* updatePost(action){
     }
 }
 
-//  watchDeletePost      -   DELETE   /api/posts/{id} 게시글 삭제  ##
+// watchDeletePost      -   DELETE   /api/posts/{id} 게시글 삭제
 export  const deletePostAPI = (id)=> api.delete(`${POST_API_BASE}/${id}`);
 export  function* deletePost(action){
     // action = { type:   , payload:{}}

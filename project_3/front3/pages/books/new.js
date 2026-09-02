@@ -63,7 +63,7 @@ export default function NewBookPage() {
   }, [success, router, dispatch]);
 
   // 검색버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후,
-  //  도서 목록 페이지로 이동합니다. (boot1 book/write.html 의 카카오검색 섹션과 동일한 흐름)
+  // 도서 목록 페이지로 이동합니다. (boot1 book/write.html 의 카카오검색 섹션과 동일한 흐름)
   const onKakaoSearch = (e) => {
     e.preventDefault();
     if (!kakaoSearch.trim()) {

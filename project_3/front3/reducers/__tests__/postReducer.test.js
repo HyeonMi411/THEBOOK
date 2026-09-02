@@ -30,7 +30,7 @@ describe('post' , ()=>{
         expect(state.loading).toBe(false);
         expect(state.posts).toEqual(posts);
         // postReducer.js 의 fetchPostsSuccess 는 loading/posts 만 갱신하고
-        //  success 플래그는 건드리지 않습니다(success 는 글쓰기 성공시에만 true 로 씀).
+        // success 플래그는 건드리지 않습니다(success 는 글쓰기 성공시에만 true 로 씀).
         expect(state.success).toBe(false);
     });
 
@@ -50,9 +50,9 @@ describe('post' , ()=>{
         expect(state.success).toBe(true);
     });
     // createPostSuccess: (state , action)=>{ 
-    //    state.loading = false;
-    //    state.posts   = [action.payload,   ...state.posts];  // 새글을 목록상단추가
-    //    state.success = true;
+    //   state.loading = false;
+    //   state.posts   = [action.payload,   ...state.posts];  // 새글을 목록상단추가
+    //   state.success = true;
     // },    
     
     // updatePostSuccess   - 글수정
@@ -65,15 +65,15 @@ describe('post' , ()=>{
         expect(state.currentPost).toEqual(  updated );
     });
     // updatePostSuccess: (state , action)=>{ 
-    //    state.loading = false;
-    //    state.posts   = state.posts.map(  post => 
-    //        post.id === action.payload.id ? action.payload : post
-    //    );   
-    //    state.currentPost = action.payload;
-    //    state.success = true;
+    //   state.loading = false;
+    //   state.posts   = state.posts.map(  post => 
+    //       post.id === action.payload.id ? action.payload : post
+    //   );   
+    //   state.currentPost = action.payload;
+    //   state.success = true;
     // }, 
 
-    //  deletePostSuccess  - 글삭제
+    // deletePostSuccess  - 글삭제
     it(  'deletePostSuccess' , ()=>{    // fetchPostDetailSuccess
         const prev    =  {   ...initialState   , posts : [{id:1, content:'새 글'}]  };  
         const state   =  postReducer( prev, deletePostSuccess(1) );
@@ -95,8 +95,8 @@ describe('post' , ()=>{
 // npm test postReducer
 
 // deletePostSuccess: (state , action)=>{ 
-//    state.loading = false;
-//    // 삭제된 게시글의 id받아서 목록에서 제외
-//    state.posts   = state.posts.filter(post=>  post.id !== action.payload);   
-//    state.success = true;
+//   state.loading = false;
+//   // 삭제된 게시글의 id받아서 목록에서 제외
+//   state.posts   = state.posts.filter(post=>  post.id !== action.payload);   
+//   state.success = true;
 // },

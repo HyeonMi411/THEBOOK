@@ -92,7 +92,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		admin.setProvider(provider);                                   // local / google / kakao / naver
 		admin.setProviderId(provider.equals("local") ? "local" : "social-" + UUID.randomUUID());
 		admin.setDeleted(false);
-		appUserRepository.save(admin);
+		appUserRepository.saveAndFlush(admin);
 		return admin;
 	}
 
@@ -105,7 +105,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		user.setProvider("local");
 		user.setProviderId("local");
 		user.setDeleted(false);
-		appUserRepository.save(user);
+		appUserRepository.saveAndFlush(user);
 		return user;
 	}
 
@@ -130,11 +130,11 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 
 	//-------------------------------------------------------------------
 	// 0. [진단용] @PreAuthorize 자체가 정상 동작하는지 최소단위로 확인
-	//   DTO/파일업로드/DB쓰기 등 다른 변수를 모두 제거하고, 순수하게
-	//   "ROLE_USER 로 @PreAuthorize(hasRole('ADMIN')) 메서드를 호출하면
-	//    정말로 막히는가?" 만 검증합니다.
-	//   ※ 이 테스트가 실패한다면 SecurityConfig 의 @EnableMethodSecurity 설정이나
-	//     Spring Security 버전/구성 문제이지, Book/Sboard2 쪽 코드 문제가 아닙니다.
+	// DTO/파일업로드/DB쓰기 등 다른 변수를 모두 제거하고, 순수하게
+	// "ROLE_USER 로 @PreAuthorize(hasRole('ADMIN')) 메서드를 호출하면
+	// 정말로 막히는가?" 만 검증합니다.
+	// 이 테스트가 실패한다면 SecurityConfig 의 @EnableMethodSecurity 설정이나
+	// Spring Security 버전/구성 문제이지, Book/Sboard2 쪽 코드 문제가 아닙니다.
 	//-------------------------------------------------------------------
 	@Test
 	@Order(0)
@@ -300,8 +300,8 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 
 		// ---------------------------------------------------------------
 		// 조회수 증가가 실제로 DB에 반영되는지 검증
-		//  (MyBatis 는 세션 캐시(cacheEnabled: false)를 꺼뒀으므로, 매 조회가
-		//  항상 실제 DB 값을 그대로 가져옵니다)
+		// (MyBatis 는 세션 캐시(cacheEnabled: false)를 꺼뒀으므로, 매 조회가
+		// 항상 실제 DB 값을 그대로 가져옵니다)
 		// ---------------------------------------------------------------
 		Long boardId = created.getId();
 
@@ -400,7 +400,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 
 	//-------------------------------------------------------------------
 	// 4. [Swagger] /v3/api-docs 에 Book/Sboard2 API가 실제로 노출되는지 검증
-	//   (지난번 "swagger에 book/notices 가 안 보인다" 문제의 회귀테스트)
+	// (지난번 "swagger에 book/notices 가 안 보인다" 문제의 회귀테스트)
 	//-------------------------------------------------------------------
 	@Test
 	@Order(4)
@@ -448,7 +448,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		nlBook.setTitle_info("출판일미상테스트도서_" + UUID.randomUUID());
 		nlBook.setAuthor_info("테스트작가");
 		nlBook.setPub_info("테스트출판사");
-		nlBook.setPub_year_info(null); // ★발행년도 정보 자체가 없는 원본 데이터를 재현
+		nlBook.setPub_year_info(null); // 발행년도 정보 자체가 없는 원본 데이터를 재현
 
 		BookResponseDto saved = bookService.saveNationalLibraryBook(nlBook, admin.getId());
 
@@ -465,7 +465,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		nlBook.setTitle_info("출판일미상테스트도서2_" + UUID.randomUUID());
 		nlBook.setAuthor_info("테스트작가");
 		nlBook.setPub_info("테스트출판사");
-		nlBook.setPub_year_info("연도미상"); // ★숫자 4자리를 뽑을 수 없는 문자열
+		nlBook.setPub_year_info("연도미상"); // 숫자 4자리를 뽑을 수 없는 문자열
 
 		BookResponseDto saved = bookService.saveNationalLibraryBook(nlBook, admin.getId());
 

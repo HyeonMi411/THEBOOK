@@ -132,13 +132,13 @@ public class PaymentService {
 	@Transactional
 	public void cancel(Long userId, Long orderId) {
 		Orders order = getMyOrder(userId, orderId);
-		order.setOrderStatus(OrderStatus.CANCELLED); // 더티체킹으로 트랜잭션 커밋시 자동 UPDATE
+		order.setOrderStatus(OrderStatus.CANCELLED);
 	}
 
 	@Transactional
 	public void fail(Long userId, Long orderId) {
 		Orders order = getMyOrder(userId, orderId);
-		order.setOrderStatus(OrderStatus.FAILED); // 더티체킹으로 트랜잭션 커밋시 자동 UPDATE
+		order.setOrderStatus(OrderStatus.FAILED);
 	}
 
 	private Orders getMyOrder(Long userId, Long orderId) {

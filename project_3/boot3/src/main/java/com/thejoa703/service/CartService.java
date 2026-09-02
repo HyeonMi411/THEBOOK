@@ -107,7 +107,7 @@ public class CartService {
 			throw new IllegalStateException("[" + item.getBook().getTitle() + "] 재고가 부족합니다. (현재 재고 : " + stockQuantity + "권)");
 		}
 
-		item.setQuantity(quantity); // 더티체킹으로 트랜잭션 커밋시 자동 UPDATE
+		item.setQuantity(quantity);
 
 		List<CartItem> freshItems = cartItemRepository.findByCart_IdOrderByIdAsc(cart.getId());
 		return CartResponseDto.from(cart, freshItems);

@@ -72,7 +72,7 @@ public class UserDto {
     }
 
     // 소셜로그인 가입확인(추가정보 입력) 화면에서, 처음 온 사용자인지 미리 보여주기 위한
-    //  조회용 응답 DTO (닉네임 기본값/프로필이미지 등을 화면에 미리 채워주는 용도)
+    // 조회용 응답 DTO (닉네임 기본값/프로필이미지 등을 화면에 미리 채워주는 용도)
     @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
     public static class SignupPreviewDto {
         private String email;

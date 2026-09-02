@@ -16,10 +16,10 @@ import {
 
 const BOOK_API_BASE = '/api/books';
 
-//  watchFetchBooks       -  GET   /api/books?category=xxx   전체(카테고리별) 조회
-//  action.payload : category 문자열 (없으면 전체조회)
-//  watchFetchBooks       -  GET   /api/books?page=1&size=12&category=xxx   전체(페이징+카테고리) 조회
-//  action.payload : { page, size, category } (모두 선택, 기본 page=1/size=12)
+// watchFetchBooks       -  GET   /api/books?category=xxx   전체(카테고리별) 조회
+// action.payload : category 문자열 (없으면 전체조회)
+// watchFetchBooks       -  GET   /api/books?page=1&size=12&category=xxx   전체(페이징+카테고리) 조회
+// action.payload : { page, size, category } (모두 선택, 기본 page=1/size=12)
 export const fetchBooksAPI = (params = {}) =>
     api.get(BOOK_API_BASE, { params: {
         page: params.page || 1,
@@ -35,7 +35,7 @@ export function* fetchBooks(action) {
     }
 }
 
-//  watchFetchBookDetail  -  GET   /api/books/{id}   단건조회
+// watchFetchBookDetail  -  GET   /api/books/{id}   단건조회
 export const fetchBookDetailAPI = (id) => api.get(`${BOOK_API_BASE}/${id}`);
 export function* fetchBookDetail(action) {
     try {
@@ -46,7 +46,7 @@ export function* fetchBookDetail(action) {
     }
 }
 
-//  watchSearchBooks      -  GET   /api/books/search?keyword=xxx  제목검색
+// watchSearchBooks      -  GET   /api/books/search?keyword=xxx  제목검색
 export const searchBooksAPI = (keyword) =>
     api.get(`${BOOK_API_BASE}/search`, { params: { keyword } });
 export function* searchBooks(action) {
@@ -58,8 +58,8 @@ export function* searchBooks(action) {
     }
 }
 
-//  watchCreateBook       -  POST  /api/books   도서등록 ( 관리자 전용, JWT Authorization 헤더는
-//                                               axios 인터셉터가 자동으로 붙여줌 )
+// watchCreateBook       -  POST  /api/books   도서등록 ( 관리자 전용, JWT Authorization 헤더는
+//                                              axios 인터셉터가 자동으로 붙여줌 )
 export function createBookAPI(payload) {
     const { dto, cover } = payload;      // dto: title/author/publisher/publishDate/category/... , cover: 표지파일(File)
     const formData = new FormData();
@@ -84,7 +84,7 @@ export function* createBook(action) {
     }
 }
 
-//  watchUpdateBook       -  PATCH /api/books/{id}   도서수정 ( 관리자 전용 )
+// watchUpdateBook       -  PATCH /api/books/{id}   도서수정 ( 관리자 전용 )
 export function updateBookAPI(payload) {
     const { bookId, dto, cover } = payload;
     const formData = new FormData();
@@ -109,7 +109,7 @@ export function* updateBook(action) {
     }
 }
 
-//  watchDeleteBook       -  DELETE /api/books/{id}   도서삭제 ( 관리자 전용 )
+// watchDeleteBook       -  DELETE /api/books/{id}   도서삭제 ( 관리자 전용 )
 export const deleteBookAPI = (id) => api.delete(`${BOOK_API_BASE}/${id}`);
 export function* deleteBook(action) {
     try {
@@ -120,8 +120,8 @@ export function* deleteBook(action) {
     }
 }
 
-//  watchKakaoInsert      -  POST /api/books/kakao-insert?search=xxx   카카오 도서검색 자동등록 ( 관리자 전용 )
-//  검색버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후, 응답으로 등록건수를 돌려줍니다.
+// watchKakaoInsert      -  POST /api/books/kakao-insert?search=xxx   카카오 도서검색 자동등록 ( 관리자 전용 )
+// 검색버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후, 응답으로 등록건수를 돌려줍니다.
 export const kakaoInsertAPI = (search) =>
     api.post(`${BOOK_API_BASE}/kakao-insert`, null, { params: { search } });
 export function* kakaoInsert(action) {
@@ -133,8 +133,8 @@ export function* kakaoInsert(action) {
     }
 }
 
-//  watchNlSearch          -  GET  /api/books/national-library/search?keyword=&page=   국립중앙도서관 검색 (조회전용)
-//  action.payload : { keyword, page }
+// watchNlSearch          -  GET  /api/books/national-library/search?keyword=&page=   국립중앙도서관 검색 (조회전용)
+// action.payload : { keyword, page }
 export const nlSearchAPI = ({ keyword, page = 1 }) =>
     api.get(`${BOOK_API_BASE}/national-library/search`, { params: { keyword, page } });
 export function* nlSearch(action) {
@@ -146,8 +146,8 @@ export function* nlSearch(action) {
     }
 }
 
-//  watchNlSave            -  POST /api/books/national-library/save   국립중앙도서관 검색결과 1권 저장 ( 관리자 전용 )
-//  action.payload : BookNlDto 형태의 원본 검색결과 객체
+// watchNlSave            -  POST /api/books/national-library/save   국립중앙도서관 검색결과 1권 저장 ( 관리자 전용 )
+// action.payload : BookNlDto 형태의 원본 검색결과 객체
 export const nlSaveAPI = (nlBook) =>
     api.post(`${BOOK_API_BASE}/national-library/save`, nlBook);
 export function* nlSave(action) {
@@ -159,7 +159,7 @@ export function* nlSave(action) {
     }
 }
 
-//  watchFetchBestsellers  -  GET /api/books/bestsellers   판매량 TOP 10 조회 (전체공개, Redis 캐싱)
+// watchFetchBestsellers  -  GET /api/books/bestsellers   판매량 TOP 10 조회 (전체공개, Redis 캐싱)
 export const fetchBestsellersAPI = () => api.get(`${BOOK_API_BASE}/bestsellers`);
 export function* fetchBestsellers() {
     try {

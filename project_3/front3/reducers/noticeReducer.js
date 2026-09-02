@@ -81,7 +81,7 @@ const noticeReducer = createSlice({
         createNoticeSuccess: (state, action) => {
             state.loading = false;
             // 페이징 도입 이후: 로컬에서 목록에 끼워넣지 않고, 작성 후 첫 페이지를 다시
-            //  불러오는 방식(pages/notices/new.js 에서 router.push('/notices'))으로 처리합니다.
+            // 불러오는 방식(pages/notices/new.js 에서 router.push('/notices'))으로 처리합니다.
             state.success = true;
         },
         createNoticeFailure: (state, action) => {

@@ -12,9 +12,9 @@ import {
 
 const NOTICE_API_BASE = '/api/notices';
 
-//  watchFetchNotices      -  GET   /api/notices   전체조회
-//  watchFetchNotices      -  GET   /api/notices?page=1&size=12   전체(페이징) 조회
-//  action.payload : { page, size } (모두 선택, 기본 page=1/size=12)
+// watchFetchNotices      -  GET   /api/notices   전체조회
+// watchFetchNotices      -  GET   /api/notices?page=1&size=12   전체(페이징) 조회
+// action.payload : { page, size } (모두 선택, 기본 page=1/size=12)
 export const fetchNoticesAPI = (params = {}) =>
     api.get(NOTICE_API_BASE, { params: { page: params.page || 1, size: params.size || 12 } });
 export function* fetchNotices(action) {
@@ -26,7 +26,7 @@ export function* fetchNotices(action) {
     }
 }
 
-//  watchFetchNoticeDetail -  GET   /api/notices/{id}   단건조회 (서버에서 BHIT 조회수 +1 처리됨)
+// watchFetchNoticeDetail -  GET   /api/notices/{id}   단건조회 (서버에서 BHIT 조회수 +1 처리됨)
 export const fetchNoticeDetailAPI = (id) => api.get(`${NOTICE_API_BASE}/${id}`);
 export function* fetchNoticeDetail(action) {
     try {
@@ -37,7 +37,7 @@ export function* fetchNoticeDetail(action) {
     }
 }
 
-//  watchSearchNotices     -  GET   /api/notices/search?keyword=xxx   제목검색
+// watchSearchNotices     -  GET   /api/notices/search?keyword=xxx   제목검색
 export const searchNoticesAPI = (keyword) =>
     api.get(`${NOTICE_API_BASE}/search`, { params: { keyword } });
 export function* searchNotices(action) {
@@ -49,7 +49,7 @@ export function* searchNotices(action) {
     }
 }
 
-//  watchCreateNotice      -  POST  /api/notices   공지사항작성 ( 관리자 전용 )
+// watchCreateNotice      -  POST  /api/notices   공지사항작성 ( 관리자 전용 )
 export function createNoticeAPI(payload) {
     const { dto, file } = payload;   // dto: btitle/bcontent , file: 첨부파일(File)
     const formData = new FormData();
@@ -74,7 +74,7 @@ export function* createNotice(action) {
     }
 }
 
-//  watchUpdateNotice      -  PATCH /api/notices/{id}   공지사항수정 ( 관리자 전용 )
+// watchUpdateNotice      -  PATCH /api/notices/{id}   공지사항수정 ( 관리자 전용 )
 export function updateNoticeAPI(payload) {
     const { noticeId, dto, file } = payload;
     const formData = new FormData();
@@ -99,7 +99,7 @@ export function* updateNotice(action) {
     }
 }
 
-//  watchDeleteNotice      -  DELETE /api/notices/{id}   공지사항삭제 ( 관리자 전용 )
+// watchDeleteNotice      -  DELETE /api/notices/{id}   공지사항삭제 ( 관리자 전용 )
 export const deleteNoticeAPI = (id) => api.delete(`${NOTICE_API_BASE}/${id}`);
 export function* deleteNotice(action) {
     try {

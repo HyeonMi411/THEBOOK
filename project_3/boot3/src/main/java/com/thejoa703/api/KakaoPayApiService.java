@@ -31,7 +31,7 @@ public class KakaoPayApiService {
 
     @Value("${kakao.pay.secret-key}")
     private String secretKey; // 카카오페이 전용 개발자센터(developers.kakaopay.com)에서 발급받는 Secret Key
-                               //  (2024.01 개편 이전의 "Admin Key" 는 더 이상 사용 불가) - 절대 프론트엔드에 노출하면 안됨
+                               // (2024.01 개편 이전의 "Admin Key" 는 더 이상 사용 불가) - 절대 프론트엔드에 노출하면 안됨
 
     @Value("${kakao.pay.cid:TC0ONETIME}")
     private String cid; // 가맹점 코드 (테스트용 기본값 TC0ONETIME)
@@ -61,8 +61,8 @@ public class KakaoPayApiService {
         body.put("fail_url", failUrl);
 
         // 진단용 로그 - 카카오페이가 "-1 내부 처리 오류"처럼 원인을 알 수 없는 응답을 줄 때,
-        //  실제로 우리가 어떤 값을 보냈는지 서버 로그에서 바로 확인할 수 있게 남깁니다.
-        //  (total_amount=0, quantity=0 등 값 자체가 이상한 경우가 가장 흔한 원인입니다)
+        // 실제로 우리가 어떤 값을 보냈는지 서버 로그에서 바로 확인할 수 있게 남깁니다.
+        // (total_amount=0, quantity=0 등 값 자체가 이상한 경우가 가장 흔한 원인입니다)
         log.info("[KakaoPay ready 요청] cid={}, partner_order_id={}, item_name={}, quantity={}, total_amount={}",
                 cid, partnerOrderId, itemName, quantity, totalAmount);
 
@@ -76,8 +76,8 @@ public class KakaoPayApiService {
                     .body(KakaoPayReadyResponse.class);
         } catch (RestClientException ex) {
             // 서버 콘솔 로그를 따로 찾아볼 필요 없이, 우리가 실제로 보낸 요청 파라미터를
-            //  에러 메시지 자체에 그대로 실어서 보냅니다. 브라우저 개발자도구의
-            //  Network 탭(Response) 에서 바로 확인할 수 있습니다.
+            // 에러 메시지 자체에 그대로 실어서 보냅니다. 브라우저 개발자도구의
+            // Network 탭(Response) 에서 바로 확인할 수 있습니다.
             throw new IllegalStateException(
                     "카카오페이 결제준비 실패 - 요청값[cid=" + cid + ", item_name=" + itemName
                             + ", quantity=" + quantity + ", total_amount=" + totalAmount

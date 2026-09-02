@@ -50,7 +50,7 @@ class Boot2ApplicationTests_3_BookSboard2Entity {
 		admin.setProvider(provider);
 		admin.setProviderId(provider.equals("local") ? "local" : "social-" + UUID.randomUUID());
 		admin.setDeleted(false);
-		appUserRepository.save(admin);
+		appUserRepository.saveAndFlush(admin);
 		createdAdminIds.add(admin.getId());
 		return admin;
 	}

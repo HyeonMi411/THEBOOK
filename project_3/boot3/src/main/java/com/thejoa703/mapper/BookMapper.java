@@ -57,7 +57,7 @@ public interface BookMapper {
 	// ------------------------------------
 
 	// 등록 - map : { title, author, publisher, publishDate(yyyy-MM-dd), category,
-	//              ranking, reviewCount, rating, description, pages, price, bookCover, appUserId }
+	//             ranking, reviewCount, rating, description, pages, price, bookCover, appUserId }
 	int insert(Map<String, Object> map);
 
 	// 수정 - map : 위 항목 + { bookId }  (null 인 항목은 미반영)

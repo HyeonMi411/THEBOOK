@@ -44,6 +44,9 @@ import com.thejoa703.service.OrderService;
 import com.thejoa703.service.PaymentService;
 import com.thejoa703.service.BookService;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 /**
  * 결제 기능(CartService/OrderService/PaymentService + RestController) 통합테스트
  * ------------------------------------------------------------------------------
@@ -70,6 +73,9 @@ class Boot2ApplicationTests_6_PaymentService {
 	@Autowired private BookStockRepository bookStockRepository;
 	@Autowired private CartItemRepository  cartItemRepository;
 
+	@PersistenceContext
+	private EntityManager entityManager; // BookStock.book(@MapsId) 참조용
+
 	@Autowired private CartService    cartService;
 	@Autowired private OrderService   orderService;
 	@Autowired private PaymentService paymentService;
@@ -93,7 +99,7 @@ class Boot2ApplicationTests_6_PaymentService {
 		admin.setProvider("local");
 		admin.setProviderId("local");
 		admin.setDeleted(false);
-		appUserRepository.save(admin);
+		appUserRepository.saveAndFlush(admin);
 		return admin;
 	}
 
@@ -106,7 +112,7 @@ class Boot2ApplicationTests_6_PaymentService {
 		user.setProvider(provider); // local / kakao / naver / google - 소셜로그인 구매자도 검증
 		user.setProviderId(provider.equals("local") ? "local" : "social-" + UUID.randomUUID());
 		user.setDeleted(false);
-		appUserRepository.save(user);
+		appUserRepository.saveAndFlush(user);
 		return user;
 	}
 
@@ -128,10 +134,14 @@ class Boot2ApplicationTests_6_PaymentService {
 		params.put("appUserId", admin.getId());
 		bookMapper.insert(params);
 		Long bookId = (Long) params.get("bookId");
-		Book book = bookMapper.findById(bookId);
 
 		BookStock stock = new BookStock();
-		stock.setBook(book); // @MapsId - book 의 PK 가 그대로 BookStock 의 PK 로 채워짐
+		// BookStock.book 은 @MapsId 라 book 이 null 이면 ID 생성 자체가 실패하고,
+		// 그렇다고 Mapper(MyBatis)로 조회한 detached Book 을 그대로 넘기면 Hibernate 가
+		// cascade persist 를 시도하다 실패합니다. entityManager.getReference() 로 만든
+		// 관리 대상 참조(프록시)를 쓰면 DB 재조회도, cascade persist 대상도 아니면서
+		// ID 는 정상적으로 넘겨줄 수 있어 두 문제를 동시에 피할 수 있습니다.
+		stock.setBook(entityManager.getReference(Book.class, bookId));
 		stock.setStockQuantity(stockQuantity);
 		bookStockRepository.saveAndFlush(stock);
 
@@ -224,7 +234,7 @@ class Boot2ApplicationTests_6_PaymentService {
 		assertThat(order2.getItems().get(0).getBookTitle()).isEqualTo(titleB);
 
 		// 주문에 사용된 장바구니 항목은 제거되어야 함 (MyBatis 는 매 조회가 항상 실제
-		//  DB 값을 그대로 가져오므로, JPA 의 1차캐시/벌크연산 관련 주의사항은 해당 없습니다)
+		// DB 값을 그대로 가져오므로, JPA 의 1차캐시/벌크연산 관련 주의사항은 해당 없습니다)
 		assertThat(cartItemRepository.findById(cartItemId)).isEmpty();
 		assertThat(cartService.getCart(buyer.getId()).getItems()).isEmpty();
 

@@ -16,8 +16,8 @@ import {
 } from '../noticeSaga';
 
 // authSaga.test.js 와 동일한 이유로 jest.mock('axios') 를 쓰지 않습니다.
-//  generator.next() 로 saga 를 한단계씩 직접 실행시키면서 CALL 이펙트에 가짜 응답을
-//  수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
+// generator.next() 로 saga 를 한단계씩 직접 실행시키면서 CALL 이펙트에 가짜 응답을
+// 수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
 
 // 더미SQL 데이터와 겹치지 않도록, 테스트 전용 공지사항 제목을 사용합니다.
 const noticeA = { id: 401, btitle: '공지사가테스트공지A', bcontent: '내용A', bhit: 5 };

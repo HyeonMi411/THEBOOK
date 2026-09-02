@@ -10,8 +10,8 @@ import BookSearchBox from './BookSearchBox';              // boot1 헤더 AJAX �
 import Footer from './Footer';                            // boot1 푸터
 
 const { Header, Content } = Layout;    // <Layout.Header> → <Header>
-import { logoutRequest, loadUserRequest } from '../reducers/authReducer';  // ##
-import { fetchCartRequest } from '../reducers/cartReducer'; // ##
+import { logoutRequest, loadUserRequest } from '../reducers/authReducer';
+import { fetchCartRequest } from '../reducers/cartReducer';
 import { useEffect } from 'react';
 
 // 2. 부품
@@ -25,11 +25,11 @@ function AppLayout({ children }) {
     const { items: cartItems } = useSelector((state) => state.cart); // 장바구니 담긴 개수 뱃지용
 
     // 새로고침, 혹은 카카오페이 결제창(외부 도메인)에서 우리 사이트로 돌아오는 것처럼
-    //  브라우저가 완전히 새로 페이지를 로드하면 Redux 스토어가 처음부터 다시 만들어져서
-    //  user 가 null 이 됩니다. localStorage 에 accessToken 이 남아있다면(진짜 로그아웃한
-    //  게 아니라면) 그 토큰으로 내 정보를 다시 불러와서 로그인 상태를 복원합니다.
-    //  이게 없으면, 결제 완료 후 "주문내역 보기"처럼 로그인이 필요한 화면으로 이동할 때
-    //  실제로는 로그인되어 있는데도 user 가 비어있어서 로그인 화면으로 튕겨나가 버립니다.
+    // 브라우저가 완전히 새로 페이지를 로드하면 Redux 스토어가 처음부터 다시 만들어져서
+    // user 가 null 이 됩니다. localStorage 에 accessToken 이 남아있다면(진짜 로그아웃한
+    // 게 아니라면) 그 토큰으로 내 정보를 다시 불러와서 로그인 상태를 복원합니다.
+    // 이게 없으면, 결제 완료 후 "주문내역 보기"처럼 로그인이 필요한 화면으로 이동할 때
+    // 실제로는 로그인되어 있는데도 user 가 비어있어서 로그인 화면으로 튕겨나가 버립니다.
     useEffect(() => {
         if (!user && typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
             dispatch(loadUserRequest());
@@ -42,23 +42,19 @@ function AppLayout({ children }) {
     }, [user, dispatch]);
 
     // 로그아웃 버튼 클릭시, 여기서 바로 /login 으로 이동시키면 안 됩니다.
-    //  dispatch(logoutRequest())는 saga 를 "비동기"로 실행시키는데(백엔드 로그아웃 API
-    //  호출 → 소셜 provider 확인 → 카카오/네이버면 그 사이트로 실제 이동), 만약 여기서
-    //  곧바로 router.replace('/login') 을 동기적으로 실행해버리면, saga 가 카카오/네이버
-    //  로그아웃 페이지로 이동시키기도 전에 사용자를 먼저 /login 으로 보내버려서
-    //  "소셜 로그아웃이 아예 실행이 안 되는" 것처럼 보이게 됩니다. 최종적으로 어디로
-    //  이동할지는 saga(authSaga.js 의 logout())가 전부 알아서 책임지도록 여기서는
-    //  액션만 dispatch 합니다.
+    // dispatch(logoutRequest())는 saga 를 비동기로 실행시키는데(백엔드 로그아웃 API
+    // 호출 → 소셜 provider 확인 → 카카오/네이버면 그 사이트로 실제 이동), 여기서 곧바로
+    // router.replace('/login') 을 하면 saga 가 이동시키기도 전에 사용자를 먼저 보내버려서
+    // 소셜 로그아웃이 실행 안 되는 것처럼 보이게 됩니다. 최종 이동은 saga(authSaga.js
+    // 의 logout())가 책임지므로, 여기서는 액션만 dispatch 합니다.
     const handleLogout = () => {
-        // eslint-disable-next-line no-console
-        console.log('[logout] 로그아웃 버튼 클릭됨 - logoutRequest dispatch');
         dispatch(logoutRequest());
-    };  // 디스패치(logoutRequest()) - 이동은 saga 가 책임짐  //##
+    };
 
     // antd Menu 의 items.label 안에 <a onClick={...}> 를 직접 넣는 방식 대신,
-    //  Menu 자체의 onClick 콜백(공식 권장 패턴)을 씁니다. label 내부에 onClick을
-    //  직접 넣는 방식은 antd 버전/설정에 따라 Menu 내부 이벤트 처리와 충돌해서
-    //  클릭이 씹히는 경우가 보고되어 있어, 더 안정적인 방식으로 바꿨습니다.
+    // Menu 자체의 onClick 콜백(공식 권장 패턴)을 씁니다. label 내부에 onClick을
+    // 직접 넣는 방식은 antd 버전/설정에 따라 Menu 내부 이벤트 처리와 충돌해서
+    // 클릭이 씹히는 경우가 보고되어 있어, 더 안정적인 방식으로 바꿨습니다.
     const handleMenuClick = ({ key }) => {
         if (key === 'logout') {
             handleLogout();
@@ -91,8 +87,7 @@ function AppLayout({ children }) {
         ),
     ];
 
-    ////////////#1) Row (줄) - Col(칸)   /  Col
-    ////////////#2) 반응형속성 (모바일 : xs, sm, 태블릿: md, pc: lg) - 24칸
+    // Row(줄) - Col(칸) 구조, 반응형(모바일: xs, sm, 태블릿: md, pc: lg) - 24칸
     // display:"flex"  자식요소 배치 알아서
     // justify="space-between"  양쪽에 콘텐츠 배치
     return (

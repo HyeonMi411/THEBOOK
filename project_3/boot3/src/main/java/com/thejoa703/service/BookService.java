@@ -34,6 +34,7 @@ import com.thejoa703.repository.AppUserRepository;
 import com.thejoa703.repository.BookStockRepository;
 import com.thejoa703.util.FileStorageService;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 
@@ -48,6 +49,7 @@ public class BookService {
 	private final OrderItemMapper         orderItemMapper;
 	private final RedisTemplate<String, Object> redisTemplate; // 베스트셀러 캐싱용
 	private final FileStorageService      fileStorageService;
+	private final EntityManager           entityManager; // BookStock.book(@MapsId) 참조용
 	private final ApiKakaoBook            apiKakaoBook;
 	private final NlBookApiService        nlBookApiService;
 
@@ -319,7 +321,14 @@ public class BookService {
 		BookStock stock = bookStockRepository.findById(bookId).orElse(null);
 		if (stock == null) {
 			BookStock newStock = new BookStock();
-			newStock.setBook(book); // @MapsId - book 의 PK 가 그대로 BookStock 의 PK 로 채워짐
+			// BookStock.book 은 @MapsId 연관관계라, ID 생성 자체가 이 book 필드를 통해
+			// 이루어집니다(book 이 null 이면 ID 를 만들 방법이 없어 실패). 그렇다고
+			// Mapper(MyBatis)로 조회한 detached Book 객체를 그대로 넘기면, Hibernate 가
+			// 그 book 을 cascade persist 하려다 "detached entity" 예외가 납니다.
+			// entityManager.getReference() 로 "이미 존재한다고 가정하는 관리 대상 참조
+			// (프록시)"를 만들면, DB 재조회도 없고 cascade persist 대상도 아니면서 ID 는
+			// 정상적으로 넘겨줄 수 있어 두 문제를 동시에 피할 수 있습니다.
+			newStock.setBook(entityManager.getReference(Book.class, bookId));
 			newStock.setStockQuantity(dto.getStockQuantity());
 			bookStockRepository.save(newStock);
 		} else {

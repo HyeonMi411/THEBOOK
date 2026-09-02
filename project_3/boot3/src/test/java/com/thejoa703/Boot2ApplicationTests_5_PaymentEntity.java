@@ -33,6 +33,9 @@ import com.thejoa703.repository.CartRepository;
 import com.thejoa703.repository.OrderItemRepository;
 import com.thejoa703.repository.OrdersRepository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 /**
  * 결제 기능(BookStock/Cart/CartItem/Orders/OrderItem) JPA Repository 통합테스트
  * ------------------------------------------------------------------------------
@@ -57,6 +60,9 @@ class Boot2ApplicationTests_5_PaymentEntity {
 	@Autowired private OrderItemRepository orderItemRepository;
 	@Autowired private OrderItemMapper     orderItemMapper;
 
+	@PersistenceContext
+	private EntityManager entityManager; // BookStock.book(@MapsId) 참조용
+
 	// ------------------------------------------------------------------
 	// 공통 헬퍼 : 관리자(도서등록용) / 구매자(장바구니·주문용) 생성
 	// ------------------------------------------------------------------
@@ -69,7 +75,7 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		admin.setProvider("local");
 		admin.setProviderId("local");
 		admin.setDeleted(false);
-		appUserRepository.save(admin);
+		appUserRepository.saveAndFlush(admin);
 		return admin;
 	}
 
@@ -82,7 +88,7 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		user.setProvider("kakao"); // 소셜로그인(카카오) 구매자도 정상 동작하는지 확인
 		user.setProviderId("social-" + UUID.randomUUID());
 		user.setDeleted(false);
-		appUserRepository.save(user);
+		appUserRepository.saveAndFlush(user);
 		return user;
 	}
 
@@ -116,8 +122,13 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		Book book = createBook(admin, "결제테스트도서_" + UUID.randomUUID(), 15000);
 
 		// 1) 등록 - BookStock.bookId 가 Book.id 를 그대로 공유(@MapsId)하는지 확인
+		//    BookStock.book 은 @MapsId 라 book 이 null 이면 ID 생성 자체가 실패하고,
+		//    그렇다고 Mapper(MyBatis)로 조회한 detached Book 을 그대로 넘기면 Hibernate 가
+		//    cascade persist 를 시도하다 실패합니다. entityManager.getReference() 로 만든
+		//    관리 대상 참조(프록시)를 쓰면 DB 재조회도, cascade persist 대상도 아니면서
+		//    ID 는 정상적으로 넘겨줄 수 있어 두 문제를 동시에 피할 수 있습니다.
 		BookStock stock = new BookStock();
-		stock.setBook(book);
+		stock.setBook(entityManager.getReference(Book.class, book.getId()));
 		stock.setStockQuantity(10);
 		bookStockRepository.saveAndFlush(stock);
 

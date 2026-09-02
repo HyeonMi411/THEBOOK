@@ -22,8 +22,8 @@ import {
 } from '../bookSaga';
 
 // authSaga.test.js 와 동일한 이유로 jest.mock('axios') 를 쓰지 않습니다.
-//  generator.next() 로 saga 를 한단계씩 직접 실행시키면서 CALL 이펙트에 가짜 응답을
-//  수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
+// generator.next() 로 saga 를 한단계씩 직접 실행시키면서 CALL 이펙트에 가짜 응답을
+// 수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
 
 // 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록, 테스트 전용 도서명을 사용합니다.
 const bookA = { id: 301, title: '북사가테스트도서A', author: '테스트작가', price: 18000, category: 'IT' };
@@ -289,7 +289,7 @@ describe('book saga', () => {
         expect(generator.next().done).toBe(true);
     });
 
-    // -- 베스트셀러(판매량 TOP 10) -- ( ★파라미터 없는 saga - action 인자를 안 받음 )
+    // -- 베스트셀러(판매량 TOP 10) -- ( 파라미터 없는 saga - action 인자를 안 받음 )
     it('fetchBestsellers success', () => {
         const generator = fetchBestsellers();
 

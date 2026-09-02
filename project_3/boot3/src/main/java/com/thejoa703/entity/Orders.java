@@ -71,10 +71,8 @@ public class Orders {
 	@Column(name = "HIDDEN_BY_USER", nullable = false, columnDefinition = "NUMBER(1) DEFAULT 0")
 	private boolean hiddenByUser = false;
 
-	// 주문에 담긴 상품들 - 조회 편의를 위한 매핑입니다. cascade 는 일부러 걸지 않았습니다
-	// (예전에 cascade+orphanRemoval 로 자동 삭제에 의존했다가, 준영속 엔티티/양방향
-	// 컬렉션 미동기화로 인한 FK 위반을 여러 번 겪은 이력이 있어서, 주문 삭제시 자식
-	// (OrderItem)을 먼저 지우는 순서는 OrderService 에서 명시적으로 관리합니다).
+	// 주문에 담긴 상품들 - 조회 편의를 위한 매핑입니다. cascade 는 걸지 않고, 주문 삭제시
+	// 자식(OrderItem)을 먼저 지우는 순서는 OrderService 에서 명시적으로 관리합니다.
 	@OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
 	private List<OrderItem> items = new ArrayList<>();
 

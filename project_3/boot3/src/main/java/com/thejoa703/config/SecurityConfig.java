@@ -59,15 +59,8 @@ public class SecurityConfig {
                     "/auth/**", "/login/**", "/oauth2/**",
                     "/swagger-ui/**", "/v3/api-docs/**",
                     "/swagger-resources/**", "/webjars/**", 
-                    "/configuration/**", "/uploads/**"  , "/api/deptusers/**" , "/api/likes/**"
+                    "/configuration/**", "/uploads/**"
                 ).permitAll()
-                // 해쉬태그          
-                .requestMatchers(HttpMethod.GET, "/api/posts/search/hashtag").permitAll()
-                // 전체조회용
-                .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
-                // 단건조회용
-                .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
-                .requestMatchers("/api/posts/paged").permitAll()
                 // 도서(Book) - 조회는 전체공개, 등록/수정/삭제는 로그인필요(+ 서비스단 @PreAuthorize("hasRole('ADMIN')"))
                 .requestMatchers(HttpMethod.GET, "/api/books/**").permitAll()
                 // 공지사항(Sboard2) - 조회는 전체공개, 작성/수정/삭제는 로그인필요(+ 서비스단 @PreAuthorize("hasRole('ADMIN')"))

@@ -4,7 +4,7 @@ import { createSlice }  from "@reduxjs/toolkit";
 //1. 초기화 상태 (공용)
 const initialState={
     user: null ,     // 단건 조회된 사용자 정보
-    accessToken: null,  //#####
+    accessToken: null,
     loading: false,  // 로딩상태   
     error:   null,   // 에러메시지
     success: false,  // 성공여부  ( insert 할때 )
@@ -23,13 +23,11 @@ const authReducer=createSlice({
         },
         signupSuccess : (state, action)=>{ 
             state.loading = false;  
-            //state.user    = action.payload;  //가입된 회원정보저장 
             state.success = true;  
         },
         signupFailure : (state, action)=>{
             state.loading = false;  
             state.error   = action.payload;  // 오류메시지
-            //state.success = false;  
         },
         // --- 상태 초기화 ---
         resetUserState: (state)=>{
@@ -44,12 +42,12 @@ const authReducer=createSlice({
         } , 
         loginSuccess: (state , action)=>{
             state.loading        = false;
-            state.user           = action.payload.user || null;         //####  .user 로 수정
-            state.accessToken    = action.payload.accessToken || null;  //####  .accessToken 으로 수정
+            state.user           = action.payload.user || null;
+            state.accessToken    = action.payload.accessToken || null;
             // boot에서 넘겨주는값
             // return ResponseEntity.ok(Map.of(
-            //        "accessToken", accessToken,
-            //        "user", user
+            //       "accessToken", accessToken,
+            //       "user", user
             // ));
         } , 
         loginFailure: (state , action)=>{
@@ -73,14 +71,13 @@ const authReducer=createSlice({
         // --- 로그아웃  ---
         logoutRequest: (state)=>{
             state.loading = true;
-            //state.error   = null;
         } , 
         logoutSuccess: (state)=>{
             state.loading = false;
             state.error   = null;
             state.user    = null;
-            state.accessToken  =null;  //####
-            state.scueess = false;
+            state.accessToken  =null;
+            state.success = false;
         } , 
         logoutFailure: (state , action)=>{
             state.loading = false;
@@ -89,7 +86,6 @@ const authReducer=createSlice({
         // --- 닉네임 변경  ---
         updateNicknameRequest: (state)=>{ 
             state.loading = true;
-            //state.error   = null;
         } , 
         updateNicknameSuccess: (state , action)=>{
             state.loading = false;
@@ -102,7 +98,6 @@ const authReducer=createSlice({
         // --- 프로필이미지 변경  --- 
         updateProfileImageRequest: (state)=>{
             state.loading = true;
-            //state.error   = null;
         } , 
         updateProfileImageSuccess: (state , action)=>{
             state.loading = false;

@@ -45,15 +45,10 @@ public class Book {
 	@Column(length = 100, nullable = false)
 	private String publisher;
 
-	@Column(name = "PUBLISH_DATE") // 출판일은 카카오/국립중앙도서관 자동수집 시 원본에 값이 없거나
-	// 파싱에 실패할 수 있어서 nullable 로 뒀습니다. 예전에는 이럴 때 임의로
-	// 1900-01-01 을 채워넣었는데, 이건 "정말 1900년에 나온 책"인지 "출판일을 못
-	// 구했는지" 구분이 안 되는 매직넘버라 잘못된 정보였습니다. 지금은 null 로 두고
-	// 화면에서 "출판일 미상"으로 명확히 표시합니다. (관리자가 직접 등록할 때는
-	// BookRequestDto.publishDate 가 @NotNull 이라 여전히 필수 입력입니다)
-	// 기존 DB에 이미 이 컬럼이 NOT NULL 로 만들어져 있었다면, ddl-auto:update 가
-	// 이 제약을 자동으로 풀어주지 못할 수 있어서, SchemaAutoFixRunner(config 패키지)가
-	// 서버 기동시 직접 확인해서 자동으로 고쳐줍니다. 별도 수동 SQL 실행이 필요 없습니다.
+	@Column(name = "PUBLISH_DATE") // 카카오/국립중앙도서관 자동수집 시 출판일 파싱에 실패하면
+	// null 로 둡니다("출판일 미상"). 관리자 직접등록은 BookRequestDto.publishDate 가
+	// @NotNull 이라 여전히 필수입니다. 기존 DB 컬럼이 NOT NULL 이었다면 SchemaAutoFixRunner
+	// 가 서버 기동시 자동으로 NULL 허용으로 고쳐줍니다.
 	private LocalDate publishDate;
 
 	@Column(length = 50, nullable = false)
@@ -83,10 +78,8 @@ public class Book {
 	@Column(name = "BOOK_COVER", length = 300)
 	private String bookCover; // 표지이미지 경로 (실제 파일은 /uploads 에 저장, 경로 문자열만 컬럼에 저장)
 
-	// 소프트 삭제 - 관리자가 "삭제"해도 실제 DB 레코드는 남겨둡니다. CART_ITEM/ORDER_ITEMS 가
-	// BOOK_ID 를 FK 로 참조하고 있어서, 장바구니에 담겼거나 한 번이라도 주문된 도서를 실제로
-	// 하드 삭제하면 FK 제약조건 위반(ORA-02292)이 발생합니다. columnDefinition 으로 DEFAULT 0
-	// 을 명시해서, 이미 도서 데이터가 있는 테이블에도 안전하게 컬럼이 추가되도록 했습니다.
+	// 소프트 삭제 - CART_ITEM/ORDER_ITEMS 가 BOOK_ID 를 FK 로 참조하고 있어서, 장바구니에
+	// 담겼거나 주문된 도서를 하드 삭제하면 FK 제약조건 위반(ORA-02292)이 발생합니다.
 	@Column(name = "DELETED", nullable = false, columnDefinition = "NUMBER(1) DEFAULT 0")
 	private boolean deleted = false;
 

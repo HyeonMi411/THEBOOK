@@ -44,7 +44,7 @@ import lombok.RequiredArgsConstructor;
 
 @Tag( name="User Api" , description="회원 인증 및 관리 관련 API (Session & Swagger  지원)"  )   //swagger
 @RestController       // @Controller + @ResponseBody
-@RequestMapping("/auth")     //    /api/users
+@RequestMapping("/auth")     // /api/users
 @RequiredArgsConstructor 
 public class UserController { 
     private final JwtProperties props;        	// 1. JWT 출입증 ( 설정값)    
@@ -53,7 +53,7 @@ public class UserController {
 	private final UserService   userService;	//@Autowired
 
 	// 카카오 REST API 키 - "카카오계정과 함께 로그아웃" URL을 서버에서 완성해서 내려주기
-	//  위한 용도입니다. (REST API 키 자체는 공개돼도 되는 값이라 노출 문제 없음)
+	// 위한 용도입니다. (REST API 키 자체는 공개돼도 되는 값이라 노출 문제 없음)
 	@Value("${kakao.rest-api-key:}")
 	private String kakaoRestApiKey;
 
@@ -129,16 +129,16 @@ public class UserController {
         //3. 쿠키설정
         // org.springframework.http.ResponseCooke         
         // secure(true) 를 무조건 고정하면, http://localhost 같은 비HTTPS 로컬 개발환경에서는
-        //  브라우저가 이 쿠키를 아예 서버로 전송하지 않습니다. 그러면 /auth/refresh 호출 시
-        //  쿠키가 없어서 항상 실패하고, 프론트(axios 인터셉터)가 이를 "재로그인 필요"로
-        //  판단해 강제 로그아웃시켜 버립니다. OAuth2SuccessHandler 와 동일하게 로컬環境
-        //  여부를 판별해서 로컬에서는 secure=false 로 설정합니다.
+        // 브라우저가 이 쿠키를 아예 서버로 전송하지 않습니다. 그러면 /auth/refresh 호출 시
+        // 쿠키가 없어서 항상 실패하고, 프론트(axios 인터셉터)가 이를 "재로그인 필요"로
+        // 판단해 강제 로그아웃시켜 버립니다. OAuth2SuccessHandler 와 동일하게 로컬環境
+        // 여부를 판별해서 로컬에서는 secure=false 로 설정합니다.
         boolean isLocal = httpRequest.getServerName().equals("localhost") || httpRequest.getServerName().equals("127.0.0.1");
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)		// js 접근불가   
                 .secure(!isLocal)  	   // 로컬(http)에서는 false, 배포환경(https)에서는 true
                 .sameSite("Lax")  // "Strict" 는 카카오페이 결제처럼 외부(카카오) 도메인을 거쳐
-                                  //  돌아오는 리다이렉트 흐름에서 쿠키가 누락될 수 있어 완화
+                                  // 돌아오는 리다이렉트 흐름에서 쿠키가 누락될 수 있어 완화
                 .path("/")   // 전체경로 적용
                 .maxAge(props.getRefreshTokenExpSeconds())		// 만료시간설정  
                 .build();
@@ -171,7 +171,7 @@ public class UserController {
     }
 
     // 소셜로그인 "가입확인(추가정보 입력)" 완료 - 사용자가 닉네임을 확인/수정하고 제출하면
-    //  이 시점에 비로소 실제로 회원가입(DB저장)이 이루어지고, 곧바로 로그인 처리됩니다.
+    // 이 시점에 비로소 실제로 회원가입(DB저장)이 이루어지고, 곧바로 로그인 처리됩니다.
     @Operation(
             summary = "소셜 가입확인 완료 (실제 회원가입 + 로그인)",
             description = "signupToken 을 검증한 뒤, 사용자가 입력한 닉네임으로 최종 회원가입을 완료하고 "
@@ -236,13 +236,13 @@ public class UserController {
                                        HttpServletRequest httpRequest,
                                        HttpServletResponse response) {
         // refreshToken 쿠키가 없거나(required=false 라 null 가능) 이미 만료/변조되어
-        //  파싱이 실패하더라도, 로그아웃 요청 자체는 항상 성공해야 합니다. 로그아웃의
-        //  목적은 "클라이언트 상태를 지우는 것"이라, 서버측 Redis 토큰 삭제는
-        //  "가능하면 같이 해주는 것"이지 실패의 이유가 되면 안 됩니다.
-        //  (이 방어 코드가 없으면 refreshToken 이 없을 때 jwtProvider.parse(null) 이
-        //  예외를 던지고, GlobalExceptionHandler 가 이를 400 으로 응답해서 로그아웃
-        //  버튼을 눌러도 항상 실패하는 문제가 있었습니다 - provider 와 무관하게 전부
-        //  여기서 막혔던 것입니다)
+        // 파싱이 실패하더라도, 로그아웃 요청 자체는 항상 성공해야 합니다. 로그아웃의
+        // 목적은 "클라이언트 상태를 지우는 것"이라, 서버측 Redis 토큰 삭제는
+        // "가능하면 같이 해주는 것"이지 실패의 이유가 되면 안 됩니다.
+        // (이 방어 코드가 없으면 refreshToken 이 없을 때 jwtProvider.parse(null) 이
+        // 예외를 던지고, GlobalExceptionHandler 가 이를 400 으로 응답해서 로그아웃
+        // 버튼을 눌러도 항상 실패하는 문제가 있었습니다 - provider 와 무관하게 전부
+        // 여기서 막혔던 것입니다)
         if (refreshToken != null && !refreshToken.isBlank()) {
             try {
                 var claims = jwtProvider.parse(refreshToken).getBody();
@@ -400,16 +400,16 @@ public class UserController {
     }	
 
 	// 소셜 로그아웃 - "카카오계정과 함께 로그아웃" URL을 완성해서 돌려줍니다.
-	//  우리 서비스 로그아웃(POST /auth/logout)만으로는 우리 서비스의 JWT/쿠키만
-	//  지워질 뿐, 브라우저에 남아있는 카카오/네이버 자체 로그인 세션은 그대로입니다.
-	//  그래서 "카카오로 로그인" 버튼을 다시 누르면 비밀번호 확인 없이 곧바로 재로그인
-	//  되어버려서 "로그아웃이 안 된 것처럼" 느껴집니다.
-	//  - 카카오 : 공식적으로 "카카오계정과 함께 로그아웃" 기능을 제공합니다
-	//    (GET https://kauth.kakao.com/oauth/logout?client_id=...&logout_redirect_uri=...)
-	//    → 이 URL로 이동하면 브라우저의 카카오계정 세션 자체가 만료됩니다.
-	//  - 네이버 : 이런 공식 OAuth 로그아웃 엔드포인트를 제공하지 않습니다(연동해제만 제공).
-	//    그래서 네이버는 "완전 자동 로그아웃"이 불가능하다는 걸 그대로 응답에 담아
-	//    프론트가 사용자에게 안내할 수 있게 합니다.
+	// 우리 서비스 로그아웃(POST /auth/logout)만으로는 우리 서비스의 JWT/쿠키만
+	// 지워질 뿐, 브라우저에 남아있는 카카오/네이버 자체 로그인 세션은 그대로입니다.
+	// 그래서 "카카오로 로그인" 버튼을 다시 누르면 비밀번호 확인 없이 곧바로 재로그인
+	// 되어버려서 "로그아웃이 안 된 것처럼" 느껴집니다.
+	// - 카카오 : 공식적으로 "카카오계정과 함께 로그아웃" 기능을 제공합니다
+	// (GET https://kauth.kakao.com/oauth/logout?client_id=...&logout_redirect_uri=...)
+	// → 이 URL로 이동하면 브라우저의 카카오계정 세션 자체가 만료됩니다.
+	// - 네이버 : 이런 공식 OAuth 로그아웃 엔드포인트를 제공하지 않습니다(연동해제만 제공).
+	// 그래서 네이버는 "완전 자동 로그아웃"이 불가능하다는 걸 그대로 응답에 담아
+	// 프론트가 사용자에게 안내할 수 있게 합니다.
 	@Operation(
 			summary = "소셜 로그아웃 URL 조회",
 			description = "provider 별로 브라우저에 남아있는 소셜 계정 세션까지 끊는 방법을 안내합니다. "
@@ -427,9 +427,9 @@ public class UserController {
 		}
 		if ("naver".equalsIgnoreCase(provider)) {
 			// 네이버는 카카오 같은 "공식" OAuth 로그아웃 엔드포인트를 제공하지 않습니다.
-			//  다만 네이버 자체 웹사이트의 로그아웃 페이지(nidlogin.logout)로 이동시키면
-			//  부수적으로 브라우저의 네이버 로그인 세션이 함께 만료되는 것으로 널리
-			//  알려져 있습니다(비공식 - 네이버가 이 동작을 문서로 보장하지는 않습니다).
+			// 다만 네이버 자체 웹사이트의 로그아웃 페이지(nidlogin.logout)로 이동시키면
+			// 부수적으로 브라우저의 네이버 로그인 세션이 함께 만료되는 것으로 널리
+			// 알려져 있습니다(비공식 - 네이버가 이 동작을 문서로 보장하지는 않습니다).
 			String returnUrl = frontendBaseUrl + "/login";
 			String url = "https://nid.naver.com/nidlogin.logout?returl=" + returnUrl;
 			return ResponseEntity.ok(Map.of(
@@ -439,10 +439,10 @@ public class UserController {
 			));
 		}
 		// 구글은 accounts.google.com/Logout 이 있지만, 이건 Gmail 등 구글 전체
-		//  서비스 로그인까지 함께 끊어버려서 사용자 경험상 권장되지 않습니다. 대신
-		//  application-oauth.yml 의 authorization-uri 에 prompt=select_account 를
-		//  추가해서, 로그아웃 후 "구글로 로그인"을 다시 눌렀을 때 자동 재로그인되지
-		//  않고 항상 계정 선택 화면이 뜨도록 이미 처리해뒀습니다.
+		// 서비스 로그인까지 함께 끊어버려서 사용자 경험상 권장되지 않습니다. 대신
+		// application-oauth.yml 의 authorization-uri 에 prompt=select_account 를
+		// 추가해서, 로그아웃 후 "구글로 로그인"을 다시 눌렀을 때 자동 재로그인되지
+		// 않고 항상 계정 선택 화면이 뜨도록 이미 처리해뒀습니다.
 		return ResponseEntity.ok(Map.of(
 				"supported", false,
 				"message", provider + " 은(는) 소셜 계정 자체를 자동으로 로그아웃할 수 있는 공식 방법을 제공하지 않습니다. "
@@ -454,5 +454,5 @@ public class UserController {
 }
 //
 //1. User Api    - 사용자 관련 API
-//- POST	/api/users		    회원가입       ※ 기능 : createUser
-//- GET		/api/users/{id}		사용자 단건조회  ※ 기능 :  getUser
+//- POST	/api/users		    회원가입        기능 : createUser
+//- GET		/api/users/{id}		사용자 단건조회   기능 :  getUser

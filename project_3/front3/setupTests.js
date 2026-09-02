@@ -19,18 +19,18 @@ afterEach(() => {
 // 4. console.error / console.warn 무시 (선택)
 // 테스트 중 불필요한 에러 로그를 숨기고 싶을 때
 // beforeAll(() => {
-//  jest.spyOn(console, 'error').mockImplementation(() => {});
-//  jest.spyOn(console, 'warn').mockImplementation(() => {});
+// jest.spyOn(console, 'error').mockImplementation(() => {});
+// jest.spyOn(console, 'warn').mockImplementation(() => {});
 // });
 // afterAll(() => {
-//  console.error.mockRestore();
-//  console.warn.mockRestore();
+// console.error.mockRestore();
+// console.warn.mockRestore();
 // });
 
 // 5. fetch mock (선택)
 // 브라우저 환경에서 fetch를 사용하는 경우
 // global.fetch = jest.fn(() =>
-//  Promise.resolve({
-//    json: () => Promise.resolve({}),
-//  })
+// Promise.resolve({
+//   json: () => Promise.resolve({}),
+// })
 // );

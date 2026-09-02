@@ -9,7 +9,7 @@ import {useSelector , useDispatch}  from  "react-redux";
 import {useRouter} from "next/router";
 import { signupRequest , resetUserState } from "../reducers/authReducer";
 
-import  api  from  "../api/axios";   //###
+import  api  from  "../api/axios";   
 
 //2. function (부품)
 function   SignupPage(){
@@ -19,12 +19,12 @@ function   SignupPage(){
     const { user, error, success, loading  } = useSelector((state) => state.auth);   
     
     const [fileList, setFileList] = useState([]);
-    const  isSubmittedRef         = useRef(false);  //##
+    const  isSubmittedRef         = useRef(false);  
 
     // 데이터 받아서 회원가입전송  - 네트워크가 느리면 0.5초 2~3회 연속으로 클릭 (회원가입요청중복)
     const onFinish  = ( values )=>{
-        if( isSubmittedRef.current ) return;  //##
-        isSubmittedRef.current = true;  //##
+        if( isSubmittedRef.current ) return;  
+        isSubmittedRef.current = true;  
 
         const formData = new FormData();
         formData.append("email" ,values.email );
@@ -37,7 +37,7 @@ function   SignupPage(){
         if(success){
             message.success("회원가입이 성공적으로 완료되었습니다.");
             router.push(`/login`);
-            //router.push(`/`);   //###
+            //router.push(`/`);   
             dispatch( resetUserState() );   
         }
         return ()=>{
@@ -71,7 +71,6 @@ function   SignupPage(){
                       }
                       return  Promise.resolve();   //성공했으니깐 바로 반환
                     }catch(err){
-                       console.log('이메일 중복검사 오류' , err);
                        return  Promise.reject(new Error("중복검사 실패"));   //오류 바로 반환
                     }
 
@@ -107,7 +106,6 @@ function   SignupPage(){
                       }
                       return  Promise.resolve();   //성공했으니깐 바로 반환
                     }catch(err){
-                       console.log('닉네임 중복검사 오류' , err);
                        return  Promise.reject(new Error("중복검사 실패"));   //오류 바로 반환
                     }
 
@@ -142,5 +140,5 @@ export default SignupPage;
 
 ///// ver-0
 // export default function SignupPage(){
-//    return "SIGNUP";
+//   return "SIGNUP";
 // }

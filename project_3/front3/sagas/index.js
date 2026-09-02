@@ -2,22 +2,18 @@
 import { all, fork }  from 'redux-saga/effects';
 
 import  authSaga  from  './authSaga';
-import  postSaga  from  './postSaga';
 import  bookSaga  from  './bookSaga';     // 도서(BOOK)
 import  noticeSaga  from  './noticeSaga'; // 공지사항(SBOARD2)
 import  cartSaga  from  './cartSaga';     // 장바구니
 import  orderSaga  from  './orderSaga';   // 주문/결제
-//import  commentSaga  from  './commentSaga';
 
 export default  function  *rootSaga(){
     yield all([
         fork( authSaga ) ,
-        fork( postSaga ) ,
         fork( bookSaga ) ,     // 
         fork( noticeSaga ) ,   // 
         fork( cartSaga ) ,     // 
         fork( orderSaga ) ,    // 
-       // fork( commentSaga ) ,
     ]);
 }
 // fork : 기다리지 않음 (다른일할수 있게 양보)   - 동시에 실행

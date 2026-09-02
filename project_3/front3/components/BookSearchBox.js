@@ -1,9 +1,9 @@
 // components/BookSearchBox.js
 // boot1(the703) fragments/header.html 의 AJAX 실시간 검색(keyup 이벤트 → /book/search)을
 // React 버전(/api/books/search)으로 재현했습니다.
-// ※ boot1 원본은 드롭다운 항목을 클릭하면 그 책 1권의 상세페이지로 바로 이동했지만,
-//  검색키워드와 관련된 전체 목록을 보고 싶다는 요청에 따라 드롭다운 항목/검색버튼/Enter
-//  모두 "검색키워드 관련 도서 목록(/books?keyword=)" 화면으로 이동하도록 변경했습니다.
+//  boot1 원본은 드롭다운 항목을 클릭하면 그 책 1권의 상세페이지로 바로 이동했지만,
+// 검색키워드와 관련된 전체 목록을 보고 싶다는 요청에 따라 드롭다운 항목/검색버튼/Enter
+// 모두 "검색키워드 관련 도서 목록(/books?keyword=)" 화면으로 이동하도록 변경했습니다.
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import api from '../api/axios';
@@ -31,7 +31,7 @@ export default function BookSearchBox() {
     debounceRef.current = setTimeout(async () => {
       try {
         // 앞뒤 공백을 정리한 값으로 검색합니다 (백엔드도 동일하게 trim 처리하지만,
-        //  프론트에서도 미리 정리해서 불필요한 공백이 포함된 요청 자체를 줄입니다)
+        // 프론트에서도 미리 정리해서 불필요한 공백이 포함된 요청 자체를 줄입니다)
         const res = await api.get('/api/books/search', { params: { keyword: value.trim() } });
         setResults(res.data || []);
         setShowResult(true);

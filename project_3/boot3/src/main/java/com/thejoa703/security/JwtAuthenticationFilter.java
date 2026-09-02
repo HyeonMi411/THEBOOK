@@ -64,8 +64,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             } catch (Exception e) {
                 // 토큰 원문/사용자 식별정보는 로그에 남기지 않습니다(탈취 위험). 실패 사유만
-                //  DEBUG 레벨로 남겨서, 운영환경에서는 기본적으로 조용하고 필요할 때만
-                //  로그 레벨을 낮춰서 확인할 수 있게 합니다.
+                // DEBUG 레벨로 남겨서, 운영환경에서는 기본적으로 조용하고 필요할 때만
+                // 로그 레벨을 낮춰서 확인할 수 있게 합니다.
                 log.debug("JWT 인증 실패: {}", e.getMessage());
                 SecurityContextHolder.clearContext();
             }

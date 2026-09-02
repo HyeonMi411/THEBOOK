@@ -130,8 +130,8 @@ public class UserService {
 				profileImage != null && !profileImage.isEmpty()
 						? fileStorageService.upload(profileImage)
 						: "uploads/thejoa703.png"
-		);
-		return UserResponseDto.fromEntity(user); // 더티체킹으로 트랜잭션 커밋시 자동 UPDATE
+		); // 더티체킹으로 트랜잭션 커밋시 자동 UPDATE
+		return UserResponseDto.fromEntity(user);
 	}
 
 	@Transactional

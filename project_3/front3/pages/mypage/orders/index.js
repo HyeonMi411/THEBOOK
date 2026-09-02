@@ -21,8 +21,8 @@ export default function MyOrdersPage() {
 
   useEffect(() => {
     // AppLayout 에서 accessToken 으로 user 를 다시 불러오는 중(loadUserRequest)일 수 있으므로,
-    //  진짜 비로그인(토큰 자체가 없음)일 때만 즉시 로그인 화면으로 보냅니다. 토큰은 있는데
-    //  user 복원이 아직 안 끝난 경우엔 여기서 섣불리 로그인으로 튕기지 않고 기다립니다.
+    // 진짜 비로그인(토큰 자체가 없음)일 때만 즉시 로그인 화면으로 보냅니다. 토큰은 있는데
+    // user 복원이 아직 안 끝난 경우엔 여기서 섣불리 로그인으로 튕기지 않고 기다립니다.
     const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
     if (!user && !hasToken) { router.replace('/login'); return; }
     if (!user) return; // user 복원 대기중

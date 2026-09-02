@@ -66,8 +66,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         if (existingUser.isEmpty()) {
             // ------------------------------------------------------------------
             // 신규 소셜회원 - 여기서 곧바로 회원가입시키지 않습니다.
-            //  "가입확인(닉네임 확인/수정)" 화면으로 먼저 보내고, 사용자가 그 화면에서
-            //  확인을 완료해야만(POST /auth/social/signup) 실제로 DB에 저장됩니다.
+            // "가입확인(닉네임 확인/수정)" 화면으로 먼저 보내고, 사용자가 그 화면에서
+            // 확인을 완료해야만(POST /auth/social/signup) 실제로 DB에 저장됩니다.
             // ------------------------------------------------------------------
             String signupToken = jwtProvider.createSignupToken(Map.of(
                     "email", userInfo.getEmail(),
@@ -109,10 +109,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         refreshCookie.setMaxAge((int) props.getRefreshTokenExpSeconds());
         response.addCookie(refreshCookie);
         // jakarta.servlet.http.Cookie 는 SameSite 속성을 직접 지원하지 않습니다.
-        //  UserController(일반 로그인)의 refreshToken 쿠키와 SameSite 정책을 동일하게
-        //  맞추기 위해, 응답 헤더에 SameSite=Lax 를 직접 덧붙입니다. ("Strict" 로 하면
-        //  카카오페이 결제처럼 외부(카카오) 도메인을 거쳐 돌아오는 리다이렉트 흐름에서
-        //  쿠키가 누락될 수 있어 완화했습니다)
+        // UserController(일반 로그인)의 refreshToken 쿠키와 SameSite 정책을 동일하게
+        // 맞추기 위해, 응답 헤더에 SameSite=Lax 를 직접 덧붙입니다. ("Strict" 로 하면
+        // 카카오페이 결제처럼 외부(카카오) 도메인을 거쳐 돌아오는 리다이렉트 흐름에서
+        // 쿠키가 누락될 수 있어 완화했습니다)
         response.setHeader("Set-Cookie", response.getHeader("Set-Cookie") + "; SameSite=Lax");
         //
 		// Step4) redirectUrl ( 리액트경로 )  accessToken= 전달         
