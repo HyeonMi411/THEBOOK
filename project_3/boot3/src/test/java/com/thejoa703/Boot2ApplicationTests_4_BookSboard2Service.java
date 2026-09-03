@@ -143,13 +143,6 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		AppUser user = createTestUser(); // ROLE_USER
 		loginAs(user);
 
-		System.out.println("[DEBUG][sanityCheck] Authentication      = "
-				+ SecurityContextHolder.getContext().getAuthentication());
-		System.out.println("[DEBUG][sanityCheck] isAuthenticated()    = "
-				+ SecurityContextHolder.getContext().getAuthentication().isAuthenticated());
-		System.out.println("[DEBUG][sanityCheck] Authorities         = "
-				+ SecurityContextHolder.getContext().getAuthentication().getAuthorities());
-
 		// 존재하지 않는 ID(-1L)로 삭제를 시도합니다.
 		// @PreAuthorize 가 정상 동작한다면, "존재하지 않는 데이터"라는 ResourceNotFoundException 이
 		// 아니라 "권한없음" AccessDeniedException 이 먼저 발생해야 합니다.
@@ -191,10 +184,6 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		// (이 assertion 이 실패한다면 @PreAuthorize 문제가 아니라 로그인상태 세팅/누수 문제입니다.
 		// 이 assertion 은 통과했는데 바로 아래 accessDenied 검증이 실패한다면, 그건 진짜
 		// @PreAuthorize 자체가 적용되지 않고 있다는 뜻이니 SecurityConfig/버전 문제를 봐야 합니다.)
-		System.out.println("[DEBUG][testBookService] Authentication = "
-				+ SecurityContextHolder.getContext().getAuthentication());
-		System.out.println("[DEBUG][testBookService] Authorities   = "
-				+ SecurityContextHolder.getContext().getAuthentication().getAuthorities());
 		assertThat(SecurityContextHolder.getContext().getAuthentication().getAuthorities())
 				.extracting(Object::toString).containsExactly("ROLE_USER");
 		assertThatThrownBy(() -> bookService.createBook(user.getId(), dto, cover))
@@ -279,10 +268,6 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		loginAs(user);
 		// sanity-check: 현재 SecurityContext 가 정말 ROLE_USER 로만 세팅됐는지 먼저 확인
 		// (이 부분이 실패한다면 @PreAuthorize 문제가 아니라 로그인상태 세팅/누수 문제입니다)
-		System.out.println("[DEBUG][testSboard2Service] Authentication = "
-				+ SecurityContextHolder.getContext().getAuthentication());
-		System.out.println("[DEBUG][testSboard2Service] Authorities   = "
-				+ SecurityContextHolder.getContext().getAuthentication().getAuthorities());
 		assertThat(SecurityContextHolder.getContext().getAuthentication().getAuthorities())
 				.extracting(Object::toString).containsExactly("ROLE_USER");
 		assertThatThrownBy(() -> sboard2Service.createNotice(user.getId(), dto, null, "127.0.0.1"))

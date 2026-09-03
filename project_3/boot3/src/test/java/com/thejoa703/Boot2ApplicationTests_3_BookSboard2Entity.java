@@ -156,7 +156,11 @@ class Boot2ApplicationTests_3_BookSboard2Entity {
 		assertThat(bookMapper.findById(bookId).getPrice()).isEqualTo(30000);
 		assertThat(bookMapper.findById(bookId).getAuthor()).isEqualTo("김코딩"); // 나머지값 유지확인
 
-		// 삭제 (소프트) - 실제 행은 그대로 남고 DELETED 플래그만 세워집니다
+		// 삭제 (소프트) - 실제 행은 그대로 남고 DELETED 플래그만 세워집니다. 행 자체는
+		// 여전히 존재하므로(하드삭제가 아님) createdBookIds 에서 빼면 안 됩니다 - 빼버리면
+		// tearDown() 이 이 행을 하드삭제하지 않고 그대로 남겨두게 되어, 이 도서가 계속
+		// APP_USER 를 FK 로 참조한 채 남아있다가 나중에 admin 을 지울 때 ORA-02292
+		// (자식 레코드가 발견되었습니다) 로 실패합니다.
 		bookMapper.updateDeleted(bookId, true);
 		Book afterDelete = bookMapper.findById(bookId);
 		assertThat(afterDelete).isNotNull();
@@ -164,7 +168,6 @@ class Boot2ApplicationTests_3_BookSboard2Entity {
 		// 소프트삭제된 도서는 목록/카테고리/검색/제목중복확인에서 제외되어야 함
 		assertThat(bookMapper.findAll(pagingMap)).extracting(Book::getId).doesNotContain(bookId);
 		assertThat(bookMapper.existsByTitle("스프링부트 완전정복")).isFalse();
-		createdBookIds.remove(bookId);
 	}
 
 	//-------------------------------------------------------------------

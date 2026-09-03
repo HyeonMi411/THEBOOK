@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -18,6 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +41,7 @@ import com.thejoa703.entity.Book;
 import com.thejoa703.entity.BookStock;
 import com.thejoa703.entity.OrderStatus;
 import com.thejoa703.mapper.BookMapper;
+import com.thejoa703.oauth2.CustomOAuth2User;
 import com.thejoa703.repository.AppUserRepository;
 import com.thejoa703.repository.BookStockRepository;
 import com.thejoa703.repository.CartItemRepository;
@@ -114,6 +120,27 @@ class Boot2ApplicationTests_6_PaymentService {
 		user.setDeleted(false);
 		appUserRepository.saveAndFlush(user);
 		return user;
+	}
+
+	// BookService.deleteBook() 등 @PreAuthorize("hasRole('ADMIN')") 가 걸린 메서드를
+	// 테스트에서 직접 호출하려면, SecurityContext 에 해당 권한을 가진 인증 정보가
+	// 먼저 있어야 합니다. JwtAuthenticationFilter 가 실제 요청때마다 하는 일을 재현합니다.
+	private void loginAs(AppUser appUser) {
+		CustomOAuth2User principal = new CustomOAuth2User(appUser.getId(), appUser.getRole());
+		Authentication auth = new UsernamePasswordAuthenticationToken(
+				principal, null, principal.getAuthorities());
+		SecurityContextHolder.getContext().setAuthentication(auth);
+	}
+
+	// 테스트 간 SecurityContextHolder(ThreadLocal) 상태가 절대 섞이지 않도록 매번 초기화
+	@BeforeEach
+	void clearSecurityContextBefore() {
+		SecurityContextHolder.clearContext();
+	}
+
+	@AfterEach
+	void clearSecurityContextAfter() {
+		SecurityContextHolder.clearContext();
 	}
 
 	// 더미SQL 데이터와 겹치지 않도록 UUID 로 고유 도서명 생성 + 재고까지 함께 등록
@@ -384,7 +411,17 @@ class Boot2ApplicationTests_6_PaymentService {
 		assertThat(cart.getItems().get(0).isBookDeleted()).isFalse();
 
 		// 2) 관리자가 도서를 삭제(소프트) - 실제 행은 남고 DELETED 플래그만 세워짐
+		//    deleteBook() 은 @PreAuthorize("hasRole('ADMIN')") 가 걸려있어서, 호출 전에
+		//    SecurityContext 에 ADMIN 권한의 인증 정보를 먼저 세팅해야 합니다.
+		loginAs(admin);
 		bookService.deleteBook(book.getId());
+		// deleteBook() 은 MyBatis(raw SQL)로 DB 를 직접 갱신하는데, 이 테스트는 클래스
+		// 레벨 @Transactional 로 처음부터 끝까지 하나의 영속성 컨텍스트(Hibernate 1차
+		// 캐시)를 계속 씁니다. 그래서 앞서 cartService.addToCart() 에서 이미 로딩해둔
+		// CartItem.book(JPA 캐시)은 deleteBook() 이후에도 여전히 옛 상태(deleted=false)
+		// 로 남아있습니다. clear() 로 캐시를 비워서, 아래 getCart() 가 실제 DB 값을
+		// 다시 읽어오도록 강제합니다.
+		entityManager.clear();
 
 		// 3) 삭제된 도서는 목록/상세조회/검색에서 더 이상 보이지 않아야 함
 		assertThatThrownBy(() -> bookService.getBook(book.getId()))
