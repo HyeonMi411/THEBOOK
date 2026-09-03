@@ -29,7 +29,11 @@ class Boot2ApplicationTests_2_Service {
         signupDto.setNickname(nickname);
         signupDto.setProvider("local");
         MockMultipartFile profileImage = new MockMultipartFile(
-                "profileImage", "test.png", "image/png", "test image content".getBytes()
+                "profileImage", "test.png", "image/png",
+                // 1x1 투명 PNG 실제 바이너리 - FileStorageService.uploadImage() 가
+                // ImageIO 로 실제 이미지인지 검증하므로, 텍스트가 아닌 유효한 PNG 여야 통과합니다.
+                java.util.Base64.getDecoder().decode(
+                        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
         );
 
         UserResponseDto res = userService.createUser(signupDto, profileImage);  //###

@@ -35,7 +35,7 @@ export default function EditNoticeModal({ visible, onCancel, editNotice, onSubmi
       </div>
       <div>
         <label className="bs-form-label">첨부파일 (변경시에만)</label>
-        <input type="file" onChange={(e) => setFile(e.target.files[0] || null)} />
+        <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.hwp,.txt,.zip" onChange={(e) => setFile(e.target.files[0] || null)} />
       </div>
     </Modal>
   );

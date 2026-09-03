@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +31,7 @@ import com.thejoa703.entity.AppUser;
 import com.thejoa703.security.JwtProperties;
 import com.thejoa703.security.JwtProvider;
 import com.thejoa703.security.TokenStore;
+import com.thejoa703.service.AuthUserJwtService;
 import com.thejoa703.service.UserService;
 
 import io.jsonwebtoken.Claims;
@@ -51,6 +53,7 @@ public class UserController {
     private final JwtProvider   jwtProvider;	// 2. JWT 토큰생성/검증 ( access Token / refresh Token)  
     private final TokenStore    tokenStore;	  	// 3. jwt 저장소
 	private final UserService   userService;	//@Autowired
+	private final AuthUserJwtService authUserJwtService; // 현재 로그인한 사용자 ID 조회용
 
 	// 카카오 REST API 키 - "카카오계정과 함께 로그아웃" URL을 서버에서 완성해서 내려주기
 	// 위한 용도입니다. (REST API 키 자체는 공개돼도 되는 값이라 노출 문제 없음)
@@ -305,22 +308,32 @@ public class UserController {
     	
 	
 	// 닉네임수정
-	@Operation( summary="닉네임 변경" , description = "특정 사용자의 닉네임을 변경합니다.")
+	@Operation( summary="닉네임 변경" , description = "본인 계정의 닉네임을 변경합니다.")
 	@PatchMapping("/{userId}/nickname")
 	public    ResponseEntity<UserResponseDto>  updateNickname(
+			Authentication authentication,
 			@Parameter(description = "사용자 ID")    @PathVariable("userId") Long userId ,
 			@Parameter(description = "변경할 닉네임")  @RequestParam("nickname") String nickname
 	){
+		Long currentUserId = authUserJwtService.getCurrentUserId(authentication);
+		if (!currentUserId.equals(userId)) {
+			return ResponseEntity.status(403).build(); // 본인 계정만 수정 가능
+		}
 		return ResponseEntity.ok(   userService.updateNickname(userId, nickname) );
 	}
 	
 	// 이미지프로필수정
-	@Operation( summary="프로필 이미지 업로드/교체" , description = "특정 사용자의 프로필이미지를 변경합니다.")
+	@Operation( summary="프로필 이미지 업로드/교체" , description = "본인 계정의 프로필이미지를 변경합니다.")
 	@PatchMapping(value="/{userId}/profile-image" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public    ResponseEntity<UserResponseDto>  updateProfileImage(
+			Authentication authentication,
 			@Parameter(description = "사용자 ID")    @PathVariable("userId") Long userId ,
 			@Parameter(description = "변경할 닉네임")  @RequestParam("ufile") MultipartFile ufile
 	){
+		Long currentUserId = authUserJwtService.getCurrentUserId(authentication);
+		if (!currentUserId.equals(userId)) {
+			return ResponseEntity.status(403).build(); // 본인 계정만 수정 가능
+		}
 		return ResponseEntity.ok(   userService.updateProfileImage(userId, ufile) );
 	}
 	

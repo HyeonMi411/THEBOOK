@@ -176,7 +176,11 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		dto.setPrice(19900);
 
 		MockMultipartFile cover = new MockMultipartFile(
-				"cover", "cover.png", "image/png", "test-cover-bytes".getBytes());
+				"cover", "cover.png", "image/png",
+				// 1x1 투명 PNG 실제 바이너리 - FileStorageService.uploadImage() 가
+				// ImageIO 로 실제 이미지인지 검증하므로, 텍스트가 아닌 유효한 PNG 여야 통과합니다.
+				java.util.Base64.getDecoder().decode(
+						"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="));
 
 		// 1) 일반회원 로그인상태 → 등록 거부(AccessDeniedException), 실제 저장 안됨
 		loginAs(user);

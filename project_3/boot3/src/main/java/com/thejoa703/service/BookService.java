@@ -139,7 +139,7 @@ public class BookService {
 		params.put("pages", dto.getPages());
 		params.put("price", dto.getPrice());
 		params.put("bookCover", cover != null && !cover.isEmpty()
-				? fileStorageService.upload(cover)
+				? fileStorageService.uploadImage(cover)
 				: "uploads/default_book.png");
 		params.put("appUserId", user.getId());
 
@@ -170,7 +170,7 @@ public class BookService {
 		params.put("pages", dto.getPages());
 		params.put("price", dto.getPrice());
 		if (cover != null && !cover.isEmpty()) {
-			params.put("bookCover", fileStorageService.upload(cover));
+			params.put("bookCover", fileStorageService.uploadImage(cover));
 		}
 
 		bookMapper.update(params);

@@ -47,7 +47,7 @@ public class UserService {
 		user.setDeleted(false);
 		user.setUfile(
 				profileImage != null && !profileImage.isEmpty()
-						? fileStorageService.upload(profileImage)
+						? fileStorageService.uploadImage(profileImage)
 						: "uploads/thejoa703.png"
 		);
 
@@ -128,7 +128,7 @@ public class UserService {
 
 		user.setUfile(
 				profileImage != null && !profileImage.isEmpty()
-						? fileStorageService.upload(profileImage)
+						? fileStorageService.uploadImage(profileImage)
 						: "uploads/thejoa703.png"
 		); // 더티체킹으로 트랜잭션 커밋시 자동 UPDATE
 		return UserResponseDto.fromEntity(user);

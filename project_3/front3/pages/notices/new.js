@@ -65,7 +65,7 @@ export default function NewNoticePage() {
 
             <div className="upload-box" style={{ marginBottom: 8 }}>
               <label className="bs-form-label">첨부파일 (선택)</label>
-              <input type="file" onChange={(e) => setFile(e.target.files[0] || null)} />
+              <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.hwp,.txt,.zip" onChange={(e) => setFile(e.target.files[0] || null)} />
             </div>
 
             <div className="button-area">

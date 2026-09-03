@@ -95,7 +95,7 @@ public class Sboard2Service {
 		params.put("bip", ip != null ? ip : "0:0:0:0:0:0:0:1");
 		params.put("appUserId", user.getId());
 		if (file != null && !file.isEmpty()) {
-			params.put("bfile", fileStorageService.upload(file));
+			params.put("bfile", fileStorageService.uploadDocument(file));
 		}
 
 		sboard2Mapper.insert(params);
@@ -115,7 +115,7 @@ public class Sboard2Service {
 		params.put("btitle", dto.getBtitle());
 		params.put("bcontent", dto.getBcontent());
 		if (file != null && !file.isEmpty()) {
-			params.put("bfile", fileStorageService.upload(file));
+			params.put("bfile", fileStorageService.uploadDocument(file));
 		}
 
 		sboard2Mapper.update(params);
