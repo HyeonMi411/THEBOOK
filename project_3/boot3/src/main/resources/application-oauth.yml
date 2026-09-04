@@ -31,13 +31,13 @@ spring:
           # google : 원래는 issuer-uri 하나로 OIDC discovery 를 이용해 authorization/token/
           #   userinfo/jwks 엔드포인트를 전부 자동으로 찾아냈는데, 이렇게 하면 authorization
           #   요청 URL에 우리가 원하는 쿼리파라미터(prompt=select_account)를 끼워넣을 방법이
-          #   없습니다. 그래서 구글의 표준 엔드포인트를 전부 명시적으로 풀어써서, authorization-uri
-          #   에만 prompt=select_account 를 추가했습니다. (UserInfoGoogle.java 가 참조하는
-          #   sub/email/name/picture 는 표준 OIDC 클레임이라 그대로 호환됩니다)
+          #   없음. 그래서 구글의 표준 엔드포인트를 전부 명시적으로 풀어써서, authorization-uri
+          #   에만 prompt=select_account 를 추가. (UserInfoGoogle.java 가 참조하는
+          #   sub/email/name/picture 는 표준 OIDC 클레임이라 그대로 호환)
           #   prompt=select_account : 이미 구글에 로그인되어 있어도 매번 "계정 선택" 화면을
-          #   보여주도록 강제합니다. 완전한 "구글 계정 로그아웃"은 Gmail 등 다른 구글 서비스의
+          #   보여주도록 강제. 완전한 "구글 계정 로그아웃"은 Gmail 등 다른 구글 서비스의
           #   로그인 세션까지 함께 끊어버려서 권장되지 않으므로, 그 대신 "다음 로그인 시 항상
-          #   재확인시키는" 이 방법으로 "로그아웃해도 바로 재로그인되는" 문제를 해결합니다.
+          #   재확인시키는" 이 방법으로 "로그아웃해도 바로 재로그인되는" 문제를 해결.
           google:
             authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?prompt=select_account
             token-uri: https://oauth2.googleapis.com/token
@@ -63,23 +63,23 @@ app:
   oauth2:
     redirect-url: http://localhost:3000/oauth2/callback
     # 신규 소셜회원의 "가입확인(닉네임 확인/수정)" 화면 주소. 비워두면
-    #   redirect-url 에서 /oauth2/callback → /oauth2/signup 로 자동 유추합니다.
+    #   redirect-url 에서 /oauth2/callback → /oauth2/signup 로 자동 유추.
     signup-confirm-url: http://localhost:3000/oauth2/signup
-  # 프론트엔드(React) 기본 주소 - 카카오페이 결제완료/취소/실패 후 리다이렉트될 URL을 만드는 데 사용합니다.
+  # 프론트엔드(React) 기본 주소 - 카카오페이 결제완료/취소/실패 후 리다이렉트될 URL을 만드는 데 사용.
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
 
  
 # 카카오 도서검색 API(dapi.kakao.com) 용 REST API 키
-#   카카오 개발자센터의 REST API 키 하나로 로그인/도서검색 둘 다 사용 가능합니다.
-#   KAKAO_REST_API_KEY 를 별도로 안 정해주셨다면, 위에서 쓰고 계신 KAKAO_CLIENT_ID 를 그대로 재사용합니다.
+#   카카오 개발자센터의 REST API 키 하나로 로그인/도서검색 둘 다 사용 가능.
+#   KAKAO_REST_API_KEY 를 별도로 안 정해주셨다면, 위에서 쓰고 계신 KAKAO_CLIENT_ID 를 그대로 재사용.
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY:${KAKAO_CLIENT_ID:}}
   # 카카오페이 결제 API 설정
   #   2024.01.03 자로 카카오페이 API 인증방식이 전면 개편되어, 기존 Admin Key 는 더 이상
-  #   사용할 수 없습니다. 반드시 카카오페이 "전용" 개발자센터(developers.kakaopay.com,
-  #   일반 카카오 디벨로퍼스(developers.kakao.com)와는 별개의 사이트입니다)에 별도
+  #   사용 불가. 반드시 카카오페이 "전용" 개발자센터(developers.kakaopay.com,
+  #   일반 카카오 디벨로퍼스(developers.kakao.com)와는 별개의 사이트)에 별도
   #   가입/애플리케이션 등록 후, [기본정보 > 발급정보]에서 Secret Key(dev) 를 발급받아
-  #   .env 의 KAKAO_PAY_SECRET_KEY 에 넣어주세요. (알파벳 대문자+숫자 40자)
+  #   .env 의 KAKAO_PAY_SECRET_KEY 에 넣을 것. (알파벳 대문자+숫자 40자)
   pay:
     secret-key: ${KAKAO_PAY_SECRET_KEY:}
     cid: ${KAKAO_PAY_CID:TC0ONETIME}

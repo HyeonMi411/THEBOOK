@@ -74,6 +74,7 @@ function AppLayout({ children }) {
                     : []),
                 { key: "cart",    label: <Link href="/cart">{`🛒 CART${cartItems?.length > 0 ? ` (${cartItems.length})` : ''}`}</Link> }, // 장바구니
                 { key: "orders",  label: <Link href="/mypage/orders">📋 주문내역</Link> }, // 내 주문내역                
+                { key: "ai-chat", label: <Link href="/ai/chat">🤖 AI 챗봇</Link> }, // PDF 문서 기반 질의응답
                 { key: "profile", label: <Link href="/mypage">👤 MYPAGE </Link> },
                 { key: "logout",  label: <span style={{ cursor: "pointer" }}>🔓 로그아웃</span> }, // 클릭은 Menu의 onClick(handleMenuClick)이 처리
             ]
@@ -94,12 +95,12 @@ function AppLayout({ children }) {
         <Layout className="bookstore-body">
             {/* Header - boot1(BookStore) 로고 + 검색창을 antd Header 안에 통합 */}
             {/* overflow: hidden - wrap={false} 로 줄바꿈은 막았지만, 혹시라도 내용이 Header의
-                고정 높이를 넘어서 삐져나오면서 겹쳐 보이는 것까지 이중으로 방지합니다. */}
+                고정 높이를 넘어서 삐져나오면서 겹쳐 보이는 것까지 이중으로 방지 */}
             <Header style={{ display: "flex", overflow: "hidden" }}>
                 {/* wrap={false} - Row 는 기본적으로 flex-wrap:wrap 이라, 로고+검색창+가로메뉴를
                     한 줄에 담을 폭이 부족해지면 자동으로 다음 줄로 줄바꿈되어 헤더가 2줄(이중)로
-                    보이는 문제가 있었습니다. 태블릿 폭(md, 768px)에서 정확히 이 문제가 발생했습니다.
-                    wrap={false} 로 항상 한 줄을 유지하도록 강제합니다. */}
+                    보이는 문제가 있었음. 태블릿 폭(md, 768px)에서 정확히 이 문제가 발생.
+                    wrap={false} 로 항상 한 줄을 유지하도록 강제. */}
                 <Row align="middle" justify="space-between" wrap={false} style={{ width: "100%" }} gutter={16}>
                     <Col flex="none">
                         {/* 로고 클릭시 도서 목록(/books)으로 이동 */}
@@ -111,8 +112,8 @@ function AppLayout({ children }) {
                     </Col>
 
                     {/* 검색창/가로메뉴 - 태블릿(md=768px)까지는 항목이 많아 한 줄에 다 안 들어가서
-                        헤더가 줄바꿈(이중화)되는 문제가 있었습니다. lg(992px) 이상에서만 노출하도록
-                        변경해서, 태블릿 폭에서는 계속 햄버거(Drawer) 메뉴를 쓰도록 했습니다. */}
+                        헤더가 줄바꿈(이중화)되는 문제가 있었음. lg(992px) 이상에서만 노출하도록
+                        변경해서, 태블릿 폭에서는 계속 햄버거(Drawer) 메뉴를 쓰도록 처리. */}
                     <Col flex="auto" xs={0} sm={0} md={0} lg={9} style={{ maxWidth: 400 }}>
                         <BookSearchBox />
                     </Col>

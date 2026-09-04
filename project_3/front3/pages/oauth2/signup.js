@@ -19,6 +19,13 @@ export default function OAuth2SignupPage() {
   const [preview, setPreview] = useState(null); // { email, provider, nicknameSuggestion, image }
   const [nickname, setNickname] = useState("");
 
+  // 이메일 인증 상태 - 로컬 회원가입(signup.js)과 동일한 패턴
+  const [emailCode, setEmailCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [verified, setVerified] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [codeVerifying, setCodeVerifying] = useState(false);
+
   useEffect(() => {
     if (!router.isReady) return;
     const { signupToken } = router.query;
@@ -48,10 +55,49 @@ export default function OAuth2SignupPage() {
     }
   };
 
+  const handleSendEmailCode = async () => {
+    if (!preview?.email) return;
+    setEmailSending(true);
+    setError(null);
+    try {
+      await axios.post("http://localhost:8080/auth/email/send-code", null, {
+        params: { email: preview.email },
+      });
+      setCodeSent(true);
+    } catch (err) {
+      setError("인증번호 발송에 실패했습니다.");
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
+  const handleVerifyEmailCode = async () => {
+    if (!emailCode) {
+      setError("인증번호를 입력해주세요.");
+      return;
+    }
+    setCodeVerifying(true);
+    setError(null);
+    try {
+      await axios.post("http://localhost:8080/auth/email/verify-code", null, {
+        params: { email: preview.email, code: emailCode },
+      });
+      setVerified(true);
+    } catch (err) {
+      setError("인증번호가 일치하지 않거나 만료되었습니다.");
+    } finally {
+      setCodeVerifying(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nickname.trim()) {
       setError("닉네임을 입력해주세요.");
+      return;
+    }
+    if (!verified) {
+      setError("이메일 인증을 먼저 완료해주세요.");
       return;
     }
     setSubmitting(true);
@@ -113,9 +159,43 @@ export default function OAuth2SignupPage() {
             autoFocus
           />
 
+          {/* 이메일 인증 - 소셜 제공자가 이메일을 검증해줬더라도, 우리 서비스 자체적으로
+              한 번 더 인증번호를 발송/확인해서 로컬 회원가입과 동일한 보안 수준을 유지 */}
+          <div style={{ marginTop: 16 }}>
+            <button
+              type="button"
+              className="btn"
+              onClick={handleSendEmailCode}
+              disabled={emailSending || verified}
+            >
+              {emailSending ? "발송중..." : "이메일 인증번호 받기"}
+            </button>
+            <input
+              type="text"
+              placeholder="인증번호 6자리"
+              value={emailCode}
+              onChange={(e) => setEmailCode(e.target.value)}
+              disabled={!codeSent || verified}
+              maxLength={6}
+              style={{ marginLeft: 8, width: 140 }}
+            />
+            <button
+              type="button"
+              className="btn"
+              onClick={handleVerifyEmailCode}
+              disabled={!codeSent || verified || codeVerifying}
+              style={{ marginLeft: 8 }}
+            >
+              {codeVerifying ? "확인중..." : "확인"}
+            </button>
+            {verified && (
+              <p style={{ color: "green", marginTop: 4 }}>이메일 인증 완료</p>
+            )}
+          </div>
+
           {error && <p style={{ color: "red", marginTop: 8 }}>{error}</p>}
 
-          <button type="submit" className="btn btn-primary-bs" disabled={submitting} style={{ marginTop: 16 }}>
+          <button type="submit" className="btn btn-primary-bs" disabled={submitting || !verified} style={{ marginTop: 16 }}>
             {submitting ? "가입 처리중..." : "가입완료"}
           </button>
         </form>

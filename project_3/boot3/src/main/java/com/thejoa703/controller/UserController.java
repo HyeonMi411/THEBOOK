@@ -235,7 +235,18 @@ public class UserController {
 
         // 같은 signupToken 으로 중복 제출하는 경우(새로고침 등) 대비 - 이미 가입돼있으면 재가입 안함
         AppUser user = userService.findByEmailAndProvider(email, provider)
-                .orElseGet(() -> userService.saveSocialUser(email, provider, providerId, request.getNickname(), image));
+                .orElseGet(() -> {
+                    // 소셜로그인도 로컬 회원가입과 동일하게, 실제 저장 전에 이 이메일로
+                    // 발송한 인증번호를 확인받은 상태(POST /auth/email/verify-code)여야
+                    // 가입을 허용. 소셜 제공자가 이메일을 이미 검증했다고 주장하더라도,
+                    // 우리 서비스 자체적으로 한 번 더 확인해서 일관된 보안 수준을 유지.
+                    if (!emailVerificationStore.isVerified(email)) {
+                        throw new IllegalArgumentException("이메일 인증을 먼저 완료해주세요.");
+                    }
+                    AppUser saved = userService.saveSocialUser(email, provider, providerId, request.getNickname(), image);
+                    emailVerificationStore.clearVerified(email); // 재사용 방지 - 가입 완료 후 정리
+                    return saved;
+                });
 
         // ↓↓↓ 여기부터는 login() 과 동일한 방식으로 JWT 발급 + 쿠키설정
         String accessToken = jwtProvider.createAccessToken(user.getId().toString(), Map.of(

@@ -7,7 +7,13 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update  #  test환경  create-drop 매번초기화 / update 부분수정  
+      ddl-auto: update  # 임시 설정 - PUBLISH_DATE 컬럼을 nullable 로 완전히 새로 만들기
+      # 위해 한 번만 create-drop 으로 켜둠. 서버를 한 번 실행/종료하고 나면 스키마가
+      # 최신 엔티티 정의(모든 컬럼 nullable 반영)로 새로 생성. 주의: create-drop 은
+      # 서버가 켜지고 꺼질 때마다 데이터베이스 전체(회원/도서/주문 등 모든 데이터)를 지우고
+      # 다시 생성. 스키마가 정리되고 나면 반드시 다시 update 로 되돌려서 그 이후부터는
+      # 데이터가 보존되도록 설정 필요. (원래 설정: update  #  test환경  create-drop 매번초기화
+      # / update 부분수정)
     properties:
       hibernate:
         format_sql: true
@@ -59,6 +65,10 @@ email:
   verification:
     code-exp-seconds: 300        # 인증번호 유효시간 (5분)
     verified-exp-seconds: 1800   # 인증완료 상태 유지시간 (30분) - 이 안에 회원가입을 마쳐야 함
+
+openai:
+  api:
+    key: ${OPENAI_API_KEY:}   # AI RAG 챗봇 - platform.openai.com 에서 발급 (유료)
 
 file:
   upload-dir: uploads

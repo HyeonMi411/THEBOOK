@@ -59,6 +59,7 @@ dependencies {
     // Gson
     implementation 'com.google.code.gson:gson:2.11.0'
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml' // 국립중앙도서관 API(XML) 파싱용
+    implementation 'org.apache.pdfbox:pdfbox:3.0.1' // AI RAG 챗봇 - PDF 텍스트 추출용
     
     // dotenv
     implementation 'me.paulschwarz:spring-dotenv:3.0.0'    
