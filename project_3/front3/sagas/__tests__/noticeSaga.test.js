@@ -15,11 +15,11 @@ import {
     createNotice, updateNotice, deleteNotice,
 } from '../noticeSaga';
 
-// authSaga.test.js 와 동일한 이유로 jest.mock('axios') 를 쓰지 않습니다.
+// authSaga.test.js 와 동일한 이유로 jest.mock('axios') 를 쓰지 않음.
 // generator.next() 로 saga 를 한단계씩 직접 실행시키면서 CALL 이펙트에 가짜 응답을
-// 수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않습니다.
+// 수동으로 넣어주는 방식이라, 실제 axios 인스턴스가 네트워크를 타지 않음.
 
-// 더미SQL 데이터와 겹치지 않도록, 테스트 전용 공지사항 제목을 사용합니다.
+// 더미SQL 데이터와 겹치지 않도록, 테스트 전용 공지사항 제목을 사용.
 const noticeA = { id: 401, btitle: '공지사가테스트공지A', bcontent: '내용A', bhit: 5 };
 
 describe('notice(SBOARD2) saga', () => {
@@ -61,7 +61,7 @@ describe('notice(SBOARD2) saga', () => {
         const callStep = generator.next().value;
         expect(callStep.type).toBe('CALL');
 
-        // 백엔드가 상세조회 시점에 BHIT 를 실제로 DB에서 +1 처리한 뒤 그 결과를 응답합니다.
+        // 백엔드가 상세조회 시점에 BHIT 를 실제로 DB에서 +1 처리한 뒤 그 결과를 응답.
         // (5 -> 6 으로 증가된 상태로 응답이 온다고 가정)
         const noticeAfterView = { ...noticeA, bhit: noticeA.bhit + 1 };
         const mockResponse = { data: noticeAfterView };

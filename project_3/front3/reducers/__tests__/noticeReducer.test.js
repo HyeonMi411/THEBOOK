@@ -22,7 +22,7 @@ describe('notice(SBOARD2) slice reducer', () => {
         success: false,
     };
 
-    // 더미SQL 데이터와 겹치지 않도록, 테스트 전용 공지사항 제목을 사용합니다.
+    // 더미SQL 데이터와 겹치지 않도록, 테스트 전용 공지사항 제목을 사용.
     const noticeA = { id: 401, btitle: '공지리듀서테스트공지A', bcontent: '내용A', bhit: 3 };
     const noticeB = { id: 402, btitle: '공지리듀서테스트공지B', bcontent: '내용B', bhit: 0 };
 
@@ -65,8 +65,8 @@ describe('notice(SBOARD2) slice reducer', () => {
     });
 
     it('fetchNoticeDetailSuccess - 서버가 조회수 +1 해서 내려준 값이 그대로 currentNotice 에 반영되는지', () => {
-        // 백엔드(Sboard2Service)는 상세조회 시점에 BHIT 를 실제로 +1 하고 그 결과를 응답합니다.
-        // 프론트는 그 응답값을 있는 그대로 신뢰해서 currentNotice 에 저장하기만 하면 됩니다.
+        // 백엔드(Sboard2Service)는 상세조회 시점에 BHIT 를 실제로 +1 하고 그 결과를 응답.
+        // 프론트는 그 응답값을 있는 그대로 신뢰해서 currentNotice 에 저장하기만 하면 됨.
         const noticeAfterView = { ...noticeA, bhit: noticeA.bhit + 1 }; // 3 -> 4 로 증가된 상태로 응답 온 것을 가정
         const state = noticeReducer(initialState, fetchNoticeDetailSuccess(noticeAfterView));
         expect(state.loading).toBe(false);

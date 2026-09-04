@@ -1,6 +1,6 @@
 // components/NoticeList.js  (SBOARD2 - 공지사항)
-// boot1(the703) templates/board/list.html 의 notice-table 디자인을 그대로 재현했습니다.
-// (boot1 원본과 동일하게, 목록에는 "글쓰기" 버튼만 두고 수정/삭제는 상세페이지에서 처리합니다.)
+// boot1(the703) templates/board/list.html 의 notice-table 디자인을 그대로 재현했음.
+// (boot1 원본과 동일하게, 목록에는 "글쓰기" 버튼만 두고 수정/삭제는 상세페이지에서 처리.)
 import React from 'react';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';

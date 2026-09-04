@@ -25,10 +25,10 @@ import lombok.Setter;
 /**
  * 주문 헤더 엔티티 (ORDERS)
  * - 테이블명을 단수 "ORDER" 가 아닌 "ORDERS" 로 한 이유: ORDER 는 Oracle/SQL 예약어라서
- *   테이블명으로 그대로 쓰면 매 쿼리마다 따옴표 처리가 필요해 충돌 위험이 있습니다.
- * - 실제 구매한 도서 목록은 OrderItem 에서 관리합니다 (Orders 1 : N OrderItem).
+ *   테이블명으로 그대로 쓰면 매 쿼리마다 따옴표 처리가 필요해 충돌 위험이 있음.
+ * - 실제 구매한 도서 목록은 OrderItem 에서 관리 (Orders 1 : N OrderItem).
  * - 카카오페이 결제 승인(approve) API 의 응답 원문(JSON)은 대용량 문자열이 될 수 있어
- *   CLOB(@Lob) 으로 저장합니다. 승인 실패 원인 분석/감사(audit) 목적입니다.
+ *   CLOB(@Lob) 으로 저장. 승인 실패 원인 분석/감사(audit) 목적임.
  */
 @Entity
 @Table(name = "ORDERS")
@@ -66,13 +66,13 @@ public class Orders {
 	private LocalDateTime approvedAt; // 결제 승인 완료 시각 (결제완료 전에는 null)
 
 	// 사용자가 삭제한 결제완료/취소/실패 주문 - 회계·이력 보존을 위해 DB에는 남기고
-	// 이 플래그만 true 로 바꿔서 "내 주문내역 목록"에서만 안 보이게 합니다.
-	// (결제전(PENDING) 주문은 실제 거래 기록이 없으므로 이 플래그 없이 진짜로 삭제합니다)
+	// 이 플래그만 true 로 바꿔서 "내 주문내역 목록"에서만 안 보이게 처리.
+	// (결제전(PENDING) 주문은 실제 거래 기록이 없으므로 이 플래그 없이 진짜로 삭제)
 	@Column(name = "HIDDEN_BY_USER", nullable = false, columnDefinition = "NUMBER(1) DEFAULT 0")
 	private boolean hiddenByUser = false;
 
-	// 주문에 담긴 상품들 - 조회 편의를 위한 매핑입니다. cascade 는 걸지 않고, 주문 삭제시
-	// 자식(OrderItem)을 먼저 지우는 순서는 OrderService 에서 명시적으로 관리합니다.
+	// 주문에 담긴 상품들 - 조회 편의를 위한 매핑임. cascade 는 걸지 않고, 주문 삭제시
+	// 자식(OrderItem)을 먼저 지우는 순서는 OrderService 에서 명시적으로 관리.
 	@OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
 	private List<OrderItem> items = new ArrayList<>();
 

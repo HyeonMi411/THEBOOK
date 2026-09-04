@@ -71,7 +71,7 @@ public class CartDto {
 		private Integer totalAmount;
 		private LocalDateTime createdAt;
 
-		// 호출 측에서 CartItemRepository 로 방금 막 조회한 목록을 그대로 넘겨받습니다.
+		// 호출 측에서 CartItemRepository 로 방금 막 조회한 목록을 그대로 넘겨받음.
 		public static CartResponseDto from(Cart cart, java.util.List<CartItem> freshItems) {
 			CartResponseDto dto = new CartResponseDto();
 			dto.setId(cart.getId());
@@ -80,7 +80,7 @@ public class CartDto {
 					.map(CartItemResponseDto::from)
 					.collect(java.util.stream.Collectors.toList());
 			dto.setItems(items);
-			// 판매중단(삭제)된 도서는 어차피 구매할 수 없으므로 결제예정금액에서 제외합니다.
+			// 판매중단(삭제)된 도서는 어차피 구매할 수 없으므로 결제예정금액에서 제외.
 			dto.setTotalAmount(items.stream()
 					.filter(i -> !i.isBookDeleted())
 					.mapToInt(CartItemResponseDto::getSubtotal)

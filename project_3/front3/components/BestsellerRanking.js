@@ -1,7 +1,7 @@
 // components/BestsellerRanking.js
-// 판매량(결제완료 주문 기준) TOP 10 을 보여주는 랭킹 위젯입니다.
+// 판매량(결제완료 주문 기준) TOP 10 을 보여주는 랭킹 위젯임.
 // 데이터는 백엔드가 Redis 에 10분간 캐싱해서 내려주므로, 이 컴포넌트는 그냥
-// fetchBestsellersRequest 를 한 번 호출하고 결과를 그대로 렌더링만 합니다.
+// fetchBestsellersRequest 를 한 번 호출하고 결과를 그대로 렌더링만 .
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';

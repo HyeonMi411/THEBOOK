@@ -186,8 +186,8 @@ public class BookService {
 		}
 		// 소프트 삭제 - 실제로 지우지 않고 DELETED 플래그만 세웁니다. CART_ITEM/ORDER_ITEMS 가
 		// BOOK_ID 를 FK 로 참조하고 있어서, 장바구니에 담겼거나 한 번이라도 주문된 도서를 하드
-		// 삭제하면 FK 제약조건 위반(ORA-02292)이 발생합니다. 재고(BOOK_STOCK)도 그대로 둡니다
-		// (판매내역 통계 등에서 필요할 수 있고, 삭제된 도서는 목록/검색에서 어차피 제외됩니다).
+		// 삭제하면 FK 제약조건 위반(ORA-02292)이 발생. 재고(BOOK_STOCK)도 그대로 둡니다
+		// (판매내역 통계 등에서 필요할 수 있고, 삭제된 도서는 목록/검색에서 어차피 제외됨).
 		bookMapper.updateDeleted(bookId, true);
 	}
 
@@ -214,7 +214,7 @@ public class BookService {
 			String date = kakaoBook.getDatetime();
 			// 파싱에 실패하면 null 로 둡니다("출판일 미상"). 예전에는 1900-01-01 같은
 			// 매직넘버를 채워넣었는데, 이건 실제 1900년도 도서와 구분이 안 되는 잘못된
-			// 정보라 그냥 비워두는 게 정직합니다.
+			// 정보라 그냥 비워두는 게 정직.
 			LocalDate publishDate = null;
 			try {
 				if (date != null && date.length() >= 10) {
@@ -287,9 +287,9 @@ public class BookService {
 		return getBook(newId);
 	}
 
-	// 국립중앙도서관 원본의 출판연도 정보가 없거나 파싱에 실패하면 null 을 반환합니다
+	// 국립중앙도서관 원본의 출판연도 정보가 없거나 파싱에 실패하면 null 을 반환
 	// ("출판일 미상"). 1900-01-01 같은 매직넘버는 실제 1900년도 도서와 구분이 안 되는
-	// 잘못된 정보라 쓰지 않습니다.
+	// 잘못된 정보라 쓰지 않음.
 	private LocalDate parseNlPublishDate(String pubYearInfo) {
 		try {
 			if (pubYearInfo == null || pubYearInfo.isBlank()) {
@@ -327,14 +327,14 @@ public class BookService {
 			// 그 book 을 cascade persist 하려다 "detached entity" 예외가 납니다.
 			// entityManager.getReference() 로 "이미 존재한다고 가정하는 관리 대상 참조
 			// (프록시)"를 만들면, DB 재조회도 없고 cascade persist 대상도 아니면서 ID 는
-			// 정상적으로 넘겨줄 수 있어 두 문제를 동시에 피할 수 있습니다.
+			// 정상적으로 넘겨줄 수 있어 두 문제를 동시에 피할 수 있음.
 			newStock.setBook(entityManager.getReference(Book.class, bookId));
 			newStock.setStockQuantity(dto.getStockQuantity());
 			bookStockRepository.save(newStock);
 		} else {
 			stock.setStockQuantity(dto.getStockQuantity());
 			try {
-				// saveAndFlush 로 즉시 반영시켜서, 낙관적 락(@Version) 충돌을 이 시점에 바로 감지합니다.
+				// saveAndFlush 로 즉시 반영시켜서, 낙관적 락(@Version) 충돌을 이 시점에 바로 감지.
 				bookStockRepository.saveAndFlush(stock);
 			} catch (OptimisticLockException | ObjectOptimisticLockingFailureException e) {
 				throw new IllegalStateException("다른 요청이 먼저 재고를 변경했습니다. 다시 시도해주세요.");
@@ -345,7 +345,7 @@ public class BookService {
 	}
 
 	// 베스트셀러(판매량 TOP 10) 조회 - Redis 캐시 우선, 없으면 DB 집계 후 캐싱
-	// 결제완료(PAID) 주문만 집계하므로 결제전/취소/실패 주문은 랭킹에 영향을 주지 않습니다.
+	// 결제완료(PAID) 주문만 집계하므로 결제전/취소/실패 주문은 랭킹에 영향을 주지 않음.
 	@SuppressWarnings("unchecked")
 	public List<BestsellerBookDto> getBestsellers() {
 		List<BestsellerBookDto> cached = (List<BestsellerBookDto>) redisTemplate.opsForValue().get(BESTSELLER_CACHE_KEY);
@@ -373,7 +373,7 @@ public class BookService {
 		return result;
 	}
 
-	// 결제가 새로 완료되면(PaymentService.approve) 캐시가 낡아지므로 여기서 무효화합니다.
+	// 결제가 새로 완료되면(PaymentService.approve) 캐시가 낡아지므로 여기서 무효화.
 	// TTL(10분)이 지나면 자동으로도 사라지지만, 결제 직후 바로 최신 랭킹을 반영하기 위해
 	// 명시적으로 지웁니다.
 	public void evictBestsellerCache() {

@@ -57,16 +57,16 @@ import jakarta.persistence.PersistenceContext;
  * 결제 기능(CartService/OrderService/PaymentService + RestController) 통합테스트
  * ------------------------------------------------------------------------------
  * - Boot2ApplicationTests_2_Service 패턴(서비스 계층을 직접 호출해 실제 비즈니스 로직을
- *   검증)을 참고하되, 결제 도메인 특성에 맞게 다음을 반영했습니다.
+ *   검증)을 참고하되, 결제 도메인 특성에 맞게 다음을 반영했음.
  * - 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록 도서명은 전부 UUID 를 붙여
- *   매번 고유하게 생성합니다.
- * - 카카오페이는 외부 실제 서버를 호출하는 API 라서, 테스트에서 진짜로 호출할 수 없습니다
+ *   매번 고유하게 생성.
+ * - 카카오페이는 외부 실제 서버를 호출하는 API 라서, 테스트에서 진짜로 호출할 수 없음
  *   (네트워크가 없는 CI 환경에서도 안정적으로 돌아가야 함). @MockBean 으로 KakaoPayApiService
- *   를 가짜 응답으로 대체해서, "우리 서비스 로직"(재고차감/주문상태변경/CLOB저장)만 검증합니다.
+ *   를 가짜 응답으로 대체해서, "우리 서비스 로직"(재고차감/주문상태변경/CLOB저장)만 검증.
  * - "재고차감이 실제로 DB에 반영되는지" 검증은 BookStockRepository 로 saveAndFlush 하고
- *   재조회해서 확인합니다.
+ *   재조회해서 확인.
  * - 클래스에 @Transactional 을 걸어 각 테스트 종료 후 자동 롤백되므로, 더미데이터 SQL과
- *   테스트 데이터가 서로 섞이지 않습니다.
+ *   테스트 데이터가 서로 섞이지 않음.
  * ------------------------------------------------------------------------------
  */
 @SpringBootTest
@@ -124,7 +124,7 @@ class Boot2ApplicationTests_6_PaymentService {
 
 	// BookService.deleteBook() 등 @PreAuthorize("hasRole('ADMIN')") 가 걸린 메서드를
 	// 테스트에서 직접 호출하려면, SecurityContext 에 해당 권한을 가진 인증 정보가
-	// 먼저 있어야 합니다. JwtAuthenticationFilter 가 실제 요청때마다 하는 일을 재현합니다.
+	// 먼저 있어야 함. JwtAuthenticationFilter 가 실제 요청때마다 하는 일을 재현.
 	private void loginAs(AppUser appUser) {
 		CustomOAuth2User principal = new CustomOAuth2User(appUser.getId(), appUser.getRole());
 		Authentication auth = new UsernamePasswordAuthenticationToken(
@@ -165,9 +165,9 @@ class Boot2ApplicationTests_6_PaymentService {
 		BookStock stock = new BookStock();
 		// BookStock.book 은 @MapsId 라 book 이 null 이면 ID 생성 자체가 실패하고,
 		// 그렇다고 Mapper(MyBatis)로 조회한 detached Book 을 그대로 넘기면 Hibernate 가
-		// cascade persist 를 시도하다 실패합니다. entityManager.getReference() 로 만든
+		// cascade persist 를 시도하다 실패. entityManager.getReference() 로 만든
 		// 관리 대상 참조(프록시)를 쓰면 DB 재조회도, cascade persist 대상도 아니면서
-		// ID 는 정상적으로 넘겨줄 수 있어 두 문제를 동시에 피할 수 있습니다.
+		// ID 는 정상적으로 넘겨줄 수 있어 두 문제를 동시에 피할 수 있음.
 		stock.setBook(entityManager.getReference(Book.class, bookId));
 		stock.setStockQuantity(stockQuantity);
 		bookStockRepository.saveAndFlush(stock);
@@ -261,7 +261,7 @@ class Boot2ApplicationTests_6_PaymentService {
 		assertThat(order2.getItems().get(0).getBookTitle()).isEqualTo(titleB);
 
 		// 주문에 사용된 장바구니 항목은 제거되어야 함 (MyBatis 는 매 조회가 항상 실제
-		// DB 값을 그대로 가져오므로, JPA 의 1차캐시/벌크연산 관련 주의사항은 해당 없습니다)
+		// DB 값을 그대로 가져오므로, JPA 의 1차캐시/벌크연산 관련 주의사항은 해당 없음)
 		assertThat(cartItemRepository.findById(cartItemId)).isEmpty();
 		assertThat(cartService.getCart(buyer.getId()).getItems()).isEmpty();
 
@@ -412,15 +412,15 @@ class Boot2ApplicationTests_6_PaymentService {
 
 		// 2) 관리자가 도서를 삭제(소프트) - 실제 행은 남고 DELETED 플래그만 세워짐
 		//    deleteBook() 은 @PreAuthorize("hasRole('ADMIN')") 가 걸려있어서, 호출 전에
-		//    SecurityContext 에 ADMIN 권한의 인증 정보를 먼저 세팅해야 합니다.
+		//    SecurityContext 에 ADMIN 권한의 인증 정보를 먼저 세팅 필요.
 		loginAs(admin);
 		bookService.deleteBook(book.getId());
 		// deleteBook() 은 MyBatis(raw SQL)로 DB 를 직접 갱신하는데, 이 테스트는 클래스
 		// 레벨 @Transactional 로 처음부터 끝까지 하나의 영속성 컨텍스트(Hibernate 1차
 		// 캐시)를 계속 씁니다. 그래서 앞서 cartService.addToCart() 에서 이미 로딩해둔
 		// CartItem.book(JPA 캐시)은 deleteBook() 이후에도 여전히 옛 상태(deleted=false)
-		// 로 남아있습니다. clear() 로 캐시를 비워서, 아래 getCart() 가 실제 DB 값을
-		// 다시 읽어오도록 강제합니다.
+		// 로 남아있음. clear() 로 캐시를 비워서, 아래 getCart() 가 실제 DB 값을
+		// 다시 읽어오도록 강제.
 		entityManager.clear();
 
 		// 3) 삭제된 도서는 목록/상세조회/검색에서 더 이상 보이지 않아야 함

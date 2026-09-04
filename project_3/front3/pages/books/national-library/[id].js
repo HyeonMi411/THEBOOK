@@ -1,8 +1,8 @@
 // pages/books/national-library/[id].js
 // 국립중앙도서관 검색결과 상세화면. 목록에서 클릭한 도서 정보를 Redux(nlSelectedBook)로 그대로
-// 받아서 보여주며, 관리자는 "BookStore에 저장" 버튼으로 실제 DB에 저장할 수 있습니다.
+// 받아서 보여주며, 관리자는 "BookStore에 저장" 버튼으로 실제 DB에 저장할 수 있음.
 // (국립중앙도서관 API 특성상 id 하나로 다시 조회하는 API가 없어서, 목록에서 선택한 데이터를
-// 그대로 들고 이동하는 방식입니다. 새로고침 등으로 선택정보가 없으면 검색화면으로 안내합니다.)
+// 그대로 들고 이동하는 방식임. 새로고침 등으로 선택정보가 없으면 검색화면으로 안내.)
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from 'react-redux';
@@ -102,7 +102,7 @@ export default function NationalLibraryDetailPage() {
             )}
             {!isAdmin && (
               <p style={{ marginTop: 16, color: '#999', fontSize: 13 }}>
-                * BookStore에 저장하는 기능은 관리자만 이용할 수 있습니다.
+                * BookStore에 저장하는 기능은 관리자만 이용할 수 있음.
               </p>
             )}
           </div>

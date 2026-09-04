@@ -40,7 +40,7 @@ describe('book slice reducer', () => {
         bestsellersError: null,
     };
 
-    // 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록, 테스트 전용 도서명을 사용합니다.
+    // 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록, 테스트 전용 도서명을 사용.
     const bookA = { id: 301, title: '북리듀서테스트도서A', author: '테스트작가', price: 18000, category: 'IT' };
     const bookB = { id: 302, title: '북리듀서테스트도서B', author: '테스트작가2', price: 12000, category: '소설' };
 

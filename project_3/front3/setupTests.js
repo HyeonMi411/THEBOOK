@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 // 3. axios mock (선택)
-// 네트워크 요청을 테스트에서 막고 싶을 때 사용합니다.
+// 네트워크 요청을 테스트에서 막고 싶을 때 사용.
 // import axios from 'axios';
 // jest.mock('axios');
 

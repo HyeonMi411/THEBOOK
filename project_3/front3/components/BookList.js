@@ -1,5 +1,5 @@
 // components/BookList.js
-// boot1(the703) templates/book/list.html 의 book-grid / book-card 디자인을 그대로 재현했습니다.
+// boot1(the703) templates/book/list.html 의 book-grid / book-card 디자인을 그대로 재현했음.
 import React from 'react';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';

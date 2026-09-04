@@ -39,12 +39,12 @@ import jakarta.persistence.PersistenceContext;
 /**
  * 결제 기능(BookStock/Cart/CartItem/Orders/OrderItem) JPA Repository 통합테스트
  * ------------------------------------------------------------------------------
- * - 클래스 레벨 @Transactional 로 각 테스트가 끝나면 자동 롤백됩니다.
- * - BookStock/Cart/CartItem/Orders/OrderItem 은 단순 CRUD 라 JPA Repository 를 사용합니다.
- * - Book 조회/등록은 검색/JOIN 이 복잡해 Mapper(BookMapper)를 그대로 사용합니다.
- * - 베스트셀러 집계(findBestSellerBookIds)는 JOIN+GROUP BY 라 OrderItemMapper 에 남겨뒀습니다.
+ * - 클래스 레벨 @Transactional 로 각 테스트가 끝나면 자동 롤백됨.
+ * - BookStock/Cart/CartItem/Orders/OrderItem 은 단순 CRUD 라 JPA Repository 를 사용.
+ * - Book 조회/등록은 검색/JOIN 이 복잡해 Mapper(BookMapper)를 그대로 사용.
+ * - 베스트셀러 집계(findBestSellerBookIds)는 JOIN+GROUP BY 라 OrderItemMapper 에 남겨뒀음.
  * - JPA 의 @Version(낙관적 락)과 @Lock(비관적 락, findByIdForUpdate)이 실제로 재고차감
- *   동시성 제어에 쓰이는지 검증합니다.
+ *   동시성 제어에 쓰이는지 검증.
  * ------------------------------------------------------------------------------
  */
 @SpringBootTest
@@ -124,9 +124,9 @@ class Boot2ApplicationTests_5_PaymentEntity {
 		// 1) 등록 - BookStock.bookId 가 Book.id 를 그대로 공유(@MapsId)하는지 확인
 		//    BookStock.book 은 @MapsId 라 book 이 null 이면 ID 생성 자체가 실패하고,
 		//    그렇다고 Mapper(MyBatis)로 조회한 detached Book 을 그대로 넘기면 Hibernate 가
-		//    cascade persist 를 시도하다 실패합니다. entityManager.getReference() 로 만든
+		//    cascade persist 를 시도하다 실패. entityManager.getReference() 로 만든
 		//    관리 대상 참조(프록시)를 쓰면 DB 재조회도, cascade persist 대상도 아니면서
-		//    ID 는 정상적으로 넘겨줄 수 있어 두 문제를 동시에 피할 수 있습니다.
+		//    ID 는 정상적으로 넘겨줄 수 있어 두 문제를 동시에 피할 수 있음.
 		BookStock stock = new BookStock();
 		stock.setBook(entityManager.getReference(Book.class, book.getId()));
 		stock.setStockQuantity(10);

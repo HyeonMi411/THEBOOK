@@ -1,5 +1,5 @@
 // pages/notices/new.js  ( 공지사항 글쓰기는 관리자(ROLE_ADMIN)만 가능 )
-// boot1(the703) templates/board/write.html 디자인을 그대로 재현했습니다.
+// boot1(the703) templates/board/write.html 디자인을 그대로 재현했음.
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/router";

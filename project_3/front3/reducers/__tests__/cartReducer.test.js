@@ -17,7 +17,7 @@ describe('cart slice reducer', () => {
         error: null,
     };
 
-    // 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록, 테스트 전용 도서명을 사용합니다.
+    // 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록, 테스트 전용 도서명을 사용.
     const bookA = { id: 101, bookTitle: '장바구니테스트도서A', bookCover: null, price: 15000, quantity: 2, subtotal: 30000, stockQuantity: 5 };
     const bookB = { id: 102, bookTitle: '장바구니테스트도서B', bookCover: null, price: 9000, quantity: 1, subtotal: 9000, stockQuantity: 10 };
 

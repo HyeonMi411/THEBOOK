@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
     }
 
     //4. @Valid 유효성 검사 실패시 (@ModelAttribute 방식, multipart/form-data 등록/수정 API)
-    // @ModelAttribute + @Valid 는 MethodArgumentNotValidException 이 아니라 BindException 이 발생합니다.
+    // @ModelAttribute + @Valid 는 MethodArgumentNotValidException 이 아니라 BindException 이 발생.
     @ExceptionHandler(BindException.class)
     public ResponseEntity<Map<String, String>> handleBindException(BindException ex) {
         Map<String, String> errors = new HashMap<>();

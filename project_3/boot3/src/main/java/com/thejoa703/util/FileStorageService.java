@@ -16,24 +16,18 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 파일 업로드 저장 서비스
- * ------------------------------------------------------------------
- * 원래는 Spring 전역 설정(application.yml 의 spring.servlet.multipart.max-file-size)
- * 으로 용량만 제한하고, 확장자·MIME 타입 검증이나 실제 파일 내용 확인이 전혀 없었습니다.
- * 이 상태로는 이론적으로 실행파일도 확장자만 바꿔서 업로드할 수 있었기 때문에 검증을
- * 추가했습니다. 용도가 서로 다른 두 가지 업로드를 분리했습니다.
+ * 용도가 다른 두 가지 업로드를 분리해서 검증
  *
- * - uploadImage() : 프로필 사진(UserService), 도서 표지(BookService) 전용. 이미지
- *   파일만 허용하며, Content-Type 뿐 아니라 ImageIO 로 실제 디코딩까지 확인합니다
- *   (Content-Type 헤더는 클라이언트가 임의로 보낼 수 있는 값이라 그것만으로는
- *   신뢰할 수 없습니다 - 확장자만 .jpg 로 바꾼 실행파일 등을 이 단계에서 걸러냅니다).
- * - uploadDocument() : 공지사항 첨부파일(Sboard2Service) 전용. 이미지뿐 아니라 PDF
- *   등 문서 첨부가 정당한 용도라, 실행 가능한 위험 확장자만 명시적으로 차단하는
- *   블랙리스트 방식으로 검증합니다.
+ * - uploadImage() : 프로필 사진(UserService), 도서 표지(BookService) 전용. 확장자·
+ *   Content-Type 화이트리스트에 더해 ImageIO 로 실제 디코딩까지 확인
+ *   (Content-Type 헤더는 클라이언트가 임의로 보낼 수 있어 그것만으로는 신뢰 불가
+ *   - 확장자만 .jpg 로 바꾼 실행파일 등을 이 단계에서 걸러냄).
+ * - uploadDocument() : 공지사항 첨부파일(Sboard2Service) 전용. 이미지 + PDF 등
+ *   문서 첨부가 정당한 용도라, 위험 확장자를 제외한 화이트리스트로 검증.
  *
- * 두 메서드 모두 저장 파일명에 원본 파일명을 전혀 사용하지 않고 UUID + 검증된
- * 확장자로만 새로 생성해서, 파일명에 "../" 등이 포함되어 uploads 폴더 바깥으로
- * 저장되는(Path Traversal) 문제 자체를 원천 차단합니다.
- * ------------------------------------------------------------------
+ * 두 메서드 모두 저장 파일명에 원본 파일명을 쓰지 않고 UUID + 검증된 확장자로만
+ * 새로 생성해서, 파일명에 "../" 가 섞여 uploads 폴더 바깥에 저장되는(Path
+ * Traversal) 문제를 원천 차단.
  */
 @Service
 public class FileStorageService {
@@ -51,7 +45,7 @@ public class FileStorageService {
 			List.of("jpg", "jpeg", "png", "gif", "webp", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "hwp", "txt", "zip");
 	private static final long MAX_DOCUMENT_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
 
-	/** 프로필 사진 / 도서 표지 - 반드시 실제 이미지 파일이어야 합니다. */
+	/** 프로필 사진 / 도서 표지 - 반드시 실제 이미지 파일이어야 함 */
 	public String uploadImage(MultipartFile file) {
 		validateCommon(file, MAX_IMAGE_SIZE_BYTES, "5MB");
 		String extension = extractExtension(file.getOriginalFilename());
@@ -65,7 +59,7 @@ public class FileStorageService {
 			throw new IllegalArgumentException("허용되지 않는 파일 형식입니다. 이미지 파일만 업로드 가능합니다.");
 		}
 		// Content-Type 은 위조될 수 있으므로, 실제로 이미지로 디코딩되는지 매직바이트
-		// 기준으로 한 번 더 검증합니다.
+		// 기준으로 한 번 더 검증
 		try {
 			if (ImageIO.read(file.getInputStream()) == null) {
 				throw new IllegalArgumentException("올바른 이미지 파일이 아닙니다.");
@@ -76,7 +70,7 @@ public class FileStorageService {
 		return store(file, extension);
 	}
 
-	/** 공지사항 첨부파일 - 이미지 또는 문서(PDF 등)를 허용합니다. */
+	/** 공지사항 첨부파일 - 이미지 또는 문서(PDF 등)를 허용 */
 	public String uploadDocument(MultipartFile file) {
 		validateCommon(file, MAX_DOCUMENT_SIZE_BYTES, "10MB");
 		String extension = extractExtension(file.getOriginalFilename());
@@ -93,8 +87,8 @@ public class FileStorageService {
 			if (!Files.exists(root)) { // 디렉토리 생성확인
 				Files.createDirectories(root); // 중간경로까지 모두생성
 			}
-			// 원본 파일명은 저장에 전혀 사용하지 않습니다 - UUID + 검증된 확장자만으로
-			// 새 파일명을 만들어서, 파일명을 통한 Path Traversal 자체가 불가능합니다.
+			// 원본 파일명은 저장에 전혀 사용하지 않음 - UUID + 검증된 확장자만으로
+			// 새 파일명을 만들어서, 파일명을 통한 Path Traversal 자체가 불가능.
 			String filename = UUID.randomUUID() + "." + extension;
 			Path target = root.resolve(filename); // uploads디렉토리안에서 filename붙여서 최종경로
 			Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING); // 파일올리기
@@ -119,7 +113,7 @@ public class FileStorageService {
 		}
 		String ext = originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
 		// 확장자 문자열 자체에도 "../" 같은 경로 조작 문자가 섞여 들어올 수 있으니,
-		// 영문자/숫자로만 구성된 짧은 확장자만 허용합니다.
+		// 영문자/숫자로만 구성된 짧은 확장자만 허용
 		if (!ext.matches("[a-z0-9]{1,5}")) {
 			throw new IllegalArgumentException("파일 확장자를 확인할 수 없습니다.");
 		}

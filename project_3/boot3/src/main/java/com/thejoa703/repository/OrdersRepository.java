@@ -14,6 +14,6 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
 
 	Optional<Orders> findByTid(String tid);
 
-	// hiddenByUser=true(사용자가 숨긴 결제완료/취소/실패 건)는 목록에서 제외합니다
+	// hiddenByUser=true(사용자가 숨긴 결제완료/취소/실패 건)는 목록에서 제외
 	Page<Orders> findByUser_IdAndHiddenByUserFalseOrderByIdDesc(Long userId, Pageable pageable);
 }

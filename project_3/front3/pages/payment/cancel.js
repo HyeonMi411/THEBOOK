@@ -1,5 +1,5 @@
 // pages/payment/cancel.js
-// 카카오페이 결제창에서 사용자가 취소하면 cancel_url(=이 페이지)?orderId= 로 리다이렉트됩니다.
+// 카카오페이 결제창에서 사용자가 취소하면 cancel_url(=이 페이지)?orderId= 로 리다이렉트됨.
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from 'react-redux';

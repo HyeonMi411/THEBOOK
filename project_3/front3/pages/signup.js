@@ -21,6 +21,45 @@ function   SignupPage(){
     const [fileList, setFileList] = useState([]);
     const  isSubmittedRef         = useRef(false);  
 
+    // 이메일 인증 상태 - 인증완료 후에도 이메일을 다시 바꾸면 재인증하도록 어떤
+    // 이메일로 인증을 완료했는지(verifiedEmail)까지 함께 기억
+    const [emailCode, setEmailCode]         = useState("");
+    const [codeSent, setCodeSent]           = useState(false);
+    const [verifiedEmail, setVerifiedEmail] = useState("");
+    const [emailSending, setEmailSending]   = useState(false);
+    const [codeVerifying, setCodeVerifying] = useState(false);
+    const formRef = React.useRef(null);
+
+    const sendEmailCode = async () => {
+        const email = formRef.current?.getFieldValue("email");
+        if (!email) { message.warning("이메일을 먼저 입력하세요."); return; }
+        setEmailSending(true);
+        try {
+            await api.post(`/auth/email/send-code?email=${encodeURIComponent(email)}`);
+            setCodeSent(true);
+            message.success("인증번호를 발송했습니다. 메일함을 확인하세요.");
+        } catch (err) {
+            message.error("인증번호 발송에 실패했습니다.");
+        } finally {
+            setEmailSending(false);
+        }
+    };
+
+    const verifyEmailCode = async () => {
+        const email = formRef.current?.getFieldValue("email");
+        if (!emailCode) { message.warning("인증번호를 입력하세요."); return; }
+        setCodeVerifying(true);
+        try {
+            await api.post(`/auth/email/verify-code?email=${encodeURIComponent(email)}&code=${encodeURIComponent(emailCode)}`);
+            setVerifiedEmail(email);
+            message.success("이메일 인증이 완료되었습니다.");
+        } catch (err) {
+            message.error("인증번호가 일치하지 않거나 만료되었습니다.");
+        } finally {
+            setCodeVerifying(false);
+        }
+    };
+
     // 데이터 받아서 회원가입전송  - 네트워크가 느리면 0.5초 2~3회 연속으로 클릭 (회원가입요청중복)
     const onFinish  = ( values )=>{
         if( isSubmittedRef.current ) return;  
@@ -53,7 +92,7 @@ function   SignupPage(){
         {  loading  && <Spin/>  }
         {  error    && <p  style={{color:"red"}}> {error} </p> }
         {  !success && ( 
-        <Form layout="vertical" onFinish={onFinish}>
+        <Form ref={formRef} layout="vertical" onFinish={onFinish}>
           {/* 이메일입력 + 중복검사 Form.Item    >  Input  /  name , hasFeedback 아이콘  */}
           <Form.Item
             label="이메일"
@@ -80,6 +119,30 @@ function   SignupPage(){
           >  
             <Input/>
           </Form.Item>
+
+          {/* 이메일 인증번호 발송/확인 - 회원가입은 이 인증을 완료해야 서버에서 허용 */}
+          <Row gutter={8} style={{ marginBottom: 8 }}>
+            <Col flex="auto">
+              <Input
+                placeholder="인증번호 6자리"
+                value={emailCode}
+                onChange={(e) => setEmailCode(e.target.value)}
+                disabled={!codeSent || !!verifiedEmail}
+                maxLength={6}
+              />
+            </Col>
+            <Col>
+              <Button onClick={sendEmailCode} loading={emailSending} disabled={!!verifiedEmail}>
+                인증번호 받기
+              </Button>
+            </Col>
+            <Col>
+              <Button onClick={verifyEmailCode} loading={codeVerifying} disabled={!codeSent || !!verifiedEmail}>
+                확인
+              </Button>
+            </Col>
+          </Row>
+          {verifiedEmail && <p style={{ color: "green" }}>이메일 인증 완료 ({verifiedEmail})</p>}
 
          {/* 비밀번호 입력 */}
           <Form.Item
@@ -128,7 +191,7 @@ function   SignupPage(){
           </Form.Item>    
 
 
-          <Button  type="primary"  htmlType="submit"  >회원가입</Button>
+          <Button  type="primary"  htmlType="submit" disabled={!verifiedEmail} >회원가입</Button>
           </Form>
         )}  
         </Col>

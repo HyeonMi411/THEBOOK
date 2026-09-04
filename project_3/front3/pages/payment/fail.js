@@ -1,5 +1,5 @@
 // pages/payment/fail.js
-// 카카오페이 결제 중 오류/거절 등으로 실패하면 fail_url(=이 페이지)?orderId= 로 리다이렉트됩니다.
+// 카카오페이 결제 중 오류/거절 등으로 실패하면 fail_url(=이 페이지)?orderId= 로 리다이렉트됨.
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from 'react-redux';

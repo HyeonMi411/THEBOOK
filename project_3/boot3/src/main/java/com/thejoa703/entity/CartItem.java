@@ -16,8 +16,8 @@ import lombok.Setter;
  * 장바구니 항목 엔티티 (CART_ITEM)
  * - 하나의 장바구니(Cart)에는 여러 도서가 담길 수 있고, 같은 도서도 여러 장바구니에
  *   담길 수 있는 다대다(N:M) 관계이지만, "담은 수량(quantity)"이라는 부가정보가 있어서
- *   순수 @ManyToMany 대신 중간 엔티티(CartItem)로 명시적으로 풀어서 모델링했습니다.
- *   (Cart --1:N--> CartItem <--N:1-- Book, 결과적으로 Cart-Book 은 N:M 관계와 동일합니다)
+ *   순수 @ManyToMany 대신 중간 엔티티(CartItem)로 명시적으로 풀어서 모델링했음.
+ *   (Cart --1:N--> CartItem <--N:1-- Book, 결과적으로 Cart-Book 은 N:M 관계와 동일)
  */
 @Entity
 @Table(name = "CART_ITEM")

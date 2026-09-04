@@ -55,7 +55,7 @@ export default function CartPage() {
       alert('결제할 도서를 선택해주세요.');
       return;
     }
-    // 체크박스 자체를 막아뒀지만, 혹시 모를 상태 불일치에 대비해 한 번 더 방어합니다.
+    // 체크박스 자체를 막아뒀지만, 혹시 모를 상태 불일치에 대비해 한 번 더 방어.
     const hasDeletedSelected = items.some((item) => selectedIds.includes(item.id) && item.bookDeleted);
     if (hasDeletedSelected) {
       alert('판매가 중단된 도서가 포함되어 있어 주문할 수 없습니다. 장바구니에서 삭제해주세요.');

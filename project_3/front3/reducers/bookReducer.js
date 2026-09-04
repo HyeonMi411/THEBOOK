@@ -97,7 +97,7 @@ const bookReducer = createSlice({
         createBookSuccess: (state, action) => {
             state.loading = false;
             // 페이징 도입 이후: 로컬에서 목록에 끼워넣지 않고, 등록 후 첫 페이지를 다시
-            // 불러오는 방식(pages/books/new.js 에서 router.push('/books'))으로 처리합니다.
+            // 불러오는 방식(pages/books/new.js 에서 router.push('/books'))으로 처리.
             state.success = true;
         },
         createBookFailure: (state, action) => {
@@ -138,7 +138,7 @@ const bookReducer = createSlice({
 
         // --- 카카오 도서검색 자동등록 (관리자 전용) ---
         //  검색버튼을 누르면 카카오 API에서 도서를 가져와 자동으로 DB에 저장한 후,
-        //  성공시 도서 목록 페이지로 이동합니다. (pages/books/new.js 에서 처리)
+        //  성공시 도서 목록 페이지로 이동. (pages/books/new.js 에서 처리)
         kakaoInsertRequest: (state) => {
             state.kakaoLoading = true;
             state.kakaoError = null;
@@ -172,7 +172,7 @@ const bookReducer = createSlice({
             state.nlError = action.payload;
         },
         // 목록에서 클릭한 도서를 상세화면에서 그대로 쓰기 위해 저장 (국립중앙도서관 API 특성상
-        // id 하나로 재조회하는 API가 없어서, 클릭 시점의 검색결과 객체를 그대로 들고 이동합니다)
+        // id 하나로 재조회하는 API가 없어서, 클릭 시점의 검색결과 객체를 그대로 들고 이동)
         selectNlBook: (state, action) => {
             state.nlSelectedBook = action.payload;
         },

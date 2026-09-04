@@ -45,28 +45,26 @@ import com.thejoa703.service.Sboard2Service;
 
 /**
  * BookService / Sboard2Service  (+ DTO 검증, RestController 가 위임하는 실제 로직) 통합테스트
- * ------------------------------------------------------------------------------
  * - Boot2ApplicationTests_2_Service 패턴을 참고하여 클래스 레벨 @Transactional 로
- *   각 테스트가 끝나면 자동 롤백되도록 구성했습니다. (더미데이터 SQL로 넣어둔
+ *   각 테스트가 끝나면 자동 롤백되도록 구성. (더미데이터 SQL로 넣어둔
  *   "스프링부트 완전정복" 등과 겹치지 않도록, 테스트에서 만드는 도서명/제목은
- *   전부 UUID 를 붙여 매번 고유하게 생성합니다.)
+ *   전부 UUID 를 붙여 매번 고유하게 생성.)
  * - 컨트롤러는 인증정보(Authentication)에서 사용자ID를 꺼내 서비스로 그대로 위임하는
  *   얇은 계층이므로, 서비스 계층을 직접 호출해 실제 비즈니스 로직(@PreAuthorize 권한체크,
- *   더티체킹 수정, 조회수 증가, 12개씩 페이징 등)을 검증합니다.
+ *   더티체킹 수정, 조회수 증가, 12개씩 페이징 등)을 검증.
  * - Sboard2Service.getNotice() 의 조회수 증가는 MyBatis UPDATE 로 즉시 DB에 반영되고,
- *   세션 캐시(cacheEnabled: false)도 꺼둬서 별도 캐시 무효화 없이 항상 최신값을 읽습니다.
- * - @Order 는 클래스에 @TestMethodOrder(OrderAnnotation.class) 를 붙여야만 실제로 적용됩니다.
+ *   세션 캐시(cacheEnabled: false)도 꺼둬서 별도 캐시 무효화 없이 항상 최신값을 읽음.
+ * - @Order 는 클래스에 @TestMethodOrder(OrderAnnotation.class) 를 붙여야만 실제로 적용.
  *   이걸 빠뜨리면 JUnit5 기본 순서(선언순서와 무관)로 실행되면서, 이전 테스트가 마지막에
  *   SecurityContextHolder 에 남겨둔 로그인상태(예: 관리자)가 다음 테스트로 새어나갈 수
- *   있습니다. 그래서 @TestMethodOrder 를 명시하고, @BeforeEach/@AfterEach 에서도
- *   SecurityContextHolder 를 매번 초기화해서 테스트 간 상태가 절대 섞이지 않게 했습니다.
- * - ⚠️ getAllBooks(String category) 는 더 이상 존재하지 않습니다. 12개씩 페이징 도입 이후
+ *   있음. 그래서 @TestMethodOrder 를 명시하고, @BeforeEach/@AfterEach 에서도
+ *   SecurityContextHolder 를 매번 초기화해서 테스트 간 상태가 절대 섞이지 않게 처리.
+ * - getAllBooks(String category) 는 더 이상 존재하지 않음. 12개씩 페이징 도입 이후
  *   getAllBooks() 는 무인자(전체 List) 버전만 남았고, 카테고리 필터/페이징은
- *   getAllBooksPaged(page, size, category) 로 옮겨졌습니다. (이 파일도 그에 맞춰 갱신했습니다)
+ *   getAllBooksPaged(page, size, category) 로 이동. (이 파일도 그에 맞춰 갱신)
  * - insertFromKakao() 는 실제 카카오 외부 API를 호출하므로, 네트워크가 없는 CI 환경에서도
  *   안정적으로 돌아가도록 "실제 카카오 응답 검증"은 하지 않고 "@PreAuthorize 로 일반회원은
- *   막히는지"만 검증합니다.
- * ------------------------------------------------------------------------------
+ *   막히는지"만 검증.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -132,9 +130,9 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 	// 0. [진단용] @PreAuthorize 자체가 정상 동작하는지 최소단위로 확인
 	// DTO/파일업로드/DB쓰기 등 다른 변수를 모두 제거하고, 순수하게
 	// "ROLE_USER 로 @PreAuthorize(hasRole('ADMIN')) 메서드를 호출하면
-	// 정말로 막히는가?" 만 검증합니다.
+	// 정말로 막히는가?" 만 검증.
 	// 이 테스트가 실패한다면 SecurityConfig 의 @EnableMethodSecurity 설정이나
-	// Spring Security 버전/구성 문제이지, Book/Sboard2 쪽 코드 문제가 아닙니다.
+	// Spring Security 버전/구성 문제이지, Book/Sboard2 쪽 코드 문제가 아님.
 	//-------------------------------------------------------------------
 	@Test
 	@Order(0)
@@ -143,9 +141,9 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		AppUser user = createTestUser(); // ROLE_USER
 		loginAs(user);
 
-		// 존재하지 않는 ID(-1L)로 삭제를 시도합니다.
+		// 존재하지 않는 ID(-1L)로 삭제를 시도.
 		// @PreAuthorize 가 정상 동작한다면, "존재하지 않는 데이터"라는 ResourceNotFoundException 이
-		// 아니라 "권한없음" AccessDeniedException 이 먼저 발생해야 합니다.
+		// 아니라 "권한없음" AccessDeniedException 이 먼저 발생해야 함.
 		// (메서드 본문이 실행되기도 전에 보안검사가 먼저 걸려야 하기 때문)
 		assertThatThrownBy(() -> bookService.deleteBook(-1L))
 				.as("ROLE_USER 로 관리자전용 메서드(deleteBook) 호출 시 반드시 AccessDeniedException 이어야 합니다.")
@@ -178,16 +176,16 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		MockMultipartFile cover = new MockMultipartFile(
 				"cover", "cover.png", "image/png",
 				// 1x1 투명 PNG 실제 바이너리 - FileStorageService.uploadImage() 가
-				// ImageIO 로 실제 이미지인지 검증하므로, 텍스트가 아닌 유효한 PNG 여야 통과합니다.
+				// ImageIO 로 실제 이미지인지 검증하므로, 텍스트가 아닌 유효한 PNG 여야 통과
 				java.util.Base64.getDecoder().decode(
 						"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="));
 
 		// 1) 일반회원 로그인상태 → 등록 거부(AccessDeniedException), 실제 저장 안됨
 		loginAs(user);
 		// sanity-check: 현재 SecurityContext 가 정말 ROLE_USER 로만 세팅됐는지 먼저 확인
-		// (이 assertion 이 실패한다면 @PreAuthorize 문제가 아니라 로그인상태 세팅/누수 문제입니다.
+		// (이 assertion 이 실패한다면 @PreAuthorize 문제가 아니라 로그인상태 세팅/누수 문제.
 		// 이 assertion 은 통과했는데 바로 아래 accessDenied 검증이 실패한다면, 그건 진짜
-		// @PreAuthorize 자체가 적용되지 않고 있다는 뜻이니 SecurityConfig/버전 문제를 봐야 합니다.)
+		// @PreAuthorize 자체가 적용되지 않고 있다는 뜻이니 SecurityConfig/버전 문제를 봐야 함.)
 		assertThat(SecurityContextHolder.getContext().getAuthentication().getAuthorities())
 				.extracting(Object::toString).containsExactly("ROLE_USER");
 		assertThatThrownBy(() -> bookService.createBook(user.getId(), dto, cover))
@@ -215,7 +213,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		assertThat(bookService.searchByTitle(uniqueTitle)).extracting(BookResponseDto::getId)
 				.contains(created.getId());
 
-		// 5) 전체조회(비페이징, 내부용/구버전 호환) - getAllBooks() 는 이제 무인자입니다
+		// 5) 전체조회(비페이징, 내부용/구버전 호환) - getAllBooks() 는 이제 무인자
 		assertThat(bookService.getAllBooks()).extracting(BookResponseDto::getId)
 				.contains(created.getId());
 
@@ -271,7 +269,7 @@ class Boot2ApplicationTests_4_BookSboard2Service {
 		// 1) 일반회원 로그인상태 → 작성 거부, 실제 저장 안됨
 		loginAs(user);
 		// sanity-check: 현재 SecurityContext 가 정말 ROLE_USER 로만 세팅됐는지 먼저 확인
-		// (이 부분이 실패한다면 @PreAuthorize 문제가 아니라 로그인상태 세팅/누수 문제입니다)
+		// (이 부분이 실패한다면 @PreAuthorize 문제가 아니라 로그인상태 세팅/누수 문제)
 		assertThat(SecurityContextHolder.getContext().getAuthentication().getAuthorities())
 				.extracting(Object::toString).containsExactly("ROLE_USER");
 		assertThatThrownBy(() -> sboard2Service.createNotice(user.getId(), dto, null, "127.0.0.1"))

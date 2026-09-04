@@ -4,6 +4,7 @@ import  api  from  '../api/axios';
 import {signupRequest , signupSuccess , signupFailure,  resetUserState,
     loginRequest,loginSuccess,loginFailure,
     logoutRequest,logoutSuccess,logoutFailure,
+    withdrawRequest,withdrawSuccess,withdrawFailure,
     updateNicknameRequest, updateNicknameSuccess ,  updateNicknameFailure,
     updateProfileImageRequest , updateProfileImageSuccess , updateProfileImageFailure,
     loadUserRequest, loadUserSuccess , loadUserFailure,   
@@ -90,7 +91,7 @@ export function*  logout(){
         }
 
         // 우리 서비스 로그아웃은 끝났지만, 카카오/네이버 같은 소셜 계정 자체의
-        // 브라우저 로그인 세션은 그대로 남아있을 수 있습니다. (그래서 로그아웃 직후
+        // 브라우저 로그인 세션은 그대로 남아있을 수 있음. (그래서 로그아웃 직후
         // "카카오로 로그인"을 다시 누르면 비밀번호 확인 없이 바로 재로그인 되어버림)
         // provider 가 소셜(local 이 아님)이면, 그 계정 세션까지 끊는 방법을 서버에 물어봅니다.
         const provider = yield select((state) => state.auth.user?.provider);
@@ -128,6 +129,28 @@ export function*  logout(){
     }
 }
 
+// ---  회원탈퇴  DELETE  :  /auth/me  넘겨줄 데이터 x  (AccessToken 으로 본인 식별)  ---
+export  const  withdrawApi = (  )=> api.delete( `${USER_API_BASE}/me`);
+
+export function*  withdraw(){
+    try{
+        yield call(withdrawApi);
+
+        if(  typeof  window != "undefined"){
+            localStorage.removeItem("accessToken");
+            Cookies.remove("accessToken");
+        }
+
+        yield put(  withdrawSuccess() );
+
+        if (typeof window !== "undefined") {
+            window.location.href = "/login";
+        }
+    }catch(err){
+        yield put(  withdrawFailure( err.response?.data?.message || err.message ) );
+    }
+}
+
 
 // ---  업데이트 닉네임  PATCH :  /auth/{userId}/nickname  ,  params를 통해서 닉네임넘기기 ---
 export const updateNicknameApi=({userId,nickname})=> api.patch( `${USER_API_BASE}/${userId}/nickname`, null ,{
@@ -161,9 +184,9 @@ export function*  updateProfileImage( action ){
 // ---  유저 정보 로드  ---
 // 새로고침, 혹은 카카오페이 결제창(외부 도메인)에서 우리 사이트로 돌아오는 것처럼
 // 브라우저가 완전히 새로 페이지를 로드하는 경우, Redux 스토어가 처음부터 다시
-// 만들어져서 state.auth.user 가 null 로 초기화됩니다. localStorage 의 accessToken
+// 만들어져서 state.auth.user 가 null 로 초기화됨. localStorage 의 accessToken
 // 은 그대로 살아있으므로, 이 API로 "그 토큰이 진짜 유효한 사용자의 것인지" 확인하고
-// user 정보를 다시 채워넣습니다.
+// user 정보를 다시 채워넣음.
 export const loadUserApi = () => api.get(`${USER_API_BASE}/me`);
 export function * loadUser(action){
     try {
@@ -178,6 +201,7 @@ export function * loadUser(action){
 function* watchSignup(){            yield  takeLatest( signupRequest.type              , signup);       } 
 function* watchLogin(){             yield  takeLatest( loginRequest.type               , login );       }
 function* watchLogout(){            yield  takeLatest( logoutRequest.type              , logout );      }
+function* watchWithdraw(){          yield  takeLatest( withdrawRequest.type            , withdraw );    }
 function* watchUpdateNickname(){    yield  takeLatest( updateNicknameRequest.type      , updateNickname );    }
 function* watchUpdateProfileImage(){yield  takeLatest( updateProfileImageRequest.type  , updateProfileImage );   }
 function* watchLoadUser(){yield  takeLatest( loadUserRequest.type  , loadUser );   }
@@ -187,6 +211,7 @@ export default  function * authSaga(){
         call(watchSignup),
         call(watchLogin),
         call(watchLogout),
+        call(watchWithdraw),
         call(watchUpdateNickname),
         call(watchUpdateProfileImage),
         call(watchLoadUser),

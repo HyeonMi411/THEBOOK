@@ -13,17 +13,15 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 카카오페이 결제 API(정기가 아닌 "일반결제") 연동 서비스
- * ------------------------------------------------------------------
  * 결제준비(ready) → 사용자가 카카오페이 결제창에서 결제 진행 → 결제승인(approve) 의
- * 3단계 흐름 중, 우리 서버가 담당하는 1),3) 단계를 처리합니다.
+ * 3단계 흐름 중, 우리 서버가 담당하는 1),3) 단계를 처리.
  * (문서: https://developers.kakaopay.com/docs/payment/online/single-payment)
  *
  * 2024.01.03 API 개편 이후, 신)API(open-api.kakaopay.com)는 요청 본문을
  *   application/x-www-form-urlencoded(폼) 가 아니라 **application/json** 으로
- *   받습니다. 예전 방식(폼 인코딩)으로 보내면 카카오 서버가 파라미터를 제대로
+ *   받음. 예전 방식(폼 인코딩)으로 보내면 카카오 서버가 파라미터를 제대로
  *   읽지 못해 "error_code:-1 internal server error!" 처럼 원인을 알 수 없는
- *   응답을 돌려줍니다. 반드시 JSON 으로 보내야 합니다.
- * ------------------------------------------------------------------
+ *   응답을 돌려줌. 반드시 JSON 으로 전송 필요.
  */
 @Slf4j
 @Service
@@ -47,7 +45,7 @@ public class KakaoPayApiService {
             String partnerOrderId, String partnerUserId, String itemName,
             int quantity, int totalAmount, String approvalUrl, String cancelUrl, String failUrl
     ) {
-        // JSON 본문 - 숫자 필드(quantity/total_amount 등)는 문자열이 아니라 숫자 타입 그대로 담습니다.
+        // JSON 본문 - 숫자 필드(quantity/total_amount 등)는 문자열이 아니라 숫자 타입 그대로 담음.
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("cid", cid);
         body.put("partner_order_id", partnerOrderId);
@@ -61,8 +59,8 @@ public class KakaoPayApiService {
         body.put("fail_url", failUrl);
 
         // 진단용 로그 - 카카오페이가 "-1 내부 처리 오류"처럼 원인을 알 수 없는 응답을 줄 때,
-        // 실제로 우리가 어떤 값을 보냈는지 서버 로그에서 바로 확인할 수 있게 남깁니다.
-        // (total_amount=0, quantity=0 등 값 자체가 이상한 경우가 가장 흔한 원인입니다)
+        // 실제로 우리가 어떤 값을 보냈는지 서버 로그에서 바로 확인 가능하도록 남김.
+        // (total_amount=0, quantity=0 등 값 자체가 이상한 경우가 가장 흔한 원인)
         log.info("[KakaoPay ready 요청] cid={}, partner_order_id={}, item_name={}, quantity={}, total_amount={}",
                 cid, partnerOrderId, itemName, quantity, totalAmount);
 
@@ -76,8 +74,8 @@ public class KakaoPayApiService {
                     .body(KakaoPayReadyResponse.class);
         } catch (RestClientException ex) {
             // 서버 콘솔 로그를 따로 찾아볼 필요 없이, 우리가 실제로 보낸 요청 파라미터를
-            // 에러 메시지 자체에 그대로 실어서 보냅니다. 브라우저 개발자도구의
-            // Network 탭(Response) 에서 바로 확인할 수 있습니다.
+            // 에러 메시지 자체에 그대로 실어서 전송. 브라우저 개발자도구의
+            // Network 탭(Response) 에서 바로 확인 가능.
             throw new IllegalStateException(
                     "카카오페이 결제준비 실패 - 요청값[cid=" + cid + ", item_name=" + itemName
                             + ", quantity=" + quantity + ", total_amount=" + totalAmount
@@ -87,7 +85,7 @@ public class KakaoPayApiService {
         }
     }
 
-    /** 3) 결제 승인 - pg_token 과 tid 로 실제 결제를 확정합니다 */
+    /** 3) 결제 승인 - pg_token 과 tid 로 실제 결제를 확정 */
     public KakaoPayApproveResponse approve(
             String tid, String partnerOrderId, String partnerUserId, String pgToken
     ) {

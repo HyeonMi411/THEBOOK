@@ -24,10 +24,10 @@ const orderReducer = createSlice({
         resetOrderState: (state) => {
             state.loading = false;
             state.error = null;
-            // currentOrder 도 함께 초기화합니다. 이걸 안 지우면, 결제완료(paymentApproveSuccess)
+            // currentOrder 도 함께 초기화. 이걸 안 지우면, 결제완료(paymentApproveSuccess)
             // 시점에 채워진 currentOrder 가 그대로 남아있다가, 나중에 다른 화면(도서상세 등)의
             // "주문 생성 성공시 이동" 같은 로직이 이 남아있는 값을 새 주문으로 착각해서
-            // 아무것도 안 눌렀는데도 자동으로 결제 흐름이 다시 실행되는 문제가 있었습니다.
+            // 아무것도 안 눌렀는데도 자동으로 결제 흐름이 다시 실행되는 문제가 있었음.
             state.currentOrder = null;
         },
         resetPaymentState: (state) => {
@@ -58,7 +58,7 @@ const orderReducer = createSlice({
         fetchMyOrdersSuccess: (state, action) => {
             state.loading = false;
             // action.payload.content 가 없는 경우(응답 구조가 예상과 다른 경우 등)에도
-            // orders 가 undefined 가 되지 않도록 방어합니다.
+            // orders 가 undefined 가 되지 않도록 방어.
             state.orders = action.payload.content || [];
             state.currentPage = action.payload.currentPage;
             state.pageSize = action.payload.pageSize;

@@ -31,7 +31,9 @@ import com.thejoa703.entity.AppUser;
 import com.thejoa703.security.JwtProperties;
 import com.thejoa703.security.JwtProvider;
 import com.thejoa703.security.TokenStore;
+import com.thejoa703.security.EmailVerificationStore;
 import com.thejoa703.service.AuthUserJwtService;
+import com.thejoa703.service.EmailService;
 import com.thejoa703.service.UserService;
 
 import io.jsonwebtoken.Claims;
@@ -56,13 +58,52 @@ public class UserController {
 	private final AuthUserJwtService authUserJwtService; // 현재 로그인한 사용자 ID 조회용
 
 	// 카카오 REST API 키 - "카카오계정과 함께 로그아웃" URL을 서버에서 완성해서 내려주기
-	// 위한 용도입니다. (REST API 키 자체는 공개돼도 되는 값이라 노출 문제 없음)
+	// 위한 용도. (REST API 키 자체는 공개돼도 되는 값이라 노출 문제 없음)
 	@Value("${kakao.rest-api-key:}")
 	private String kakaoRestApiKey;
 
 	@Value("${app.frontend-base-url:http://localhost:3000}")
 	private String frontendBaseUrl;
-	
+
+	private final EmailService emailService;
+	private final EmailVerificationStore emailVerificationStore;
+
+	@Value("${email.verification.code-exp-seconds:300}")
+	private long emailCodeExpSeconds;
+
+	@Value("${email.verification.verified-exp-seconds:1800}")
+	private long emailVerifiedExpSeconds;
+
+	// 이메일 인증번호 발송
+	@Operation( summary="이메일 인증번호 발송" , description = "입력한 이메일로 6자리 인증번호를 발송합니다. (5분간 유효)")
+	@PostMapping("/email/send-code")
+	public ResponseEntity<Void> sendEmailVerificationCode(
+			@Parameter(description = "인증번호를 받을 이메일") @RequestParam("email") String email
+	){
+		String code = emailService.generateVerificationCode();
+		emailVerificationStore.saveCode(email, code, emailCodeExpSeconds);
+		emailService.sendVerificationCode(email, code);
+		return ResponseEntity.ok().build();
+	}
+
+	// 이메일 인증번호 확인
+	@Operation( summary="이메일 인증번호 확인" , description = "발송된 인증번호가 맞는지 확인합니다. 성공 시 30분간 인증완료 상태가 유지되며, 이 안에 회원가입을 완료해야 합니다.")
+	@PostMapping("/email/verify-code")
+	public ResponseEntity<Void> verifyEmailCode(
+			@Parameter(description = "인증 대상 이메일") @RequestParam("email") String email,
+			@Parameter(description = "받은 인증번호") @RequestParam("code") String code
+	){
+		String savedCode = emailVerificationStore.getCode(email);
+		// 확인 시도는 성공/실패와 무관하게 인증번호를 즉시 삭제 - 같은 코드를 여러 번
+		// 재사용해서 무차별 대입(brute-force)으로 맞추는 것을 방지
+		emailVerificationStore.deleteCode(email);
+		if (savedCode == null || !savedCode.equals(code)) {
+			throw new IllegalArgumentException("인증번호가 일치하지 않거나 만료되었습니다.");
+		}
+		emailVerificationStore.markVerified(email, emailVerifiedExpSeconds);
+		return ResponseEntity.ok().build();
+	}
+
 	// 사용자 등록 (회원가입)
 	// 회원가입
 	@Operation( summary="회원가입" , description = "새로운 사용자를 등록합니다.")
@@ -132,10 +173,10 @@ public class UserController {
         //3. 쿠키설정
         // org.springframework.http.ResponseCooke         
         // secure(true) 를 무조건 고정하면, http://localhost 같은 비HTTPS 로컬 개발환경에서는
-        // 브라우저가 이 쿠키를 아예 서버로 전송하지 않습니다. 그러면 /auth/refresh 호출 시
+        // 브라우저가 이 쿠키를 아예 서버로 전송하지 않음. 그러면 /auth/refresh 호출 시
         // 쿠키가 없어서 항상 실패하고, 프론트(axios 인터셉터)가 이를 "재로그인 필요"로
-        // 판단해 강제 로그아웃시켜 버립니다. OAuth2SuccessHandler 와 동일하게 로컬環境
-        // 여부를 판별해서 로컬에서는 secure=false 로 설정합니다.
+        // 판단해 강제 로그아웃시켜 버림. OAuth2SuccessHandler 와 동일하게 로컬환경
+        // 여부를 판별해서 로컬에서는 secure=false 로 설정.
         boolean isLocal = httpRequest.getServerName().equals("localhost") || httpRequest.getServerName().equals("127.0.0.1");
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)		// js 접근불가   
@@ -174,7 +215,7 @@ public class UserController {
     }
 
     // 소셜로그인 "가입확인(추가정보 입력)" 완료 - 사용자가 닉네임을 확인/수정하고 제출하면
-    // 이 시점에 비로소 실제로 회원가입(DB저장)이 이루어지고, 곧바로 로그인 처리됩니다.
+    // 이 시점에 비로소 실제로 회원가입(DB저장)이 이루어지고, 곧바로 로그인 처리.
     @Operation(
             summary = "소셜 가입확인 완료 (실제 회원가입 + 로그인)",
             description = "signupToken 을 검증한 뒤, 사용자가 입력한 닉네임으로 최종 회원가입을 완료하고 "
@@ -239,20 +280,20 @@ public class UserController {
                                        HttpServletRequest httpRequest,
                                        HttpServletResponse response) {
         // refreshToken 쿠키가 없거나(required=false 라 null 가능) 이미 만료/변조되어
-        // 파싱이 실패하더라도, 로그아웃 요청 자체는 항상 성공해야 합니다. 로그아웃의
+        // 파싱이 실패하더라도, 로그아웃 요청 자체는 항상 성공해야 함. 로그아웃의
         // 목적은 "클라이언트 상태를 지우는 것"이라, 서버측 Redis 토큰 삭제는
-        // "가능하면 같이 해주는 것"이지 실패의 이유가 되면 안 됩니다.
+        // "가능하면 같이 해주는 것"이지 실패의 이유가 되면 안 됨.
         // (이 방어 코드가 없으면 refreshToken 이 없을 때 jwtProvider.parse(null) 이
         // 예외를 던지고, GlobalExceptionHandler 가 이를 400 으로 응답해서 로그아웃
-        // 버튼을 눌러도 항상 실패하는 문제가 있었습니다 - provider 와 무관하게 전부
-        // 여기서 막혔던 것입니다)
+        // 버튼을 눌러도 항상 실패하는 문제 발생 - provider 와 무관하게 전부
+        // 여기서 막혔던 것)
         if (refreshToken != null && !refreshToken.isBlank()) {
             try {
                 var claims = jwtProvider.parse(refreshToken).getBody();
                 String userId = claims.getSubject();
                 tokenStore.deleteRefreshToken(userId);	// redis 제거
             } catch (Exception e) {
-                // 이미 만료됐거나 유효하지 않은 토큰이어도 로그아웃 자체는 계속 진행합니다.
+                // 이미 만료됐거나 유효하지 않은 토큰이어도 로그아웃 자체는 계속 진행
             }
         }
 
@@ -338,18 +379,6 @@ public class UserController {
 	}
 	
 	
-	//	// 탈퇴
-	//	@Operation( summary="회원 탈퇴" , description = "로그인된 사용자 계정을 삭제하고 세션을 만료시킵니다.")
-	//	@DeleteMapping("/me")
-	//	public    ResponseEntity<Void>  deleteMe(HttpSession session){
-	//		Long userId = (Long)session.getAttribute("LOGIN_USER_ID");
-	//		if( userId == null ) {  return  ResponseEntity.status(401).build();  }   // 권한없음.
-	//		
-	//		userService.deleteById(userId);
-	//		session.invalidate();
-	//		return  ResponseEntity.noContent().build();
-	//	}
-	
     @Operation(summary = "회원 탈퇴")
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteMe(HttpServletRequest request,
@@ -366,7 +395,7 @@ public class UserController {
             var claims = jwtProvider.parse(accessToken).getBody();
             String userId = claims.getSubject();
             // 해당유저삭제 
-            userService.deleteById(Long.valueOf(userId));	//##
+            userService.deleteById(Long.valueOf(userId));
             // refreshToken삭제 
             if (refreshToken != null) {
                 tokenStore.deleteRefreshToken(userId);
@@ -402,7 +431,7 @@ public class UserController {
             return ResponseEntity.status(401).body(Map.of("error", "Invalid refresh token"));
         }
 
-        String role = userService.findRoleByUserId(Long.valueOf(userId));	//####
+        String role = userService.findRoleByUserId(Long.valueOf(userId));
 
         String newAccessToken = jwtProvider.createAccessToken(
                 userId,
@@ -412,17 +441,17 @@ public class UserController {
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
     }	
 
-	// 소셜 로그아웃 - "카카오계정과 함께 로그아웃" URL을 완성해서 돌려줍니다.
+	// 소셜 로그아웃 - "카카오계정과 함께 로그아웃" URL을 완성해서 반환.
 	// 우리 서비스 로그아웃(POST /auth/logout)만으로는 우리 서비스의 JWT/쿠키만
-	// 지워질 뿐, 브라우저에 남아있는 카카오/네이버 자체 로그인 세션은 그대로입니다.
+	// 지워질 뿐, 브라우저에 남아있는 카카오/네이버 자체 로그인 세션은 그대로.
 	// 그래서 "카카오로 로그인" 버튼을 다시 누르면 비밀번호 확인 없이 곧바로 재로그인
-	// 되어버려서 "로그아웃이 안 된 것처럼" 느껴집니다.
-	// - 카카오 : 공식적으로 "카카오계정과 함께 로그아웃" 기능을 제공합니다
+	// 되어버려서 "로그아웃이 안 된 것처럼" 느껴짐.
+	// - 카카오 : 공식적으로 "카카오계정과 함께 로그아웃" 기능을 제공
 	// (GET https://kauth.kakao.com/oauth/logout?client_id=...&logout_redirect_uri=...)
-	// → 이 URL로 이동하면 브라우저의 카카오계정 세션 자체가 만료됩니다.
-	// - 네이버 : 이런 공식 OAuth 로그아웃 엔드포인트를 제공하지 않습니다(연동해제만 제공).
+	// → 이 URL로 이동하면 브라우저의 카카오계정 세션 자체가 만료.
+	// - 네이버 : 이런 공식 OAuth 로그아웃 엔드포인트를 미제공(연동해제만 제공).
 	// 그래서 네이버는 "완전 자동 로그아웃"이 불가능하다는 걸 그대로 응답에 담아
-	// 프론트가 사용자에게 안내할 수 있게 합니다.
+	// 프론트가 사용자에게 안내할 수 있게 처리.
 	@Operation(
 			summary = "소셜 로그아웃 URL 조회",
 			description = "provider 별로 브라우저에 남아있는 소셜 계정 세션까지 끊는 방법을 안내합니다. "
@@ -439,10 +468,10 @@ public class UserController {
 			return ResponseEntity.ok(Map.of("supported", true, "logoutUrl", url));
 		}
 		if ("naver".equalsIgnoreCase(provider)) {
-			// 네이버는 카카오 같은 "공식" OAuth 로그아웃 엔드포인트를 제공하지 않습니다.
+			// 네이버는 카카오 같은 "공식" OAuth 로그아웃 엔드포인트를 미제공.
 			// 다만 네이버 자체 웹사이트의 로그아웃 페이지(nidlogin.logout)로 이동시키면
 			// 부수적으로 브라우저의 네이버 로그인 세션이 함께 만료되는 것으로 널리
-			// 알려져 있습니다(비공식 - 네이버가 이 동작을 문서로 보장하지는 않습니다).
+			// 알려짐(비공식 - 네이버가 이 동작을 문서로 보장하지는 않음).
 			String returnUrl = frontendBaseUrl + "/login";
 			String url = "https://nid.naver.com/nidlogin.logout?returl=" + returnUrl;
 			return ResponseEntity.ok(Map.of(
@@ -452,10 +481,10 @@ public class UserController {
 			));
 		}
 		// 구글은 accounts.google.com/Logout 이 있지만, 이건 Gmail 등 구글 전체
-		// 서비스 로그인까지 함께 끊어버려서 사용자 경험상 권장되지 않습니다. 대신
+		// 서비스 로그인까지 함께 끊어버려서 사용자 경험상 권장되지 않음. 대신
 		// application-oauth.yml 의 authorization-uri 에 prompt=select_account 를
 		// 추가해서, 로그아웃 후 "구글로 로그인"을 다시 눌렀을 때 자동 재로그인되지
-		// 않고 항상 계정 선택 화면이 뜨도록 이미 처리해뒀습니다.
+		// 않고 항상 계정 선택 화면이 뜨도록 이미 처리.
 		return ResponseEntity.ok(Map.of(
 				"supported", false,
 				"message", provider + " 은(는) 소셜 계정 자체를 자동으로 로그아웃할 수 있는 공식 방법을 제공하지 않습니다. "

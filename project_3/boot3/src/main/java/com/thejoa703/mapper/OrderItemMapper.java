@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * OrderItem 의 기본 CRUD(findByOrderId/insert/delete)는 JpaRepository(OrderItemRepository)로
- * 처리하고, 이 Mapper 는 여러 테이블을 JOIN+GROUP BY 하는 집계 쿼리(베스트셀러 통계)만 담당합니다.
+ * 처리하고, 이 Mapper 는 여러 테이블을 JOIN+GROUP BY 하는 집계 쿼리(베스트셀러 통계)만 담당.
  */
 @Mapper
 public interface OrderItemMapper {

@@ -83,6 +83,21 @@ const authReducer=createSlice({
             state.loading = false;
             state.error   = action.payload;
         } , 
+        // --- 회원 탈퇴 ---
+        withdrawRequest: (state)=>{
+            state.loading = true;
+        } ,
+        withdrawSuccess: (state)=>{
+            state.loading = false;
+            state.error   = null;
+            state.user    = null;
+            state.accessToken  = null;
+            state.success = false;
+        } ,
+        withdrawFailure: (state , action)=>{
+            state.loading = false;
+            state.error   = action.payload;
+        } ,
         // --- 닉네임 변경  ---
         updateNicknameRequest: (state)=>{ 
             state.loading = true;
@@ -124,6 +139,7 @@ const authReducer=createSlice({
 export const {signupRequest , signupSuccess , signupFailure,  resetUserState,
     loginRequest,loginSuccess,loginFailure,
     logoutRequest,logoutSuccess,logoutFailure,
+    withdrawRequest,withdrawSuccess,withdrawFailure,
     updateNicknameRequest, updateNicknameSuccess ,  updateNicknameFailure,
     updateProfileImageRequest , updateProfileImageSuccess , updateProfileImageFailure , 
     refreshTokenRequest, refreshTokenSuccess , refreshTokenFailure ,

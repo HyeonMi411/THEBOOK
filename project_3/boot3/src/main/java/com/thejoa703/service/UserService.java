@@ -13,6 +13,7 @@ import com.thejoa703.dto.UserDto.UserResponseDto;
 import com.thejoa703.entity.AppUser;
 import com.thejoa703.exception.ResourceNotFoundException;
 import com.thejoa703.repository.AppUserRepository;
+import com.thejoa703.security.EmailVerificationStore;
 import com.thejoa703.util.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class UserService {
 	private final AppUserRepository  appUserRepository;
 	private final FileStorageService fileStorageService;
 	private final PasswordEncoder    passwordEncoder;
+	private final EmailVerificationStore emailVerificationStore;
 
 	@Transactional
 	public UserResponseDto createUser(UserRequestDto request, MultipartFile profileImage) {
@@ -35,6 +37,13 @@ public class UserService {
 		}
 		if (appUserRepository.existsByNickname(request.getNickname())) {
 			throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
+		}
+		// 일반(local) 회원가입은 소셜로그인처럼 제3자가 이메일 소유를 확인해주지 않으므로,
+		// 반드시 POST /auth/email/send-code → /auth/email/verify-code 로 직접 인증을
+		// 완료한 이메일이어야만 가입을 허용. 소셜 회원가입(saveSocialUser)은 이 메서드를
+		// 거치지 않으므로 영향 없음.
+		if ("local".equals(provider) && !emailVerificationStore.isVerified(request.getEmail())) {
+			throw new IllegalArgumentException("이메일 인증을 먼저 완료해주세요.");
 		}
 
 		AppUser user = new AppUser();
@@ -52,6 +61,9 @@ public class UserService {
 		);
 
 		appUserRepository.save(user);
+		if ("local".equals(provider)) {
+			emailVerificationStore.clearVerified(request.getEmail()); // 재사용 방지 - 가입 완료 후 정리
+		}
 		return UserResponseDto.fromEntity(user);
 	}
 
@@ -68,6 +80,9 @@ public class UserService {
 				.findByEmailAndProvider(request.getEmail(), request.getProvider() != null ? request.getProvider() : "local")
 				.orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을수 없습니다."));
 
+		if (Boolean.TRUE.equals(user.getDeleted())) {
+			throw new IllegalArgumentException("탈퇴한 계정입니다.");
+		}
 		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
 			throw new IllegalArgumentException("비밀번호 불일치");
 		}
@@ -76,6 +91,12 @@ public class UserService {
 
 	public Optional<AppUser> findByEmailAndProvider(String email, String provider) {
 		return appUserRepository.findByEmailAndProvider(email, provider);
+	}
+
+	// provider 무관하게 이메일만으로 조회 - 소셜로그인 시 같은 이메일이 다른 provider로
+	// 이미 가입되어 있는지 확인하는 용도(OAuth2SuccessHandler)
+	public Optional<AppUser> findByEmail(String email) {
+		return appUserRepository.findByEmail(email);
 	}
 
 	@Transactional
@@ -136,9 +157,12 @@ public class UserService {
 
 	@Transactional
 	public void deleteById(Long userId) {
-		if (!appUserRepository.existsById(userId)) {
-			throw new IllegalArgumentException("삭제할 사용자가 존재하지 않습니다. ID: " + userId);
-		}
-		appUserRepository.deleteById(userId);
+		AppUser user = appUserRepository.findById(userId)
+				.orElseThrow(() -> new IllegalArgumentException("삭제할 사용자가 존재하지 않습니다. ID: " + userId));
+		// 실제 행을 지우지 않고 DELETED 플래그만 갱신(소프트 삭제). AppUser 는 Book/Sboard2
+		// 의 작성자(APP_USER_ID), Cart/Orders 의 소유자 등 여러 테이블이 FK 로 참조하는
+		// 부모 행이라, 하드 삭제하면 Book 소프트삭제 도입 계기가 됐던 것과 동일한 FK 제약
+		// 위반(ORA-02292)이 도서를 하나라도 등록했거나 주문 이력이 있는 계정에서 그대로 발생.
+		user.setDeleted(true);
 	}
 }

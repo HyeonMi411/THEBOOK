@@ -1,5 +1,5 @@
 // pages/books/[id].js
-// boot1(the703) templates/book/detail.html 디자인을 그대로 재현했습니다.
+// boot1(the703) templates/book/detail.html 디자인을 그대로 재현했음.
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
@@ -44,9 +44,9 @@ export default function BookDetailPage() {
     }
   };
 
-  // 수정모달을 상세페이지 안에서 바로 열고 닫습니다. (페이징 도입 이후, 목록 페이지의
+  // 수정모달을 상세페이지 안에서 바로 열고 닫음. (페이징 도입 이후, 목록 페이지의
   // 현재 화면(12개)에 수정대상이 없을 수도 있어 ?edit=id 로 목록에 되돌아가 찾는 방식은
-  // 더 이상 사용하지 않습니다.)
+  // 더 이상 사용하지 않음.)
   const handleEditSubmit = (values, coverFile) => {
     dispatch(updateBookRequest({
       bookId: currentBook.id,

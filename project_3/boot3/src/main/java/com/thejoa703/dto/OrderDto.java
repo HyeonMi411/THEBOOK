@@ -20,7 +20,7 @@ public class OrderDto {
 	// 주문 생성 요청 Dto
 	// - cartItemIds 를 넘기면 "장바구니에서 선택한 항목으로 주문"
 	// - bookId + quantity 를 넘기면 "바로구매"
-	// - 즉 둘 중 하나만 채워서 요청합니다.
+	// - 즉 둘 중 하나만 채워서 요청.
 	@Getter @Setter @AllArgsConstructor @NoArgsConstructor
 	public static class OrderCreateRequestDto {
 		private List<Long> cartItemIds; // 장바구니 결제용 (선택한 CartItem id 목록)

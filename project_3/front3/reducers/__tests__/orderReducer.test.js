@@ -26,7 +26,7 @@ describe('order slice reducer', () => {
         redirectUrl: null,
     };
 
-    // 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록, 테스트 전용 도서명을 사용합니다.
+    // 더미SQL 데이터(스프링부트 완전정복 등)와 겹치지 않도록, 테스트 전용 도서명을 사용.
     const orderPayload = {
         id: 501,
         totalAmount: 45000,

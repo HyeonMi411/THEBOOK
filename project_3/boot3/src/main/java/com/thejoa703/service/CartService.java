@@ -21,8 +21,8 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 장바구니 서비스 - 로그인한 사용자라면 누구나 이용 가능 (관리자 전용 아님)
- * - Cart/CartItem 은 단순 CRUD 라 JPA Repository 를 사용합니다.
- * - Book 조회는 검색/JOIN 이 복잡해 Mapper(BookMapper)를 그대로 사용합니다.
+ * - Cart/CartItem 은 단순 CRUD 라 JPA Repository 를 사용.
+ * - Book 조회는 검색/JOIN 이 복잡해 Mapper(BookMapper)를 그대로 사용.
  */
 @Service
 @RequiredArgsConstructor
@@ -99,7 +99,7 @@ public class CartService {
 		}
 
 		int stockQuantity = (item.getBook().getStock() != null) ? item.getBook().getStock().getStockQuantity() : 0;
-		// 판매중단(삭제)된 도서는 수량을 늘릴 수 없습니다(줄이거나 삭제(removeItem)하는 것은 항상 허용).
+		// 판매중단(삭제)된 도서는 수량을 늘릴 수 없음(줄이거나 삭제(removeItem)하는 것은 항상 허용).
 		if (item.getBook().isDeleted() && quantity > item.getQuantity()) {
 			throw new IllegalStateException("[" + item.getBook().getTitle() + "] 판매가 중단된 도서라 수량을 늘릴 수 없습니다. 장바구니에서 삭제해주세요.");
 		}

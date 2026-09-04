@@ -1,5 +1,5 @@
 // components/Pagination.js
-// boot1(the703) util/UtilPaging.java 의 페이지블록 계산 로직을 React 버전으로 그대로 재현했습니다.
+// boot1(the703) util/UtilPaging.java 의 페이지블록 계산 로직을 React 버전으로 그대로 재현했음.
 // - bottomList(기본 10) 개씩 페이지번호를 묶어서 보여주고, 블록단위로 "이전"/"다음" 이동
 import React from 'react';
 

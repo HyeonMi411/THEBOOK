@@ -131,7 +131,7 @@ public class Sboard2Service {
 		sboard2Mapper.delete(id);
 	}
 
-	// 등록/수정 직후 응답용 조회 - 조회수를 증가시키지 않습니다 (getNotice()는 상세조회 전용)
+	// 등록/수정 직후 응답용 조회 - 조회수를 증가시키지 않음 (getNotice()는 상세조회 전용)
 	private Sboard2ResponseDto getNoticeWithoutHitIncrease(Long id) {
 		Sboard2 board = sboard2Mapper.selectById(id);
 		return Sboard2ResponseDto.from(board);

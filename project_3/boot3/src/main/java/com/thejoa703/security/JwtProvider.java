@@ -55,9 +55,9 @@ public class JwtProvider {
     // 소셜로그인 "가입확인(추가정보 입력)" 임시토큰 생성
     // 신규 소셜회원은 인증만 통과했을 뿐, 아직 우리 서비스 회원으로 정식 가입된 게
     // 아닙니다. 이 토큰에 이메일/제공자/닉네임(기본값)/프로필이미지를 담아뒀다가,
-    // 사용자가 닉네임을 확인/수정하고 "가입완료"를 눌렀을 때만 실제 DB에 저장합니다.
+    // 사용자가 닉네임을 확인/수정하고 "가입완료"를 눌렀을 때만 실제 DB에 저장.
     // accessToken 보다 훨씬 짧게(10분) 만료시켜서, 그 사이에 완료 안 하면 다시
-    // 소셜로그인부터 시작해야 하도록 합니다.
+    // 소셜로그인부터 시작하도록 처리.
     public String createSignupToken(Map<String, Object> claims) {
         Instant now = Instant.now();
         Instant exp = now.plusSeconds(600); // 10분
@@ -81,7 +81,7 @@ public class JwtProvider {
     }
 
     // 가입확인 임시토큰 전용 파싱 - subject 가 "SOCIAL_SIGNUP" 인지까지 검증해서,
-    // 일반 accessToken/refreshToken 을 이 API에 잘못 넣는 것을 막습니다.
+    // 일반 accessToken/refreshToken 을 이 API에 잘못 넣는 것을 막음.
     public Jws<Claims> parseSignupToken(String token) {
         Jws<Claims> jws = parse(token);
         if (!"SOCIAL_SIGNUP".equals(jws.getBody().getSubject())) {

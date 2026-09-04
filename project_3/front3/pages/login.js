@@ -19,7 +19,7 @@ export default function LoginPage() {
     const onFinish = (values)=>{   
         dispatch(   loginRequest({ ...values  , provider:'local'})   );
     }; 
-    //Q4.   로그인 성공시 oo님 환영합니다 메시지 띄우고 (message),  마이페이지로 이동 (router.push)
+    //Q4.   로그인 성공시 oo님 환영 메시지 띄우고 (message),  마이페이지로 이동 (router.push)
     // useSelect , useDispatch ,useRouter, useEffect , useState
     useEffect(()=>{
         if(user &&  user.email){

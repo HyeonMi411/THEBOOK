@@ -1,12 +1,12 @@
 // pages/books/national-library/index.js
 // boot1(the703) templates/book/search-nl.html(KDC 분류 아코디언) +
-// search-nl_list.html(검색결과 카드) 을 하나의 화면으로 재현했습니다.
-// (DB에는 저장하지 않고 검색결과만 보여주는 화면이며, 상세보기 클릭시 상세페이지로 이동합니다)
+// search-nl_list.html(검색결과 카드) 을 하나의 화면으로 재현했음.
+// (DB에는 저장하지 않고 검색결과만 보여주는 화면이며, 상세보기 클릭시 상세페이지로 이동)
 //
 // boot1 원본은 부트스트랩 아코디언(data-bs-toggle="collapse")으로 되어있는데,
 // 부트스트랩 JS 번들이 제대로 로드/초기화되지 않으면 "대분류를 클릭해도 하위
 // 키워드 목록이 안 펼쳐지는" 증상이 그대로 나타납니다. 그래서 React 자체 상태로
-// 여닫는 진짜 아코디언을 직접 구현했습니다(외부 JS 라이브러리 의존 없이 항상 동작).
+// 여닫는 진짜 아코디언을 직접 구현했음(외부 JS 라이브러리 의존 없이 항상 동작).
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from 'react-redux';

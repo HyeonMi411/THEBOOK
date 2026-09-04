@@ -16,12 +16,12 @@ import lombok.Setter;
  * 주문상품 엔티티 (ORDER_ITEMS)
  * - Orders 와 Book 은 N:M 관계이지만("한 주문에 여러 책", "한 책이 여러 주문에 포함"),
  *   quantity/price 라는 부가정보(주문 시점 스냅샷)가 있어 순수 @ManyToMany 대신
- *   중간 엔티티(OrderItem)로 명시적으로 모델링했습니다.
+ *   중간 엔티티(OrderItem)로 명시적으로 모델링했음.
  *   (Orders --1:N--> OrderItem <--N:1-- Book)
  * - Book 이 FK 로 연결되어 있어서, 나중에 "이 책이 총 몇 권 팔렸는지" 같은 판매통계·
- *   베스트셀러 쿼리를 SQL 로 바로 집계할 수 있습니다.
- * - price/bookTitleSnapshot 은 **주문 시점 스냅샷**입니다. 이후 도서 가격이 바뀌거나
- *   도서가 삭제되어도 과거 주문 내역(얼마에, 무슨 제목으로 샀는지)은 그대로 보존됩니다.
+ *   베스트셀러 쿼리를 SQL 로 바로 집계할 수 있음.
+ * - price/bookTitleSnapshot 은 **주문 시점 스냅샷**임. 이후 도서 가격이 바뀌거나
+ *   도서가 삭제되어도 과거 주문 내역(얼마에, 무슨 제목으로 샀는지)은 그대로 보존됨.
  */
 @Entity
 @Table(name = "ORDER_ITEMS")

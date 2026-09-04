@@ -47,7 +47,7 @@ public class Book {
 
 	@Column(name = "PUBLISH_DATE") // 카카오/국립중앙도서관 자동수집 시 출판일 파싱에 실패하면
 	// null 로 둡니다("출판일 미상"). 관리자 직접등록은 BookRequestDto.publishDate 가
-	// @NotNull 이라 여전히 필수입니다. 기존 DB 컬럼이 NOT NULL 이었다면 SchemaAutoFixRunner
+	// @NotNull 이라 여전히 필수임. 기존 DB 컬럼이 NOT NULL 이었다면 SchemaAutoFixRunner
 	// 가 서버 기동시 자동으로 NULL 허용으로 고쳐줍니다.
 	private LocalDate publishDate;
 
@@ -79,7 +79,7 @@ public class Book {
 	private String bookCover; // 표지이미지 경로 (실제 파일은 /uploads 에 저장, 경로 문자열만 컬럼에 저장)
 
 	// 소프트 삭제 - CART_ITEM/ORDER_ITEMS 가 BOOK_ID 를 FK 로 참조하고 있어서, 장바구니에
-	// 담겼거나 주문된 도서를 하드 삭제하면 FK 제약조건 위반(ORA-02292)이 발생합니다.
+	// 담겼거나 주문된 도서를 하드 삭제하면 FK 제약조건 위반(ORA-02292)이 발생.
 	@Column(name = "DELETED", nullable = false, columnDefinition = "NUMBER(1) DEFAULT 0")
 	private boolean deleted = false;
 
@@ -101,7 +101,7 @@ public class Book {
 
 	// 이 도서의 재고 - Book 이 부모, BookStock 이 자식(같은 PK 공유)이라 여기서는
 	// 조회 편의를 위한 역방향 매핑만 둡니다. CartItem/OrderItem 처럼 Book 을 JPA
-	// 로 참조하는 다른 엔티티가 book.getStock() 을 쓸 수 있어야 하기 때문입니다.
+	// 로 참조하는 다른 엔티티가 book.getStock() 을 쓸 수 있어야 하기 때문임.
 	@OneToOne(mappedBy = "book", fetch = FetchType.EAGER)
 	private BookStock stock;
 }

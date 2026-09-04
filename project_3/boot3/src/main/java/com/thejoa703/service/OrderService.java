@@ -30,13 +30,13 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 주문 서비스 - 로그인한 사용자라면 누구나 이용 가능 (관리자 전용 아님)
- * - Orders/OrderItem/CartItem 은 단순 CRUD 라 JPA Repository 를 사용합니다.
- * - Book 조회는 검색/JOIN 이 복잡해 Mapper(BookMapper)를 그대로 사용합니다.
- * - 장바구니 결제(cartItemIds) 또는 바로구매(bookId+quantity) 두 방식을 모두 지원합니다.
- * - 주문 생성 시점에는 재고를 "확인만" 하고 차감하지는 않습니다. 실제 차감은 결제 승인
+ * - Orders/OrderItem/CartItem 은 단순 CRUD 라 JPA Repository 를 사용.
+ * - Book 조회는 검색/JOIN 이 복잡해 Mapper(BookMapper)를 그대로 사용.
+ * - 장바구니 결제(cartItemIds) 또는 바로구매(bookId+quantity) 두 방식을 모두 지원.
+ * - 주문 생성 시점에는 재고를 "확인만" 하고 차감하지는 않음. 실제 차감은 결제 승인
  *   완료 시점(PaymentService.approve)에 이루어집니다.
  * - 결제전(PENDING) 주문 삭제는 DB에서 실제 삭제, 결제완료/취소/실패는 hiddenByUser
- *   플래그로 "숨기기"만 처리해서 회계·이력 기록을 보존합니다.
+ *   플래그로 "숨기기"만 처리해서 회계·이력 기록을 보존.
  */
 @Service
 @RequiredArgsConstructor
@@ -113,7 +113,7 @@ public class OrderService {
 		return OrderResponseDto.from(order);
 	}
 
-	// 재고 + 가격 검증 - 가격이 비어있는 도서는 여기서 즉시 거부합니다 (0원 주문 방지)
+	// 재고 + 가격 검증 - 가격이 비어있는 도서는 여기서 즉시 거부 (0원 주문 방지)
 	private void checkPurchasable(Book book, int quantity) {
 		if (book.isDeleted()) {
 			throw new IllegalStateException("[" + book.getTitle() + "] 판매가 중단된 도서라 구매할 수 없습니다.");
@@ -174,7 +174,7 @@ public class OrderService {
 
 		if (order.getOrderStatus() == OrderStatus.PENDING) {
 			// FK 제약(ORDER_ITEMS.ORDER_ID → ORDERS.ID) 때문에, 자식(OrderItem)을
-			// 먼저 지운 뒤 부모(Orders)를 삭제해야 합니다.
+			// 먼저 지운 뒤 부모(Orders)를 삭제 필요.
 			orderItemRepository.deleteByOrder_Id(orderId);
 			ordersRepository.deleteById(orderId);
 		} else {

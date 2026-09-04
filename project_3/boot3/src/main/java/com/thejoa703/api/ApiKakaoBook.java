@@ -17,9 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 카카오 도서검색 API 연동 서비스
- * boot1(the703) 의 api/ApiKakaoBook.java 를 그대로 재현했습니다.
- * (카카오 개발자센터의 REST API 키 하나로 로그인/도서검색 둘 다 사용 가능합니다.
- *  이미 소셜로그인에 등록해두신 KAKAO_CLIENT_ID 를 재사용하도록 기본값을 잡아뒀습니다.)
+ * boot1(the703) 의 api/ApiKakaoBook.java 를 그대로 재현했음.
+ * (카카오 개발자센터의 REST API 키 하나로 로그인/도서검색 둘 다 사용 가능.
+ *  이미 소셜로그인에 등록해두신 KAKAO_CLIENT_ID 를 재사용하도록 기본값을 잡아뒀음.)
  */
 @Slf4j
 @Service

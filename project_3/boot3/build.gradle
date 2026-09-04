@@ -36,6 +36,7 @@ dependencies {
    implementation 'org.springframework.boot:spring-boot-starter-security'
    implementation 'org.springframework.boot:spring-boot-starter-data-redis' 
    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+   implementation 'org.springframework.boot:spring-boot-starter-mail' // 회원가입 이메일 인증
    
    // lombok
    compileOnly 'org.projectlombok:lombok'
@@ -57,7 +58,7 @@ dependencies {
     
     // Gson
     implementation 'com.google.code.gson:gson:2.11.0'
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml' // ★국립중앙도서관 API(XML) 파싱용
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml' // 국립중앙도서관 API(XML) 파싱용
     
     // dotenv
     implementation 'me.paulschwarz:spring-dotenv:3.0.0'    

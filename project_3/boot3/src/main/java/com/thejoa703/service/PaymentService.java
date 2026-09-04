@@ -27,13 +27,11 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 카카오페이 결제 서비스 - 로그인한 사용자라면 누구나 이용 가능 (관리자 전용 아님)
- * ------------------------------------------------------------------
  * 결제흐름(3단계) : 결제준비(ready) → 사용자가 카카오페이 결제창에서 결제 → 결제승인(approve)
- * - 결제승인이 실제로 완료된 시점에만 재고를 차감합니다.
+ * - 결제승인이 실제로 완료된 시점에만 재고를 차감.
  * - 재고차감은 비관적 락(SELECT ... FOR UPDATE, BookStockRepository.findByIdForUpdate)으로
  *   동시성을 제어하고, 갱신 자체는 낙관적 락(BookStock.version, JPA @Version)으로 다시 한번
- *   확정합니다. Orders/OrderItem/BookStock 은 단순 CRUD 라 JPA Repository 를 사용합니다.
- * ------------------------------------------------------------------
+ *   확정. Orders/OrderItem/BookStock 은 단순 CRUD 라 JPA Repository 를 사용.
  */
 @Service
 @RequiredArgsConstructor
@@ -83,7 +81,7 @@ public class PaymentService {
 		return dto;
 	}
 
-	// 결제 승인 - 재고차감을 여기서 처리합니다 (비관적 락 + 낙관적 락)
+	// 결제 승인 - 재고차감을 여기서 처리 (비관적 락 + 낙관적 락)
 	@Transactional
 	public OrderResponseDto approve(Long userId, Long orderId, String pgToken) {
 		Orders order = ordersRepository.findById(orderId)
@@ -112,7 +110,7 @@ public class PaymentService {
 			}
 			stock.setStockQuantity(stock.getStockQuantity() - item.getQuantity());
 			try {
-				// saveAndFlush 로 즉시 반영시켜서, 낙관적 락(@Version) 충돌을 이 시점에 바로 감지합니다.
+				// saveAndFlush 로 즉시 반영시켜서, 낙관적 락(@Version) 충돌을 이 시점에 바로 감지
 				bookStockRepository.saveAndFlush(stock);
 			} catch (OptimisticLockException | ObjectOptimisticLockingFailureException e) {
 				throw new IllegalStateException("[" + item.getBookTitleSnapshot() + "] 재고 갱신 충돌이 발생했습니다. 다시 시도해주세요.");
@@ -123,7 +121,7 @@ public class PaymentService {
 		order.setApprovedAt(LocalDateTime.now());
 		order.setKakaoResponseJson(toJsonSafely(res));
 
-		// 판매량이 바뀌었으므로 베스트셀러(TOP 10) 캐시를 무효화해서 다음 조회 때 최신 랭킹으로 재계산되게 합니다.
+		// 판매량이 바뀌었으므로 베스트셀러(TOP 10) 캐시를 무효화해서 다음 조회 때 최신 랭킹으로 재계산되도록 처리
 		bookService.evictBestsellerCache();
 
 		return OrderResponseDto.from(order);

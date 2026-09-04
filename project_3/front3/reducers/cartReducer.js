@@ -100,7 +100,7 @@ const cartReducer = createSlice({
                 : [...state.selectedIds, id];
         },
         selectAllItems: (state) => {
-            // 판매중단(bookDeleted)된 항목은 어차피 주문할 수 없으므로 전체선택에서 제외합니다.
+            // 판매중단(bookDeleted)된 항목은 어차피 주문할 수 없으므로 전체선택에서 제외.
             state.selectedIds = state.items.filter((item) => !item.bookDeleted).map((item) => item.id);
         },
         clearSelection: (state) => {

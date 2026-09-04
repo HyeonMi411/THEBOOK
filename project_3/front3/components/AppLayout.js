@@ -26,10 +26,10 @@ function AppLayout({ children }) {
 
     // 새로고침, 혹은 카카오페이 결제창(외부 도메인)에서 우리 사이트로 돌아오는 것처럼
     // 브라우저가 완전히 새로 페이지를 로드하면 Redux 스토어가 처음부터 다시 만들어져서
-    // user 가 null 이 됩니다. localStorage 에 accessToken 이 남아있다면(진짜 로그아웃한
-    // 게 아니라면) 그 토큰으로 내 정보를 다시 불러와서 로그인 상태를 복원합니다.
+    // user 가 null 이 됨. localStorage 에 accessToken 이 남아있다면(진짜 로그아웃한
+    // 게 아니라면) 그 토큰으로 내 정보를 다시 불러와서 로그인 상태를 복원.
     // 이게 없으면, 결제 완료 후 "주문내역 보기"처럼 로그인이 필요한 화면으로 이동할 때
-    // 실제로는 로그인되어 있는데도 user 가 비어있어서 로그인 화면으로 튕겨나가 버립니다.
+    // 실제로는 로그인되어 있는데도 user 가 비어있어서 로그인 화면으로 튕겨나가 버림.
     useEffect(() => {
         if (!user && typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
             dispatch(loadUserRequest());
@@ -41,12 +41,12 @@ function AppLayout({ children }) {
         if (user && user.nickname) dispatch(fetchCartRequest());
     }, [user, dispatch]);
 
-    // 로그아웃 버튼 클릭시, 여기서 바로 /login 으로 이동시키면 안 됩니다.
+    // 로그아웃 버튼 클릭시, 여기서 바로 /login 으로 이동시키면 안 됨.
     // dispatch(logoutRequest())는 saga 를 비동기로 실행시키는데(백엔드 로그아웃 API
     // 호출 → 소셜 provider 확인 → 카카오/네이버면 그 사이트로 실제 이동), 여기서 곧바로
     // router.replace('/login') 을 하면 saga 가 이동시키기도 전에 사용자를 먼저 보내버려서
-    // 소셜 로그아웃이 실행 안 되는 것처럼 보이게 됩니다. 최종 이동은 saga(authSaga.js
-    // 의 logout())가 책임지므로, 여기서는 액션만 dispatch 합니다.
+    // 소셜 로그아웃이 실행 안 되는 것처럼 보이게 됨. 최종 이동은 saga(authSaga.js
+    // 의 logout())가 책임지므로, 여기서는 액션만 dispatch .
     const handleLogout = () => {
         dispatch(logoutRequest());
     };
@@ -54,7 +54,7 @@ function AppLayout({ children }) {
     // antd Menu 의 items.label 안에 <a onClick={...}> 를 직접 넣는 방식 대신,
     // Menu 자체의 onClick 콜백(공식 권장 패턴)을 씁니다. label 내부에 onClick을
     // 직접 넣는 방식은 antd 버전/설정에 따라 Menu 내부 이벤트 처리와 충돌해서
-    // 클릭이 씹히는 경우가 보고되어 있어, 더 안정적인 방식으로 바꿨습니다.
+    // 클릭이 씹히는 경우가 보고되어 있어, 더 안정적인 방식으로 바꿨음.
     const handleMenuClick = ({ key }) => {
         if (key === 'logout') {
             handleLogout();

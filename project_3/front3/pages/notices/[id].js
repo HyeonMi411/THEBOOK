@@ -1,5 +1,5 @@
 // pages/notices/[id].js  (SBOARD2 - 공지사항, 상세조회시 서버에서 BHIT +1 처리됨)
-// boot1(the703) templates/board/detail.html 디자인을 그대로 재현했습니다.
+// boot1(the703) templates/board/detail.html 디자인을 그대로 재현했음.
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";

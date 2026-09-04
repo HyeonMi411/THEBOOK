@@ -16,8 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 국립중앙도서관 도서검색 API 연동 서비스
- * boot1(the703) 의 api/NlBookApiService.java 를 그대로 재현했습니다.
- * (국립중앙도서관 오픈API 는 XML 로 응답합니다)
+ * boot1(the703) 의 api/NlBookApiService.java 를 그대로 재현했음.
+ * (국립중앙도서관 오픈API 는 XML 로 응답)
  */
 @Slf4j
 @Service

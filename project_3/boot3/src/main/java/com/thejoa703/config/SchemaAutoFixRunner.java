@@ -21,10 +21,10 @@ import lombok.extern.slf4j.Slf4j;
  * 실제 컬럼 상태를 확인해 필요하면 직접 고쳐줍니다.
  *
  * - BOOK.PUBLISH_DATE : 카카오/국립중앙도서관 자동수집 도서는 출판일 정보가 없거나
- *   파싱에 실패할 수 있어 null 로 저장합니다. 그러려면 이 컬럼이 NULL 을 허용해야 합니다.
+ *   파싱에 실패할 수 있어 null 로 저장. 그러려면 이 컬럼이 NULL 을 허용 필요.
  *
  * 이미 NULL 허용 상태면 아무것도 하지 않으므로(멱등성) 매번 실행돼도 안전하고,
- * 실패해도 애플리케이션 기동 자체는 막지 않습니다.
+ * 실패해도 애플리케이션 기동 자체는 막지 않음.
  */
 @Slf4j
 @Component
@@ -53,7 +53,7 @@ public class SchemaAutoFixRunner implements ApplicationRunner {
 
 			if (!columnFound) {
 				// 아직 테이블/컬럼 자체가 없는 최초 기동 시점 - Hibernate 가 이번 기동에서
-				// 만들어줄 것이므로(NULL 허용으로), 여기서는 아무 것도 할 필요가 없습니다.
+				// 만들어줄 것이므로(NULL 허용으로), 여기서는 아무 것도 할 필요가 없음.
 				return;
 			}
 
@@ -69,7 +69,7 @@ public class SchemaAutoFixRunner implements ApplicationRunner {
 
 		} catch (Exception e) {
 			// 스키마 보정 실패가 애플리케이션 기동 자체를 막지 않도록 예외를 삼킵니다.
-			// (권한 부족, 방언 차이 등으로 실패하면 로그만 남기고, 필요시 수동으로 확인하면 됩니다)
+			// (권한 부족, 방언 차이 등으로 실패하면 로그만 남기고, 필요시 수동으로 확인하면 됨)
 			log.warn("스키마 자동 보정 중 문제가 발생했습니다 ({}.{}): {}", tableName, columnName, e.getMessage());
 		}
 	}

@@ -17,8 +17,8 @@ import lombok.Setter;
 
 /**
  * 장바구니 헤더 엔티티 (CART)
- * - 사용자당 장바구니는 1개뿐이므로 AppUser 와 1:1 관계입니다.
- * - 실제 담긴 도서 목록은 CartItem 에서 관리합니다.
+ * - 사용자당 장바구니는 1개뿐이므로 AppUser 와 1:1 관계임.
+ * - 실제 담긴 도서 목록은 CartItem 에서 관리.
  */
 @Entity
 @Table(name = "CART")

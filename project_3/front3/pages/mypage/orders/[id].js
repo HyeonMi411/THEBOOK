@@ -1,5 +1,5 @@
 // pages/mypage/orders/[id].js
-// 주문내역 목록(/mypage/orders)에서 특정 주문을 클릭했을 때 보여주는 상세 화면입니다.
+// 주문내역 목록(/mypage/orders)에서 특정 주문을 클릭했을 때 보여주는 상세 화면임.
 // PENDING(결제대기) 상태인 주문은 여기서 바로 결제 이어하기가 가능하도록
 // /order/checkout 으로 이동하는 버튼도 함께 보여줍니다.
 import React, { useEffect } from 'react';

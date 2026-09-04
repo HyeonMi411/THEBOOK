@@ -26,8 +26,8 @@ import com.thejoa703.repository.AppUserRepository;
  * Book / Sboard2 - BookMapper / Sboard2Mapper (MyBatis) 검증 테스트
  * ------------------------------------------------------------------------------
  * - 클래스에 @Transactional 을 걸어 자동롤백시키는 대신, 매 테스트가 끝난 뒤
- *   @AfterEach 에서 이 테스트가 생성한 데이터만 정확히 지워서 초기화합니다.
- * - Service/Security(@PreAuthorize) 검증은 포함하지 않고, Mapper 만 검증합니다.
+ *   @AfterEach 에서 이 테스트가 생성한 데이터만 정확히 지워서 초기화.
+ * - Service/Security(@PreAuthorize) 검증은 포함하지 않고, Mapper 만 검증.
  * ------------------------------------------------------------------------------
  */
 @SpringBootTest
@@ -157,10 +157,10 @@ class Boot2ApplicationTests_3_BookSboard2Entity {
 		assertThat(bookMapper.findById(bookId).getAuthor()).isEqualTo("김코딩"); // 나머지값 유지확인
 
 		// 삭제 (소프트) - 실제 행은 그대로 남고 DELETED 플래그만 세워집니다. 행 자체는
-		// 여전히 존재하므로(하드삭제가 아님) createdBookIds 에서 빼면 안 됩니다 - 빼버리면
+		// 여전히 존재하므로(하드삭제가 아님) createdBookIds 에서 빼면 안 됨 - 빼버리면
 		// tearDown() 이 이 행을 하드삭제하지 않고 그대로 남겨두게 되어, 이 도서가 계속
 		// APP_USER 를 FK 로 참조한 채 남아있다가 나중에 admin 을 지울 때 ORA-02292
-		// (자식 레코드가 발견되었습니다) 로 실패합니다.
+		// (자식 레코드가 발견되었음) 로 실패.
 		bookMapper.updateDeleted(bookId, true);
 		Book afterDelete = bookMapper.findById(bookId);
 		assertThat(afterDelete).isNotNull();

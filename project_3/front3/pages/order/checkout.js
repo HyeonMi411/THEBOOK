@@ -1,6 +1,6 @@
 // pages/order/checkout.js
 // 장바구니 선택항목(?cartItemIds=1,2,3) 또는 바로구매로 만들어진 주문(?orderId=)을
-// 확인하고, 카카오페이 결제를 요청하는 화면입니다.
+// 확인하고, 카카오페이 결제를 요청하는 화면임.
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from 'react-redux';

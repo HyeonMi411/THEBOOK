@@ -1,7 +1,7 @@
 // pages/payment/complete.js
 // 카카오페이 결제창에서 결제를 마치면 approval_url(=이 페이지)?orderId=&pg_token= 로
-// 리다이렉트됩니다. 로그인 상태(JWT)가 있는 이 프론트 화면에서 백엔드 승인 API를
-// AJAX 로 호출해 최종 승인 처리합니다.
+// 리다이렉트됨. 로그인 상태(JWT)가 있는 이 프론트 화면에서 백엔드 승인 API를
+// AJAX 로 호출해 최종 승인 처리.
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from 'react-redux';
