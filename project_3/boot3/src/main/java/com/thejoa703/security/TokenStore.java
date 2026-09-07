@@ -1,7 +1,7 @@
 package com.thejoa703.security;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate; // 🔍 템플릿 변경
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
@@ -29,7 +29,7 @@ public class TokenStore {
         String key = buildKey(userId);
         stringRedisTemplate.delete(key);
     } 
-    // REDIS 키 생성 규칙 ##
+    // Redis 키 생성 규칙
     private String buildKey(String userId) {
         return "refresh:" + userId;
     }

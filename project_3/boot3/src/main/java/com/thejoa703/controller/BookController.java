@@ -41,7 +41,7 @@ import lombok.RequiredArgsConstructor;
 public class BookController {
 
 	private final BookService        bookService;
-	private final AuthUserJwtService authUserJwtService; // ###
+	private final AuthUserJwtService authUserJwtService;
 
 	@Operation(summary = "도서 전체조회(페이징)", description = "page(1부터)/size 파라미터로 12개씩 페이징 조회, category 로 필터링 가능")
 	@GetMapping

@@ -135,20 +135,6 @@ public class UserController {
 	}
 	
 	// 로그인
-	//	@Operation( summary="로그인" , description = "이메일과 비밀번호로 로그인하여 세션을 생성합니다.")
-	//	@PostMapping(value="/login"  , consumes = MediaType.APPLICATION_JSON_VALUE) 
-	//	public   ResponseEntity<UserResponseDto>   login(
-	//			@RequestBody LoginRequest request,
-	//			HttpSession session   // jakarta.servlet.http.HttpSession
-	//	){	
-	//		//Long userId = (Long)session.getAttribute("LOGIN_USER_ID");
-	//		//if( userId == null ) {  return  ResponseEntity.status(401).build();  }   // 권한없음.
-	//		//return  ResponseEntity.ok(  userService.getUser(userId));  
-	//		UserResponseDto  user	 =	userService.login(request);
-	//		session.setAttribute("LOGIN_USER_ID", user.getId());  //세션셋팅
-	//		return  ResponseEntity.ok(  user );
-	//	}
-	
     @Operation(summary = "로그인 (Access Token + Refresh Token 발급)")
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> login(
@@ -276,13 +262,6 @@ public class UserController {
 	
 	
 	// 로그아웃 
-//	@Operation( summary="로그아웃" , description = "현재 세션을 만료시켜 로그아웃합니다.")
-//	@PostMapping("/logout")
-//	public    ResponseEntity<Void> logout(HttpSession session){
-//		session.invalidate();
-//		return ResponseEntity.noContent().build();
-//	}
-    
     //org.springframework.web.bind.annotation.CookieValue    
     @Operation(summary = "로그아웃")
     @PostMapping("/logout")
@@ -323,15 +302,6 @@ public class UserController {
     
 	
 	// 마이페이지       
-//	@Operation( summary="현재 로그인한 사용자 정보조회" , description = "세션기반으로 현재 로그인된 사용자의 정보를 조회")
-//	@GetMapping("/me") 
-//	public    ResponseEntity<UserResponseDto>  getUser( HttpSession session ){
-//		
-//		Long userId = (Long)session.getAttribute("LOGIN_USER_ID");
-//		if( userId == null ) {  return  ResponseEntity.status(401).build();  }   // 권한없음.
-//		return  ResponseEntity.ok(  userService.getUser(userId));  
-//	} 
-	    
     @Operation(summary = "현재 로그인한 사용자 정보 조회")
     @GetMapping("/me")					// jakarta.servlet.http.HttpServletRequest
     public ResponseEntity<UserResponseDto> me(HttpServletRequest request,

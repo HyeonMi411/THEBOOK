@@ -93,7 +93,7 @@ public class UserDto {
 }
 
 //1) UserDto :  UserRequestDto   /  UserResponseDto  
-//UserRequestDto  < email , password, nickname,  ☆image (ufile: Multipart 빠짐)   /  provider , mobile, mbtitype  >
+//UserRequestDto  < email , password, nickname,  image (ufile: Multipart 빠짐)   /  provider , mobile, mbtitype  >
 //UserResponseDto < id, email , role    , nickname,   ufile     / provider , mobile , mbtitype >
 //
 

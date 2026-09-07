@@ -37,7 +37,7 @@ import lombok.RequiredArgsConstructor;
 public class Sboard2Controller {
 
 	private final Sboard2Service     sboard2Service;
-	private final AuthUserJwtService authUserJwtService; // ###
+	private final AuthUserJwtService authUserJwtService;
 
 	@Operation(summary = "공지사항 전체조회(페이징)", description = "page(1부터)/size 파라미터로 12개씩 페이징 조회")
 	@GetMapping
