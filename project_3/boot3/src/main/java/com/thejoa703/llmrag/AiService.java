@@ -78,7 +78,7 @@ public class AiService {
 				.body(LlmRagResponse.class);
 
 		if (response != null && !response.choices().isEmpty()) {
-			return response.choices().get(0).message().getContent();
+			return response.choices().get(0).message().content();
 		}
 		return "AI 응답을 생성하지 못했습니다.";
 	}

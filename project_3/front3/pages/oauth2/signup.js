@@ -56,7 +56,13 @@ export default function OAuth2SignupPage() {
   };
 
   const handleSendEmailCode = async () => {
-    if (!preview?.email) return;
+    if (!preview?.email) {
+      setError(
+        "카카오/네이버 계정에서 이메일 제공에 동의하지 않으셨거나, 앱이 이메일 항목을 " +
+          "수신하도록 설정되어 있지 않습니다. 이메일 동의 후 다시 로그인해주세요."
+      );
+      return;
+    }
     setEmailSending(true);
     setError(null);
     try {
@@ -162,11 +168,18 @@ export default function OAuth2SignupPage() {
           {/* 이메일 인증 - 소셜 제공자가 이메일을 검증해줬더라도, 우리 서비스 자체적으로
               한 번 더 인증번호를 발송/확인해서 로컬 회원가입과 동일한 보안 수준을 유지 */}
           <div style={{ marginTop: 16 }}>
+            {!preview?.email && (
+              <p style={{ color: "#d46b08", marginBottom: 8 }}>
+                ⚠️ {preview?.provider} 계정에서 이메일 정보를 받아오지 못했습니다.
+                카카오/네이버 계정 설정에서 이메일 제공에 동의하셨는지 확인 후,
+                로그아웃하고 다시 로그인해주세요.
+              </p>
+            )}
             <button
               type="button"
               className="btn"
               onClick={handleSendEmailCode}
-              disabled={emailSending || verified}
+              disabled={emailSending || verified || !preview?.email}
             >
               {emailSending ? "발송중..." : "이메일 인증번호 받기"}
             </button>
