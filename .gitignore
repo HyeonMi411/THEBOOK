@@ -21,7 +21,15 @@ Thumbs.db
 
 # Next.js
 .next/
+node_modules/
 
 .env
 **/env
 **/.env
+
+*.csv
+*.env
+*.key
+*.pem
+*.md
+ 
