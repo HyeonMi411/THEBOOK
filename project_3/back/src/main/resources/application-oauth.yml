@@ -61,7 +61,9 @@ spring:
 
 app:
   oauth2:
-    redirect-url: http://localhost:3000/oauth2/callback
+    redirect-url: http://3.34.52.58/oauth2/callback
+    # redirect-url: http://localhost:3000/oauth2/callback
+    # redirect-url: http://localhost:3000/oauth2/callback
     # 신규 소셜회원의 "가입확인(닉네임 확인/수정)" 화면 주소. 비워두면
     #   redirect-url 에서 /oauth2/callback → /oauth2/signup 로 자동 유추.
     signup-confirm-url: http://localhost:3000/oauth2/signup
