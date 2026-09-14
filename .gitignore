@@ -30,6 +30,6 @@ node_modules/
 *.csv
 *.env
 *.key
-*.pem
+*.pem 
 *.md
-  
+   
