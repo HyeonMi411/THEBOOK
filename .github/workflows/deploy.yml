@@ -5,7 +5,8 @@ on:     # 실행조건 정의
     branches:   
       - main   # main 브랜치에 push 될 때만 실행     
     paths:
-      - 'project_3/**'
+      - "project_3/**"
+      - ".github/workflows/deploy.yml"
 
 jobs:       # 실행할 job 정의
   backend:     # 백엔드 배포 job
