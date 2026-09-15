@@ -1,0 +1,223 @@
+name: Deploy Fullstack App   # 워크플로우 이름 정의 - d2big.duckdns.org  도메인추가 변경사항없음
+
+on:     # 실행조건 정의
+  push:    # push 이벤트 발생시 실행
+    branches:   
+      - main   # main 브랜치에 push 될 때만 실행     
+    paths:
+      # paths: 
+      # - 'v3/**'
+      - 'project_3/**'      
+
+jobs:       # 실행할 job 정의
+  backend:     # 백엔드 배포 job
+    runs-on: ubuntu-latest  # ubuntu 최신버젼환경
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3    # 저장소 코드 가져오기
+
+      - name: Check gradle wrapper
+        run: |
+          chmod +x back/gradlew
+          ls -la back/gradle/wrapper/
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3  # Java 환경설정
+        with:
+          java-version: '17'         # Java 17    ##
+          distribution: 'temurin'    
+
+      - name: Grant execute permission for gradlew  
+        run: chmod +x ./gradlew       # gradlew 실행권한
+        working-directory: back       # back 디렉토리에서실행  ##  
+
+      - name: Build Spring Boot App
+        run: ./gradlew clean build -x test  # 테스트제외하고 빌드
+        working-directory: back      # back 디렉토리
+
+      - name: Debug Backend Files
+        run: |
+          echo "=== back 디렉터리 ==="
+          ls -al back
+          echo "=== build/libs 디렉터리 ==="
+          ls -al back/build/libs
+
+      - name: Find JAR file (fat jar만 선택)
+        run: echo "JAR_FILE=$(ls back/build/libs/*SNAPSHOT.jar | grep -v plain | head -n 1)" >> $GITHUB_ENV
+        # plain.jar 제외하고 실행 가능한 fat JAR만 선택
+
+      - name: Debug JAR_FILE
+        run: echo "선택된 JAR_FILE=${{ env.JAR_FILE }}"
+
+      - name: Ensure JAR exists
+        run: |
+          if [ ! -f "${{ env.JAR_FILE }}" ]; then
+            echo "❌ JAR file not found: ${{ env.JAR_FILE }}"
+            ls -al back/build/libs
+            exit 1
+          fi
+          echo "✅ JAR file found: ${{ env.JAR_FILE }}"
+
+      - name: Create Backend .env from Secrets
+        run: |                     # secrets 기반으로 .env 파일 생성    
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> back/.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> back/.env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> back/.env
+          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> back/.env
+          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> back/.env
+          echo "KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" >> back/.env
+          echo "NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID }}" >> back/.env
+          echo "NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}" >> back/.env
+
+      - name: Ensure app directory exists on EC2
+        uses: appleboy/ssh-action@v0.1.7                 #   EC2 접속후 디렉토리 생성
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: mkdir -p /home/ubuntu/app
+
+        # - name: Copy Backend build/libs to EC2
+        # uses: appleboy/scp-action@v0.1.7
+        # with:
+        #   host: ${{ secrets.EC2_HOST }}
+        #   username: ${{ secrets.EC2_USER }}
+        #   key: ${{ secrets.EC2_SSH_KEY }}
+        #   source: "back/build/libs/*"
+        #   target: "/home/ubuntu/app/back/build/libs"
+        # 🔧 build/libs 전체를 복사해서 EC2에서 직접 실행  
+        
+      - name: Copy Backend JAR to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "back/build/libs/back-0.0.1-SNAPSHOT.jar"
+          target: "/home/ubuntu/app"
+
+      - name: Debug EC2 app directory
+        uses: appleboy/ssh-action@v0.1.7   # .EC2 파일확인
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: ls -lh /home/ubuntu/app/back/build/libs
+
+ 
+      - name: Copy Backend .env to EC2
+        uses: appleboy/scp-action@v0.1.7   #  .env 파일을 ec2로 복사
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "back/.env"
+          target: "/home/ubuntu/app"
+
+
+
+      - name: Wait for Oracle & Redis readiness on EC2
+        uses: appleboy/ssh-action@v0.1.7    # db와 redis 준비상태 확인
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "⏳ Waiting for Oracle DB (1521) and Redis (6379)..."
+            for i in {1..30}; do
+              nc -z localhost 1521 && nc -z localhost 6379
+              if [ $? -eq 0 ]; then
+                echo "✅ Oracle & Redis are ready"
+                break
+              fi
+              echo "Not ready yet... retry in 10s ($i/30)"
+              sleep 10
+            done
+
+      - name: Run Backend on EC2 with pm2 (build/libs에서 실행)
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/app/back/build/libs
+            pm2 delete backend || true
+            export $(cat /home/ubuntu/app/back/.env | xargs)
+            pm2 start java --name backend -- -jar back-0.0.1-SNAPSHOT.jar
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # 🔑 Secrets 기반으로 .env.production 먼저 생성
+      - name: Create Frontend .env.production
+        run: |
+          echo "NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}" > front/.env.production
+
+      # 빌드 전에 .env.production이 반영되도록 순서 조정   
+      - name: Build Frontend
+        run: |
+          npm install
+          npm run build -- --no-lint
+        working-directory: front
+
+      - name: Debug Frontend Files
+        run: |
+          ls -al front
+          ls -al front/.next || true
+          ls -al front/public || true
+
+      - name: Ensure front directory exists on EC2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: mkdir -p /home/ubuntu/app/front
+
+      # 빌드 결과물(.next, public, package.json,   .env.production)을 압축     
+      - name: Archive frontend build
+        run: |
+          cd front
+          tar -czf ../frontend-build.tar.gz .next public package.json .env.production
+
+      - name: Copy frontend archive to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "frontend-build.tar.gz"
+          target: "/home/ubuntu/app/front"
+
+      - name: Extract archive on EC2 (기존 빌드 정리 후)
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/app/front
+            rm -rf .next public
+            tar -xzf frontend-build.tar.gz
+
+      - name: Run Frontend on EC2 with pm2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/app/front
+            npm install --production
+            pm2 delete frontend || true
+            pm2 start npm --name "frontend" -- run start
+
