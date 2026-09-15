@@ -1,0 +1,71 @@
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521/XE
+    username: boot  # ${DB_USERNAME}
+    password: react # ${DB_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: update  #  test환경  create-drop 매번초기화 / update 부분수정
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 20MB      
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USERNAME:}
+    password: ${GMAIL_APP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  config:
+    import: 
+      - optional:application-oauth.yml
+      - optional:file:.env[.properties]
+
+mybatis:
+  config-location: classpath:mybatis-config.xml
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.thejoa703.entity
+
+jwt:
+  issuer: thejoa703
+  secret: ${JWT_SECRET}
+  access-token-exp-seconds: 900       
+  refresh-token-exp-seconds: 1209600   
+  header: Authorization
+  prefix: Bearer
+
+email:
+  verification:
+    code-exp-seconds: 300        # 인증번호 유효시간 (5분)
+    verified-exp-seconds: 1800   # 인증완료 상태 유지시간 (30분) - 이 안에 회원가입을 마쳐야 함
+
+openai:
+  api:
+    key: ${OPENAI_API_KEY:}   # AI RAG 챗봇 - platform.openai.com 에서 발급 (유료)
+
+file:
+  upload-dir: uploads
+
+#server:
+#  port: 8484

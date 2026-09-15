@@ -5,8 +5,7 @@ on:     # 실행조건 정의
     branches:   
       - main   # main 브랜치에 push 될 때만 실행     
     paths:
-      - "project_3/**"
-      - ".github/workflows/deploy.yml"
+      - 'project_3/**'
 
 jobs:       # 실행할 job 정의
   backend:     # 백엔드 배포 job
@@ -83,7 +82,7 @@ jobs:       # 실행할 job 정의
         #   username: ${{ secrets.EC2_USER }}
         #   key: ${{ secrets.EC2_SSH_KEY }}
         #   source: "project_3/back/build/libs/*"
-        #   target: "/home/ubuntu/app/back/build/libs"
+        #   target: "/home/ubuntu/app/project_3/back/build/libs"
         # 🔧 build/libs 전체를 복사해서 EC2에서 직접 실행  
         
       - name: Copy Backend JAR to EC2
@@ -101,7 +100,7 @@ jobs:       # 실행할 job 정의
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: ls -lh /home/ubuntu/app/back/build/libs
+          script: ls -lh /home/ubuntu/app/project_3/back/build/libs
 
  
       - name: Copy Backend .env to EC2
@@ -140,9 +139,9 @@ jobs:       # 실행할 job 정의
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/app/back/build/libs
+            cd /home/ubuntu/app/project_3/back/build/libs
             pm2 delete backend || true
-            export $(cat /home/ubuntu/app/back/.env | xargs)
+            export $(cat /home/ubuntu/app/project_3/back/.env | xargs)
             pm2 start java --name backend -- -jar back-0.0.1-SNAPSHOT.jar
 
   frontend:
