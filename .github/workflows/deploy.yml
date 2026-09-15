@@ -4,9 +4,7 @@ on:     # 실행조건 정의
   push:    # push 이벤트 발생시 실행
     branches:   
       - main   # main 브랜치에 push 될 때만 실행     
-    paths:
-      # paths: 
-      # - 'v3/**'
+    paths: 
       - 'project_3/**'      
 
 jobs:       # 실행할 job 정의
