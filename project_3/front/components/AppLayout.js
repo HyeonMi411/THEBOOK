@@ -47,10 +47,23 @@ function AppLayout({ children }) {
     // router.replace('/login') 을 하면 saga 가 이동시키기도 전에 사용자를 먼저 보내버려서
     // 소셜 로그아웃이 실행 안 되는 것처럼 보이게 됨. 최종 이동은 saga(authSaga.js
     // 의 logout())가 책임지므로, 여기서는 액션만 dispatch .
-    const handleLogout = () => {
-        dispatch(logoutRequest());
-    };
+    // const handleLogout = () => {
+    //     dispatch(logoutRequest());
+    // };
+    ////////// 로그아웃
+    const handleLogout = (e)=>{   
+        if( e  && e.preventDefault)     e.preventDefault();
 
+        dispatch(logoutRequest());   
+
+        if(  typeof  window  !== 'undefined' ){
+            localStorage.removeItem('accessToken');
+            sessionStorage.clear();
+            //router.replace('/login');  
+            window.location.href='/login';
+        }
+    };
+    
     // antd Menu 의 items.label 안에 <a onClick={...}> 를 직접 넣는 방식 대신,
     // Menu 자체의 onClick 콜백(공식 권장 패턴)을 씁니다. label 내부에 onClick을
     // 직접 넣는 방식은 antd 버전/설정에 따라 Menu 내부 이벤트 처리와 충돌해서
