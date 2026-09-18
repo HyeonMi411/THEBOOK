@@ -65,7 +65,7 @@ openai:
     key: ${OPENAI_API_KEY:}   # AI RAG 챗봇 - platform.openai.com 에서 발급 (유료)
 
 file:
-  upload-dir: /home/ubuntu/app/back/build/libs/uploads
+  upload-dir: /home/ubuntu/app/project_3/back/build/libs/uploads
   #upload-dir: uploads
 
 #server:

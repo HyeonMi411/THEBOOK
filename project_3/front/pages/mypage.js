@@ -5,6 +5,7 @@ import {
   Card, Avatar, Spin, Descriptions, Form, Input, Button, Upload, List, Tabs, message, Popconfirm,
 } from "antd";
 import {useRouter}  from  "next/router"; 
+import { API_BASE_URL } from "../api/axios";
 import {updateNicknameRequest , updateProfileImageRequest, withdrawRequest}  from "../reducers/authReducer"; 
 import { UploadOutlined } from "@ant-design/icons";
 
@@ -40,7 +41,7 @@ export default function MyPage(){//2. 부품 + export
         <div  style={{ maxWidth: 600 , margin: "40px auto"}}>
             <Card title="마이페이지 (회원 정보)">
                 <div  style={{ display:"flex"  , alignItems:"center" ,  gap:"20px"  }} >
-                    <Avatar src={`http://localhost:8080/${user.ufile}`} size={64}>{user.nickname?.[0]}</Avatar>
+                    <Avatar src={`${API_BASE_URL}/${user.ufile}`} size={64}>{user.nickname?.[0]}</Avatar>
                     <Descriptions title="User Info"  bordered column={1}>
                         <Descriptions.Item label="회원 번호">{user.id}</Descriptions.Item>
                         <Descriptions.Item label="이메일">{user.email}</Descriptions.Item>

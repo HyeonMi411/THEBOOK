@@ -1,8 +1,9 @@
 // api/axios.js 
 import axios from "axios"; 
+// 기본 api 서버주소, 환경변수 없으면 로컬서버 사용 (이미지 URL 등 다른 곳에서도 재사용)
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 const api = axios.create({
-  // 기본 api 서버주소, 환경변수 없으면 로컬서버 사용
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080",  
+  baseURL: API_BASE_URL,  
   // refreshToken 이 HttpOnly 쿠키에 저장이 되어 있으면 자동으로 포함 필요
   withCredentials: true,  
   headers: {

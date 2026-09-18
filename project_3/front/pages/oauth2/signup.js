@@ -8,6 +8,7 @@ import { useRouter } from "next/router";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../reducers/authReducer";
 import axios from "axios";
+import { API_BASE_URL } from "../../api/axios";
 
 export default function OAuth2SignupPage() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function OAuth2SignupPage() {
 
   const fetchPreview = async (signupToken) => {
     try {
-      const res = await axios.get("http://localhost:8080/auth/social/preview", {
+      const res = await axios.get(`${API_BASE_URL}/auth/social/preview`, {
         params: { signupToken },
       });
       setPreview(res.data);
@@ -66,7 +67,7 @@ export default function OAuth2SignupPage() {
     setEmailSending(true);
     setError(null);
     try {
-      await axios.post("http://localhost:8080/auth/email/send-code", null, {
+      await axios.post(`${API_BASE_URL}/auth/email/send-code`, null, {
         params: { email: preview.email },
       });
       setCodeSent(true);
@@ -85,7 +86,7 @@ export default function OAuth2SignupPage() {
     setCodeVerifying(true);
     setError(null);
     try {
-      await axios.post("http://localhost:8080/auth/email/verify-code", null, {
+      await axios.post(`${API_BASE_URL}/auth/email/verify-code`, null, {
         params: { email: preview.email, code: emailCode },
       });
       setVerified(true);
@@ -111,7 +112,7 @@ export default function OAuth2SignupPage() {
     try {
       const { signupToken } = router.query;
       const res = await axios.post(
-        "http://localhost:8080/auth/social/signup",
+        `${API_BASE_URL}/auth/social/signup`,
         { signupToken, nickname: nickname.trim() },
         { withCredentials: true } // 쿠키(refreshToken) 저장용
       );

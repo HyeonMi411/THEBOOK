@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchBookDetailRequest, deleteBookRequest, updateBookRequest, resetBookState } from "../../reducers/bookReducer";
 import { addToCartRequest } from "../../reducers/cartReducer";
+import { API_BASE_URL } from "../../api/axios";
 import { createOrderRequest, resetOrderState } from "../../reducers/orderReducer";
 import EditBookModal from "../../components/EditBookModal";
 import BookCoverImage from "../../components/BookCoverImage";
@@ -106,7 +107,7 @@ export default function BookDetailPage() {
   const coverSrc = currentBook.bookCover
     ? (currentBook.bookCover.startsWith('http')
         ? currentBook.bookCover
-        : `http://localhost:8080/${currentBook.bookCover}`)
+        : `${API_BASE_URL}/${currentBook.bookCover}`)
     : null;
 
   return (

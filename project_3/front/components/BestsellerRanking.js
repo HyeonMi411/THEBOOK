@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchBestsellersRequest } from '../reducers/bookReducer';
 import BookCoverImage from './BookCoverImage';
+import { API_BASE_URL } from '../api/axios';
 
 export default function BestsellerRanking() {
   const dispatch = useDispatch();
@@ -34,7 +35,7 @@ export default function BestsellerRanking() {
               <div className="bestseller-cover">
                 <BookCoverImage
                   src={item.book.bookCover
-                    ? (item.book.bookCover.startsWith('http') ? item.book.bookCover : `http://localhost:8080/${item.book.bookCover}`)
+                    ? (item.book.bookCover.startsWith('http') ? item.book.bookCover : `${API_BASE_URL}/${item.book.bookCover}`)
                     : null}
                   alt={item.book.title}
                   iconSize={22}

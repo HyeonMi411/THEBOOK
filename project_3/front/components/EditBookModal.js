@@ -2,6 +2,7 @@
 // boot1(BookStore) 톤을 유지한 도서수정 모달 (antd Modal 틀 + bs-form-control 스타일)
 import React, { useState, useEffect } from 'react';
 import { Modal } from 'antd';
+import { API_BASE_URL } from '../api/axios';
 
 export default function EditBookModal({ visible, onCancel, editBook, onSubmit }) {
   const [form, setForm] = useState({});
@@ -90,7 +91,7 @@ export default function EditBookModal({ visible, onCancel, editBook, onSubmit })
               ? <img src={previewUrl} alt="미리보기" style={{ width: 130, height: 175, objectFit: "cover", borderRadius: 8 }} />
               : (editBook?.bookCover
                 ? <img
-                    src={editBook.bookCover.startsWith('http') ? editBook.bookCover : `http://localhost:8080/${editBook.bookCover}`}
+                    src={editBook.bookCover.startsWith('http') ? editBook.bookCover : `${API_BASE_URL}/${editBook.bookCover}`}
                     alt="현재 표지"
                     style={{ width: 130, height: 175, objectFit: "cover", borderRadius: 8 }}
                   />

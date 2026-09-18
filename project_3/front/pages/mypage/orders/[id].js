@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchOrderDetailRequest, deleteOrderRequest, resetOrderState } from '../../../reducers/orderReducer';
 import BookCoverImage from '../../../components/BookCoverImage';
+import { API_BASE_URL } from '../../../api/axios';
 
 const STATUS_LABEL = {
   PENDING: '결제대기',
@@ -65,7 +66,7 @@ export default function MyOrderDetailPage() {
             <div className="checkout-item-cover">
               <BookCoverImage
                 src={item.bookCover
-                  ? (item.bookCover.startsWith('http') ? item.bookCover : `http://localhost:8080/${item.bookCover}`)
+                  ? (item.bookCover.startsWith('http') ? item.bookCover : `${API_BASE_URL}/${item.bookCover}`)
                   : null}
                 alt={item.bookTitle}
                 iconSize={18}

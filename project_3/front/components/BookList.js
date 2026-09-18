@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import Pagination from './Pagination';
 import BookCoverImage from './BookCoverImage';
+import { API_BASE_URL } from '../api/axios';
 
 export default function BookList({ books = [], currentPage, totalPages, onPageChange }) {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function BookList({ books = [], currentPage, totalPages, onPageCh
                 {/* 표지 없음/링크깨짐 → 자동으로 기본 아이콘 표시 */}
                 <BookCoverImage
                   src={book.bookCover
-                    ? (book.bookCover.startsWith('http') ? book.bookCover : `http://localhost:8080/${book.bookCover}`)
+                    ? (book.bookCover.startsWith('http') ? book.bookCover : `${API_BASE_URL}/${book.bookCover}`)
                     : null}
                   alt={book.title}
                   iconSize={40}

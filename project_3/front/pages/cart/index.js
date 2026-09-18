@@ -7,6 +7,7 @@ import {
   toggleSelectItem, selectAllItems, clearSelection,
 } from '../../reducers/cartReducer';
 import BookCoverImage from '../../components/BookCoverImage';
+import { API_BASE_URL } from '../../api/axios';
 
 export default function CartPage() {
   const router = useRouter();
@@ -123,7 +124,7 @@ export default function CartPage() {
                       <div className="cart-item-cover">
                         <BookCoverImage
                           src={item.bookCover
-                            ? (item.bookCover.startsWith('http') ? item.bookCover : `http://localhost:8080/${item.bookCover}`)
+                            ? (item.bookCover.startsWith('http') ? item.bookCover : `${API_BASE_URL}/${item.bookCover}`)
                             : null}
                           alt={item.bookTitle}
                           iconSize={20}

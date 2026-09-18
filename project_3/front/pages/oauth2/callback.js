@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../reducers/authReducer";
 import axios from "axios";
+import { API_BASE_URL } from "../../api/axios";
 // String targetUrl = redirectUrl + "?accessToken=" + access;   // 쿼리스트링
 //2. 부품 + export
 export default function OAuth2CallbackPage(){
@@ -52,7 +53,7 @@ export default function OAuth2CallbackPage(){
     
     const fetchUser = async( accessToken)=>{
         try{
-            const res = await axios.get("http://localhost:8080/auth/me", {
+            const res = await axios.get(`${API_BASE_URL}/auth/me`, {
                 headers: { Authorization: `Bearer ${accessToken}` },
                 withCredentials: true,  //쿠키전송용
             });

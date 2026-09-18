@@ -7,6 +7,7 @@ import {
   fetchNoticeDetailRequest, deleteNoticeRequest, updateNoticeRequest, resetNoticeState
 } from "../../reducers/noticeReducer";
 import EditNoticeModal from "../../components/EditNoticeModal";
+import { API_BASE_URL } from "../../api/axios";
 import moment from "moment";
 
 export default function NoticeDetailPage() {
@@ -63,9 +64,9 @@ export default function NoticeDetailPage() {
         {currentNotice.bfile && (
           <div className="notice-detail-image">
             {/\.(jpg|jpeg|png|gif|webp)$/i.test(currentNotice.bfile) ? (
-              <img src={`http://localhost:8080/${currentNotice.bfile}`} alt="첨부이미지" />
+              <img src={`${API_BASE_URL}/${currentNotice.bfile}`} alt="첨부이미지" />
             ) : (
-              <a href={`http://localhost:8080/${currentNotice.bfile}`} target="_blank" rel="noreferrer">
+              <a href={`${API_BASE_URL}/${currentNotice.bfile}`} target="_blank" rel="noreferrer">
                 📎 첨부파일 다운로드
               </a>
             )}

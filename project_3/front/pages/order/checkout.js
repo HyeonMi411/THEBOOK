@@ -9,6 +9,7 @@ import {
   paymentReadyRequest, resetPaymentState,
 } from '../../reducers/orderReducer';
 import BookCoverImage from '../../components/BookCoverImage';
+import { API_BASE_URL } from '../../api/axios';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function CheckoutPage() {
             <div className="checkout-item-cover">
               <BookCoverImage
                 src={item.bookCover
-                  ? (item.bookCover.startsWith('http') ? item.bookCover : `http://localhost:8080/${item.bookCover}`)
+                  ? (item.bookCover.startsWith('http') ? item.bookCover : `${API_BASE_URL}/${item.bookCover}`)
                   : null}
                 alt={item.bookTitle}
                 iconSize={18}

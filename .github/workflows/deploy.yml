@@ -66,6 +66,12 @@ jobs:       # 실행할 job 정의
           echo "KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" >> project_3/back/.env
           echo "NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID }}" >> project_3/back/.env
           echo "NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}" >> project_3/back/.env
+          echo "GMAIL_USERNAME=${{ secrets.GMAIL_USERNAME }}" >> project_3/back/.env
+          echo "GMAIL_APP_PASSWORD=${{ secrets.GMAIL_APP_PASSWORD }}" >> project_3/back/.env
+          echo "KAKAO_PAY_SECRET_KEY=${{ secrets.KAKAO_PAY_SECRET_KEY }}" >> project_3/back/.env
+          echo "NL_API_KEY=${{ secrets.NL_API_KEY }}" >> project_3/back/.env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> project_3/back/.env
+          echo "FRONTEND_BASE_URL=${{ secrets.FRONTEND_BASE_URL }}" >> project_3/back/.env
 
       - name: Ensure app directory exists on EC2
         uses: appleboy/ssh-action@v0.1.7                 #   EC2 접속후 디렉토리 생성
