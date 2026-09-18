@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";  // 2. 스토어알림 ,
 import { Row, Col, Form, Input, Button, Spin, message } from "antd";  
 import { useRouter } from "next/router";   //3. 경로
 import { loginRequest } from "../reducers/authReducer";
+import { API_BASE_URL } from "../api/axios";
 
 //2+3. 부품+export
 export default function LoginPage() {  
