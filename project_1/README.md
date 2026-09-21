@@ -91,5 +91,5 @@ mvn clean install
 
 ## 🔗 관련 링크
 
-- 시연 영상: (YouTube 링크)
+- 시연 영상: https://www.youtube.com/watch?v=xN2kwFkq-PY
 - 다음 버전: [BookStore v2 →](../project_2)

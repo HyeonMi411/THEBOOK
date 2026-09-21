@@ -101,6 +101,6 @@ mvn spring-boot:run
 
 ## 🔗 관련 링크
 
-- 시연 영상: (YouTube 링크)
+- 시연 영상: https://www.youtube.com/watch?v=IdoHBQfeH5Q
 - 이전 버전: [← BookStore v1](../project_1)
 - 다음 버전: [BookStore v3 →](../project_3)

@@ -148,6 +148,7 @@ npx jest             # 프론트엔드 — 11 suites / 180 tests
 
 ## 🔗 관련 링크
 
-- 시연 영상: (YouTube 링크)
-- 배포 주소: (배포 주소가 있다면 입력)
+- 시연 영상: 1 : https://www.youtube.com/watch?v=eDxqr3u_LcY&t=9s
+            2 : https://www.youtube.com/watch?v=eByYCYUFjTI&t=175s
+- 배포 주소: https://bookproject3.duckdns.org/books
 - 이전 버전: [← BookStore v2](../project_2) · [BookStore v1](../project_1)
