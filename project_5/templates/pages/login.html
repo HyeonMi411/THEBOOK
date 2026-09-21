@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}로그인{% endblock %}
+{% block content %}
+<form class="auth-form" id="login-form">
+    <h3>로그인</h3>
+    <input type="email" id="email" placeholder="이메일" required>
+    <input type="password" id="password" placeholder="비밀번호" required>
+    <button type="submit">로그인</button>
+    <p class="msg" id="err"></p>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const res = await fetch(API_BASE + "/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            provider: "local",
+        }),
+    });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById("err").textContent = data.error || "로그인에 실패했습니다."; return; }
+    setTokens(data.accessToken, data.refreshToken);
+    window.location.href = "/";
+});
+</script>
+{% endblock %}

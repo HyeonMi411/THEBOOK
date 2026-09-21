@@ -65,7 +65,13 @@ openai:
     key: ${OPENAI_API_KEY:}   # AI RAG 챗봇 - platform.openai.com 에서 발급 (유료)
 
 file:
-  upload-dir: uploads
+  upload-dir: /home/ubuntu/app/project_4/back/build/libs/uploads
+  #upload-dir: uploads
 
 #server:
 #  port: 8484
+
+# "https://bookproject3.duckdns.org"
+# 프록시서버(nginx) , 프로시가 전달해준 https 헤더정보 어떻게 처리할것인지
+server:
+  forward-headers-strategy: native

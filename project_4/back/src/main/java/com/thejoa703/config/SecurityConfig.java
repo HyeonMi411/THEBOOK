@@ -65,6 +65,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/books/**").permitAll()
                 // 공지사항(Sboard2) - 조회는 전체공개, 작성/수정/삭제는 로그인필요(+ 서비스단 @PreAuthorize("hasRole('ADMIN')"))
                 .requestMatchers(HttpMethod.GET, "/api/notices/**").permitAll()
+                // project_4 신규: 게시글(Post) 조회는 비로그인도 가능, 작성/수정/삭제만 인증 필요
+                .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
                 // /api/ 요청은 jwt 인증필요
                 .requestMatchers("/api/**").authenticated()
                 // 나머지는 모두허용       
@@ -86,8 +89,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
- 
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));  // Front 포트번호
+                
+        // configuration.setAllowedOrigins(List.of("http://localhost:3000" , "http://3.34.52.58"));  //★ Front 포트번호        
+        // ★ React 및 Flutter 웹/앱에서 접근할 수 있도록 허용 주소 추가
+        configuration.setAllowedOriginPatterns(List.of(
+            "http://localhost:3000",       // React 개발 서버
+            "http://localhost:*",          // 로컬에서 뜨는 다른 포트들 (Flutter Web 등)
+            "https://bookproject3.duckdns.org"		// 배포된 도메인 (필요시 추가)
+        )); 
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

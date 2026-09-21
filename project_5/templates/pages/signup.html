@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}회원가입{% endblock %}
+{% block content %}
+<form class="auth-form" id="signup-form">
+    <h3>회원가입</h3>
+    <input type="email" id="email" placeholder="이메일" required>
+    <button type="button" onclick="sendCode()">인증번호 받기</button>
+    <input type="text" id="code" placeholder="인증번호 6자리">
+    <button type="button" onclick="verifyCode()">인증확인</button>
+    <input type="password" id="password" placeholder="비밀번호" required>
+    <input type="text" id="nickname" placeholder="닉네임" required>
+    <button type="submit">가입하기</button>
+    <p class="msg" id="err"></p>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+function sendCode() {
+    const email = document.getElementById("email").value;
+    fetch(API_BASE + `/auth/email/send-code?email=${encodeURIComponent(email)}`, { method: "POST" })
+        .then(r => r.json()).then(d => alert(d.message || d.error));
+}
+function verifyCode() {
+    const email = document.getElementById("email").value;
+    const code = document.getElementById("code").value;
+    fetch(API_BASE + `/auth/email/verify-code?email=${encodeURIComponent(email)}&code=${code}`, { method: "POST" })
+        .then(r => r.json()).then(d => alert(d.message || d.error));
+}
+document.getElementById("signup-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const res = await fetch(API_BASE + "/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            nickname: document.getElementById("nickname").value,
+        }),
+    });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById("err").textContent = data.error || JSON.stringify(data); return; }
+    alert("가입 완료! 로그인해주세요.");
+    window.location.href = "/login";
+});
+</script>
+{% endblock %}
