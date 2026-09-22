@@ -31,4 +31,5 @@ node_modules/
 *.env
 *.key
 *.pem 
+*.local.md
      

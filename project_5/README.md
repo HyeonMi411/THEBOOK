@@ -1,96 +1,83 @@
-# BookStore v5 (`project_5`) — Django + Python 완전 재작성
+# BookStore v5 — Django + Python 완전 재작성 + 판매 통계 대시보드
 
-`project_3`(Spring Boot 3 + Next.js)를 그대로 유지한 채, **Django + Python으로 백엔드·프론트엔드를 전부 새로 작성**한 5차 버전입니다.
-여기에 첨부하신 `python_django.zip`(analytics 대시보드)을 기반으로, Spring Boot 동기화 없이 자체 DB를 직접 분석하는 **판매 통계 대시보드**를 새 기능으로 추가했습니다.
+> v3(Spring Boot + Next.js)는 그대로 유지한 채, 백엔드·프론트엔드 전체를 Django + Python으로 완전히 새로 작성한 버전입니다.
+> pandas 기반 판매 통계 대시보드를 신규 기능으로 추가했습니다.
 
----
-
-## 1. project_3와 달라진 점 요약
-
-| 항목 | project_3 (Spring Boot) | project_5 (Django) |
+## 다른 버전 보기
+| 버전 | 설명 | 링크 |
 |---|---|---|
-| 언어/프레임워크 | Java 17 + Spring Boot 3 | Python 3 + Django |
-| API | Spring MVC + Spring Security | Django REST Framework |
-| 인증 | JWT (jjwt) + Redis RefreshToken | JWT (SimpleJWT) |
-| ORM | JPA + MyBatis 하이브리드 | Django ORM 단일 |
-| 프론트엔드 | Next.js (React, 별도 서버) | Django Template (백엔드와 같은 서버, 별도 CORS/배포 불필요) |
-| 통계 | 없음 | **pandas 기반 판매 통계 대시보드 (신규)** |
-| DB | Oracle | SQLite(기본) / PostgreSQL(배포 권장) |
+| v1 | Spring MVC + MyBatis + JSP | [project_1](../project_1) |
+| v2 | Spring Boot + Thymeleaf + OAuth2 + AI RAG | [project_2](../project_2) |
+| v3 | REST API + JWT + Next.js + 카카오페이 (배포됨) | [project_3](../project_3) |
+| v4 | Flutter 모바일 앱 | [project_4](../project_4) |
+| v5 (현재) | Django + Python 재작성 + 통계 대시보드 | - |
 
-## 2. 앱(모듈) 구성
+## GitHub
+https://github.com/HyeonMi411/THEBOOK/tree/main/project_5
 
+## 구성
 ```
 project_5/
 ├── accounts/   회원가입·로그인(JWT)·이메일인증·탈퇴
-├── books/      도서 CRUD·검색·베스트셀러·국립중앙도서관/카카오 도서검색
+├── books/      도서 CRUD·검색·베스트셀러·국립중앙도서관/카카오검색
 ├── cart/       장바구니
 ├── orders/     주문 + 카카오페이 결제(ready/approve/cancel/fail)
 ├── notices/    공지사항 게시판
-├── analytics/  판매 통계 대시보드 (관리자 전용, /dashboard/)
-└── templates/  Django Template 프론트엔드 (홈/로그인/회원가입/장바구니/마이페이지)
+├── analytics/  판매 통계 대시보드 (신규, 관리자 전용)
+└── templates/  Django Template 프론트엔드
 ```
 
-## 3. project_3에서 겪었던 문제들을 처음부터 반영한 부분
+## 개발 환경
+- Backend: Python, Django, Django REST Framework, djangorestframework-simplejwt
+- Frontend: Django Template (백엔드와 같은 서버에서 직접 서빙)
+- Analytics: pandas
+- Others: JWT, 카카오페이 결제 API, Gmail SMTP(이메일 인증)
 
-실제 project_3 배포 과정에서 겪었던 이슈들을 설계 단계부터 방지했습니다.
-
-- **도메인/프론트주소 하드코딩 금지**: `FRONTEND_BASE_URL`, `DJANGO_ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`를 전부 `.env`로만 주입 (카카오페이 `approval_url` 등도 이 값을 사용)
-- **로그인 시 탈퇴 여부를 비밀번호 검증보다 먼저 확인** — "탈퇴한 계정입니다" 메시지가 정확히 나오도록 함
-- **재고 동시성 제어**: 결제 승인(`kakao_approve`) 시점에만 `select_for_update()`로 비관적 락을 걸고 재고 차감
-- **소프트 삭제**: 회원탈퇴·도서삭제 모두 실제 DELETE 대신 `deleted` 플래그만 사용 (FK 제약 위반 방지)
-- **프론트가 백엔드와 같은 서버(Django Template)** 라서, project_3에서 여러 번 겪었던 `localhost:8080` 하드코딩·nginx 라우팅 누락·CORS 문제 자체가 구조적으로 적게 발생함
-
-## 4. 로컬 실행 방법
-
+## 로컬 실행
 ```bash
 cd project_5
-python -m venv .venv
-source .venv/bin/activate   # Windows는 .venv\Scripts\activate
-
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-
-cp .env.example .env        # 값 채워넣기 (비워두면 SQLite + 콘솔이메일로 바로 실행 가능)
-
 python manage.py migrate
-python manage.py createsuperuser   # 통계 대시보드(/dashboard/) 접근용 관리자 계정
+python manage.py createsuperuser
 python manage.py runserver
 ```
 
-- 사이트: http://localhost:8000
-- Django Admin: http://localhost:8000/admin/
-- 통계 대시보드: http://localhost:8000/dashboard/ (관리자 로그인 필요)
+## 주요 기능
+1. 회원가입/로그인 — JWT(SimpleJWT) 인증
+2. 도서 관리 — CRUD·검색·베스트셀러(Django cache 프레임워크 기반, 배포 시 Redis 전환 가능)
+3. 장바구니/주문/카카오페이 결제
+4. 공지사항 게시판
+5. **판매 통계 대시보드(신규)** — 카테고리별 매출·판매량, 일자별 트렌드를 pandas로 집계해 Chart.js로 시각화
 
-`.env`를 안 채워도 SQLite + 콘솔 이메일 백엔드로 바로 실행되도록 만들었습니다 (이메일 인증번호가 화면 대신 **터미널 콘솔에 출력**됩니다).
+## 담당 업무 및 성과
 
-## 5. 배포 시 반드시 채워야 하는 환경변수 (`.env`)
+**v3에서 겪은 배포 문제들을 설계 단계부터 선반영**
+v3 배포 과정에서 실제로 겪었던 하드코딩·경로 누락 문제들을 정리해, v5는 처음부터 이를 방지하도록 설계했습니다.
 
-```
-DJANGO_SECRET_KEY=
-DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=실제도메인
-FRONTEND_BASE_URL=https://실제도메인
-CORS_ALLOWED_ORIGINS=https://실제도메인
-GMAIL_USERNAME=
-GMAIL_APP_PASSWORD=
-KAKAO_PAY_SECRET_KEY=
-KAKAO_PAY_CID=
-KAKAO_CLIENT_ID=
-NL_API_KEY=
-```
+| v3에서 겪은 문제 | v5에서 미리 막은 방법 |
+|---|---|
+| `localhost:8080`/`3000` 하드코딩 | 프론트가 백엔드와 같은 서버(Django Template)라 애초에 분리된 도메인이 불필요 |
+| `FRONTEND_BASE_URL` 등 하드코딩 | 전부 `.env` 로만 주입되도록 강제 |
+| 탈퇴 계정인데 "비밀번호 불일치"로 표시됨 | 로그인 로직에서 탈퇴 여부를 비밀번호 검증보다 먼저 체크 |
+| 결제 시 재고 동시성 문제 | `select_for_update()`로 결제 승인 시점에만 락을 걸고 차감 |
+| 도서/회원 하드삭제 시 FK 위반 | 처음부터 소프트 삭제(`deleted` 플래그)만 사용 |
+| CI/CD 시크릿 누락 반복 | `deploy.yml`에 필요한 시크릿 전부와 수동 실행(`workflow_dispatch`) 처음부터 포함 |
 
-## 6. 이번 재작성에서 의도적으로 단순화한 부분 (정직하게 밝힙니다)
+→ 성과: 같은 실수를 다른 프레임워크에서 반복하지 않도록, 문제와 해결책을 "프로젝트에 종속된 지식"이 아니라 "재사용 가능한 체크리스트"로 정리하는 경험을 얻음
 
-project_3의 모든 기능을 1:1로 완벽히 재현하기보다, **핵심 이커머스 흐름(회원가입→로그인→도서→장바구니→결제→주문)과 통계 기능이 실제로 끝까지 동작하는 것**을 우선했습니다. 아래는 구조는 마련해뒀지만 완전히 구현하지 않은 부분입니다 — 다음 작업 시 이어서 채워나가시면 됩니다.
+**pandas 기반 통계 기능 신규 구현**
+결제완료(PAID) 주문 데이터를 pandas DataFrame으로 변환해 카테고리별 집계·점유율·일자별 피벗 테이블을 계산하고, Chart.js로 시각화했습니다.
+→ 성과: 실제 서비스 데이터를 데이터 분석 도구로 가공해 의미 있는 지표로 보여주는 경험 확보
 
-- **OAuth2 소셜로그인(구글/카카오/네이버)**: `AppUser.provider` 필드와 모델 구조는 준비되어 있으나, 실제 OAuth2 인가 흐름(콜백 처리 등)은 미구현
-- **AI 문서 챗봇(RAG)**: `OPENAI_API_KEY` 설정만 준비, 실제 PDF 업로드+질의응답 엔드포인트는 미구현
-- **Redis**: 베스트셀러 캐싱은 Django 기본 `cache` 프레임워크를 사용하도록 만들어서, 배포 시 `CACHES` 설정에 Redis 백엔드를 연결하면 됩니다 (지금은 로컬 메모리 캐시로 동작)
-- **이미지 파일 검증**(확장자/MIME 위변조 체크): project_3에서 만들었던 보안 로직을 아직 옮기지 않음 — 배포 전 꼭 추가 권장
+## 검증한 내용
+`python manage.py check`, `makemigrations`/`migrate` 통과는 물론, 실제 서버를 띄워서 이메일 인증 발송 → 인증확인 → 회원가입 → 로그인(JWT 발급) → 관리자 권한 승격 → 도서 등록 → 장바구니 담기 → 주문 생성까지 전체 흐름을 curl로 직접 실행해 확인했습니다.
 
-## 7. 실제로 검증한 것
+## 이번 재작성에서 의도적으로 단순화한 부분
+- OAuth2 소셜로그인(구글/카카오/네이버): 모델 필드는 준비, 실제 인가 흐름은 미구현
+- AI 문서 챗봇(RAG): 설정만 준비, 엔드포인트 미구현
+- Redis: Django cache 프레임워크로 구조만 마련(배포 시 설정 변경으로 연결 가능)
+- 이미지 업로드 보안 검증(확장자/MIME): v3에 있던 로직 아직 미이식
 
-이 zip을 만들면서 직접 로컬에서 실행해 아래를 확인했습니다.
-
-- `python manage.py check` — 이상 없음
-- `python manage.py makemigrations && migrate` — 전체 앱 마이그레이션 정상 적용
-- 실제 서버 기동 후 curl로 **회원가입 → 이메일 인증 → 로그인(JWT 발급) → 관리자 권한 승격 → 도서 등록 → 장바구니 담기 → 주문 생성**까지 전 과정이 에러 없이 동작하는 것을 확인
+## 프로젝트 소감
+같은 서비스를 다른 언어·프레임워크로 다시 만들어보면서, "이 프레임워크가 원래 이렇게 동작한다"고 생각했던 것들이 실은 이전 프로젝트에서 겪은 문제를 해결하며 얻은 개별적인 지식이었다는 걸 깨달았습니다. Django로 옮기며 그 지식들을 처음부터 설계에 반영해보니, 문제 해결 경험이 특정 기술에 묶인 지식이 아니라 재사용 가능한 원칙으로 남는다는 것을 체감했습니다.
