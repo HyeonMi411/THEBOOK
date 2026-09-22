@@ -21,7 +21,7 @@
 | 항목 | 내용 |
 |---|---|
 | 기간 | 2026.08.12(수) ~ 2026.08.28(금) |
-| 구분 | 개인 프로젝트 (팀 프로젝트 버전: `project_3-team`, 6인) *별도 확인 필요 |
+| 구분 | 개인 프로젝트 |
 | 배포 주소 | https://bookproject3.duckdns.org/books |
 | 이전 버전 | [← v2 (Spring Boot + Thymeleaf)](../project_2) · [v1 (Spring MVC + MyBatis)](../project_1) |
 
