@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>대시보드 로그인</title>
+    <style>
+        body { font-family: -apple-system, "Malgun Gothic", sans-serif; background: #f4f5f7; display: flex; height: 100vh; align-items: center; justify-content: center; margin: 0; }
+        form { background: #fff; padding: 32px; border-radius: 8px; border: 1px solid #e2e8f0; width: 300px; }
+        h2 { margin-top: 0; color: #2b6cb0; }
+        input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #2b6cb0; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        .errorlist { color: #e53e3e; font-size: 13px; list-style: none; padding: 0; }
+    </style>
+</head>
+<body>
+    <form method="post">
+        {% csrf_token %}
+        <h2>📊 판매 통계 대시보드</h2>
+        {{ form.non_field_errors }}
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        {{ form.password.label_tag }}
+        {{ form.password }}
+        <button type="submit">로그인</button>
+    </form>
+</body>
+</html>

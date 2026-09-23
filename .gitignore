@@ -32,4 +32,5 @@ node_modules/
 *.key
 *.pem 
 *.local.md
+*.gradle
         
