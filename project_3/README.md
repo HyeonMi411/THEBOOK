@@ -11,8 +11,7 @@
 | [v1](../project_1) | Spring MVC + MyBatis + JSP | - |
 | [v2](../project_2) | Spring Boot + Thymeleaf + OAuth2 + AI RAG | - |
 | **v3 (현재)** | REST API + JWT + Next.js + 카카오페이 | 🟢 배포됨 |
-| [v4](../project_4) | Flutter 모바일 앱 + SNS 게시판 | 준비 중 |
-| [v5](../project_5) | Django + Python 재작성 + 통계 대시보드 | 준비 중 |
+| [v4](../project_4) | Flutter 모바일 앱 + SNS 게시판 + 통계 대시보드 | 🟡 배포 준비 중 |
 
 ---
 
@@ -189,4 +188,4 @@ npx jest             # 프론트엔드 — 11 suites / 180 tests
 - 시연 영상 1: https://www.youtube.com/watch?v=eDxqr3u_LcY&t=9s
 - 시연 영상 2: https://www.youtube.com/watch?v=eByYCYUFjTI&t=175s
 - 이전 버전: [← BookStore v2](../project_2) · [BookStore v1](../project_1)
-- 다음 버전: [BookStore v4 (Flutter) →](../project_4) · [BookStore v5 (Django) →](../project_5)
+- 다음 버전: [BookStore v4 (Flutter + 통계 대시보드) →](../project_4)

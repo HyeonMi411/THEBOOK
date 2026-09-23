@@ -11,8 +11,7 @@
 | [v1](../project_1) | Spring MVC + MyBatis + JSP | - |
 | **v2 (현재)** | Spring Boot + Thymeleaf + OAuth2 + AI RAG | - |
 | [v3](../project_3) | REST API + JWT + Next.js + 카카오페이 | 🟢 배포됨 |
-| [v4](../project_4) | Flutter 모바일 앱 + SNS 게시판 | 준비 중 |
-| [v5](../project_5) | Django + Python 재작성 + 통계 대시보드 | 준비 중 |
+| [v4](../project_4) | Flutter 모바일 앱 + SNS 게시판 + 통계 대시보드 | 🟡 배포 준비 중 |
 
 ---
 
