@@ -88,3 +88,4 @@ jobs:
             pm2 delete django-backend || true
             pm2 start ".venv/bin/gunicorn" --name django-backend -- config.wsgi:application --bind 0.0.0.0:8001
             pm2 save
+ 
