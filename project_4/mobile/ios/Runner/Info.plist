@@ -66,5 +66,27 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>현재 위치의 날씨와 가까운 매장을 보여주기 위해 위치를 사용합니다.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>책 표지를 촬영해 도서를 검색하기 위해 카메라를 사용합니다.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>게시글·프로필 사진과 표지 검색 사진을 고르기 위해 사진 보관함을 사용합니다.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>bookstore4</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>bookstore4</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>mailto</string>
+	</array>
 </dict>
 </plist>

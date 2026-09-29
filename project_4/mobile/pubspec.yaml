@@ -1,8 +1,8 @@
 name: mobile
-description: "BookStore project_4 - Flutter 모바일 클라이언트"
+description: "BookStore project_4 - Flutter 모바일 앱 (project_3 웹 쇼핑몰의 Flutter 버전 + 커뮤니티 + 외부 API)"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: ^3.13.3
@@ -12,11 +12,16 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  flutter_riverpod: ^3.3.2
-  dio: ^5.11.1
-  flutter_secure_storage: ^11.1.1
-  image_picker: ^1.2.3
-  url_launcher: ^6.3.1   # 카카오페이 결제창(외부 브라우저) 이동용
+  flutter_riverpod: ^3.3.2        # 전역 상태관리 (React 의 Redux 역할)
+  dio: ^5.11.1                    # HTTP 통신 (axios 역할)
+  flutter_secure_storage: ^11.1.1  # 토큰 보안 저장소
+  image_picker: ^1.2.3            # 게시글 사진 / 프로필 사진 / 표지 사진(OCR)
+  url_launcher: ^6.3.1            # 카카오페이 결제창, 소셜 로그인, 길찾기, 뉴스 원문, 상담 메일
+  app_links: ^6.4.0               # 딥링크(bookstore4://) - 소셜 로그인·결제 후 앱으로 복귀
+  webview_flutter: ^4.10.0        # 다음 우편번호 검색 페이지
+  flutter_map: ^8.1.1             # 매장 지도 (OpenStreetMap 타일, API 키 불필요)
+  latlong2: ^0.9.1                # 지도 좌표
+  geolocator: ^14.0.0             # 현재 위치 (날씨·가까운 매장)
 
 dev_dependencies:
   flutter_test:

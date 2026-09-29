@@ -61,12 +61,17 @@ spring:
 
 app:
   oauth2:
-    # ⚠️ project_4 전용 배포 도메인을 정하신 뒤 여기를 채워주세요 (project_3의 도메인과 반드시 달라야 합니다)
-    redirect-url: ${OAUTH2_REDIRECT_URL:http://localhost:3000/oauth2/callback}
-    # 신규 소셜회원의 "가입확인(닉네임 확인/수정)" 화면 주소. 비워두면
-    #   redirect-url 에서 /oauth2/callback → /oauth2/signup 로 자동 유추.
-    signup-confirm-url:
-  # 프론트엔드(React) 기본 주소 - 카카오페이 결제완료/취소/실패 후 리다이렉트될 URL을 만드는 데 사용.
+    # 모바일 앱 소셜 로그인: 브라우저 로그인 → 이 서버의 /oauth2/app/callback → 앱(bookstore4://)으로 복귀
+    #   배포 시 OAUTH2_REDIRECT_URL = https://<project_4 도메인>/oauth2/app/callback  (project_3 도메인과 달라야 함)
+    redirect-url: ${OAUTH2_REDIRECT_URL:http://localhost:8082/oauth2/app/callback}
+    # 신규 소셜회원 가입확인 - 앱의 "닉네임 확인 + 이메일 인증" 화면으로 넘겨주는 중계 주소
+    signup-confirm-url: ${OAUTH2_SIGNUP_CONFIRM_URL:http://localhost:8082/oauth2/app/signup}
+    # 로그인 결과를 앱으로 돌려줄 딥링크 스킴 (AndroidManifest / Info.plist 의 스킴과 같아야 함)
+    app-scheme: ${APP_DEEPLINK_SCHEME:bookstore4}
+  # 카카오페이 결제완료/취소/실패 후 리다이렉트될 URL(=이 주소 + /payment/complete 등)을 만드는 데 사용.
+  # project_4(모바일 앱)는 별도 웹 프론트가 없으므로, GitHub Secrets 의 FRONTEND_BASE_URL_P4 를
+  # project_4 백엔드의 외부 주소(예: https://bookproject4.duckdns.org)로 지정하세요.
+  # → PaymentCallbackController(/payment/**)가 결제 승인을 처리하고 "앱으로 돌아가세요" 안내 페이지를 보여줍니다.
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
 
  
@@ -85,9 +90,7 @@ kakao:
     secret-key: ${KAKAO_PAY_SECRET_KEY:}
     cid: ${KAKAO_PAY_CID:TC0ONETIME}
 
-# 국립중앙도서관 도서검색 API 키 (boot1 원본에서 사용하던 키를 기본값으로 둡니다.
-#   개인/테스트용 키일 수 있으니, 정상 동작 안 하면 국립중앙도서관 오픈API 홈페이지에서
-#   본인 명의로 새로 발급받아 .env 의 NL_API_KEY 값을 교체해주세요.)
+# 국립중앙도서관 도서검색 API 키 - 키를 코드에 두면 GitHub 에 그대로 공개되므로 .env 의 NL_API_KEY 로만 받습니다.
 nl:
   api:
-    key: ${NL_API_KEY:2e9fc657c6c68b702f22af6878d76b9280e0edd7fe220af5db9184a67ac3e36b}
+    key: ${NL_API_KEY:}

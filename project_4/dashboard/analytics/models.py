@@ -49,3 +49,77 @@ class OrderItem(models.Model):
     class Meta:
         managed = False
         db_table = "ORDER_ITEMS"
+
+
+# ─────────────────────────────────────────────────────────────
+# project_4 확장: 커뮤니티 / 상담 챗봇 분석용 (역시 전부 managed=False, 읽기 전용)
+# 컬럼명은 back/src/main/java/com/thejoa703/entity 의 @Column/@JoinColumn 과
+# Spring Boot 기본 네이밍(camelCase → SNAKE_CASE)을 그대로 따름.
+# ─────────────────────────────────────────────────────────────
+
+class AppUser(models.Model):
+    id = models.BigAutoField(db_column="APP_USER_ID", primary_key=True)
+    nickname = models.CharField(max_length=50, db_column="NICKNAME")
+    provider = models.CharField(max_length=150, db_column="PROVIDER")
+    deleted = models.BooleanField(db_column="DELETED", null=True)
+    created_at = models.DateTimeField(db_column="CREATED_AT")
+
+    class Meta:
+        managed = False
+        db_table = "APP_USER"
+
+
+class Post(models.Model):
+    id = models.BigAutoField(db_column="ID", primary_key=True)
+    user = models.ForeignKey(AppUser, on_delete=models.DO_NOTHING, db_column="APP_USER_ID")
+    deleted = models.BooleanField(db_column="DELETED")
+    created_at = models.DateTimeField(db_column="CREATED_AT")
+
+    class Meta:
+        managed = False
+        db_table = "POSTS"
+
+
+class PostLike(models.Model):
+    id = models.BigAutoField(db_column="ID", primary_key=True)
+    post = models.ForeignKey(Post, on_delete=models.DO_NOTHING, db_column="POST_ID")
+    user = models.ForeignKey(AppUser, on_delete=models.DO_NOTHING, db_column="APP_USER_ID")
+    created_at = models.DateTimeField(db_column="CREATED_AT")
+
+    class Meta:
+        managed = False
+        db_table = "POST_LIKES"
+
+
+class Comment(models.Model):
+    id = models.BigAutoField(db_column="ID", primary_key=True)
+    post = models.ForeignKey(Post, on_delete=models.DO_NOTHING, db_column="POST_ID")
+    deleted = models.BooleanField(db_column="DELETED")
+    created_at = models.DateTimeField(db_column="CREATED_AT")
+
+    class Meta:
+        managed = False
+        db_table = "COMMENTS"
+
+
+class Follow(models.Model):
+    id = models.BigAutoField(db_column="ID", primary_key=True)
+    follower = models.ForeignKey(AppUser, on_delete=models.DO_NOTHING, db_column="FOLLOWER_ID", related_name="+")
+    followee = models.ForeignKey(AppUser, on_delete=models.DO_NOTHING, db_column="FOLLOWEE_ID", related_name="+")
+    created_at = models.DateTimeField(db_column="CREATED_AT")
+
+    class Meta:
+        managed = False
+        db_table = "FOLLOWS"
+
+
+class ChatbotLog(models.Model):
+    id = models.BigAutoField(db_column="ID", primary_key=True)
+    question = models.CharField(max_length=200, db_column="QUESTION")
+    faq_id = models.CharField(max_length=50, db_column="FAQ_ID", null=True)
+    source = models.CharField(max_length=10, db_column="SOURCE")
+    created_at = models.DateTimeField(db_column="CREATED_AT")
+
+    class Meta:
+        managed = False
+        db_table = "CHATBOT_LOGS"

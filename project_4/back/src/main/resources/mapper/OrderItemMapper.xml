@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thejoa703.mapper.OrderItemMapper">
+
+    <select id="findBestSellerBookIds" parameterType="int" resultType="map">
+        SELECT oi.BOOK_ID AS BOOK_ID, SUM(oi.QUANTITY) AS TOTAL_QTY
+        FROM ORDER_ITEMS oi
+        JOIN ORDERS o ON oi.ORDER_ID = o.ID
+        WHERE o.ORDER_STATUS = 'PAID'
+        GROUP BY oi.BOOK_ID
+        ORDER BY TOTAL_QTY DESC
+        FETCH FIRST #{limit} ROWS ONLY
+    </select>
+
+</mapper>

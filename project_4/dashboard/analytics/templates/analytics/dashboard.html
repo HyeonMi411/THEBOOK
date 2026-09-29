@@ -2,69 +2,141 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>project_4 판매 통계 대시보드</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BookStore project_4 운영 대시보드</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: -apple-system, "Malgun Gothic", sans-serif; background: #f4f5f7; margin: 0; }
+        body { font-family: -apple-system, "Malgun Gothic", sans-serif; background: #f4f5f7; margin: 0; color: #1a202c; }
         header { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; background: #1a202c; color: #fff; }
-        header a { color: #cbd5e0; text-decoration: none; font-size: 14px; }
-        .dashboard-container { width: 900px; margin: 32px auto; padding: 0 16px; }
-        .summary-cards { display: flex; gap: 15px; margin-bottom: 24px; }
-        .card { flex: 1; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; text-align: center; }
-        .card h4 { margin: 0 0 8px 0; color: #718096; font-size: 13px; }
-        .card p { margin: 0; font-size: 20px; font-weight: bold; color: #1a202c; }
-        .chart-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-        h2 { color: #2b6cb0; }
-        .note { color: #a0aec0; font-size: 12px; }
+        header a, header button { color: #cbd5e0; text-decoration: none; font-size: 14px; }
+        .wrap { max-width: 1040px; margin: 24px auto; padding: 0 16px; }
+        h2 { color: #2b6cb0; margin: 32px 0 6px; }
+        .note { color: #718096; font-size: 13px; margin: 0 0 14px; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; text-align: center; }
+        .card h4 { margin: 0 0 6px; color: #718096; font-size: 13px; font-weight: 600; }
+        .card p { margin: 0; font-size: 20px; font-weight: bold; }
+        .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; }
+        .box { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 16px; }
+        .box h3 { margin: 0 0 10px; font-size: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        td, th { padding: 7px 6px; border-bottom: 1px solid #edf2f7; text-align: left; }
+        .msg { padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; }
+        .msg.success { background: #e6fffa; color: #234e52; }
+        .msg.error, .msg.db { background: #fff5f5; color: #742a2a; }
+        .sync { background: #2b6cb0; color: #fff; border: 0; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .sync[disabled] { background: #a0aec0; cursor: not-allowed; }
+        .empty { color: #a0aec0; font-size: 13px; }
+        ul.unanswered { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.8; }
     </style>
 </head>
 <body>
-    <header>
-        <span>📚 BookStore project_4 — 판매 통계</span>
-        <span>{{ request.user.username }}님 · <a href="{% url 'logout' %}">로그아웃</a></span>
-    </header>
-    <div class="dashboard-container">
-        <h2>카테고리별 판매 현황 (Python + Pandas)</h2>
-        <p class="note">Spring Boot(project_4/back)의 Oracle DB를 읽기 전용으로 직접 조회해 집계한 결과입니다. 결제완료(PAID) 주문만 포함됩니다.</p>
+<header>
+    <span>📚 BookStore project_4 — 운영 대시보드</span>
+    <span>{{ request.user.username }}님 ·
+        <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button type="submit" style="background:none;border:0;cursor:pointer;padding:0">로그아웃</button></form>
+    </span>
+</header>
+<div class="wrap">
+    {% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+    {% if db_error %}<div class="msg db">{{ db_error }}</div>{% endif %}
 
-        <div class="summary-cards">
-            <div class="card"><h4>최다 판매 카테고리</h4><p style="color:#2b6cb0;">{{ top_category }}</p></div>
-            <div class="card"><h4>일평균 매출</h4><p>{{ stats_summary.avg_amount }}원</p></div>
-            <div class="card"><h4>일 최고 매출</h4><p>{{ stats_summary.max_amount }}원</p></div>
-            <div class="card"><h4>총 누적 매출</h4><p>{{ stats_summary.total_amount }}원</p></div>
+    <!-- ① 판매 -->
+    <h2>① 판매 현황</h2>
+    <p class="note">Spring Boot 의 Oracle DB 를 읽기 전용으로 조회해 pandas 로 집계했습니다. 결제완료(PAID) 주문만 포함됩니다.</p>
+    <div class="cards">
+        <div class="card"><h4>최다 판매 카테고리</h4><p style="color:#2b6cb0">{{ top_category }}</p></div>
+        <div class="card"><h4>일평균 매출</h4><p>{{ stats_summary.avg_amount }}원</p></div>
+        <div class="card"><h4>일 최고 매출</h4><p>{{ stats_summary.max_amount }}원</p></div>
+        <div class="card"><h4>총 누적 매출</h4><p>{{ stats_summary.total_amount }}원</p></div>
+        <div class="card"><h4>판매 상품 줄 수</h4><p>{{ stats_summary.total_orders }}</p></div>
+    </div>
+    <div class="grid2">
+        <div class="box"><h3>카테고리별 판매량·매출</h3><canvas id="categoryChart"></canvas></div>
+        <div class="box"><h3>카테고리 점유율(%)</h3><canvas id="shareChart"></canvas></div>
+    </div>
+    <div class="box"><h3>일자별 매출</h3><canvas id="dailyChart" height="90"></canvas></div>
+
+    <!-- ② 커뮤니티 -->
+    <h2>② 커뮤니티 활동 (최근 14일)</h2>
+    <p class="note">게시글·좋아요·댓글 추이와 인기 해시태그. 팔로우는 전체 누적 수입니다.</p>
+    <div class="cards">
+        <div class="card"><h4>새 게시글</h4><p>{{ community_summary.posts }}</p></div>
+        <div class="card"><h4>좋아요</h4><p>{{ community_summary.likes }}</p></div>
+        <div class="card"><h4>댓글</h4><p>{{ community_summary.comments }}</p></div>
+        <div class="card"><h4>팔로우 관계(누적)</h4><p>{{ community_summary.follows }}</p></div>
+    </div>
+    <div class="grid2">
+        <div class="box"><h3>일자별 활동</h3><canvas id="activityChart"></canvas></div>
+        <div class="box"><h3>인기 해시태그 TOP 10</h3>
+            {% if top_tags %}<canvas id="tagChart"></canvas>{% else %}<p class="empty">아직 해시태그가 없습니다.</p>{% endif %}
         </div>
-
-        <div class="chart-box"><canvas id="categoryChart"></canvas></div>
-        <div class="chart-box"><canvas id="shareChart"></canvas></div>
     </div>
 
-    {{ categories|json_script:"categories-data" }}
-    {{ quantities|json_script:"quantities-data" }}
-    {{ amounts|json_script:"amounts-data" }}
-    {{ shares|json_script:"shares-data" }}
-    <script>
-        const categories = JSON.parse(document.getElementById('categories-data').textContent);
-        const quantities = JSON.parse(document.getElementById('quantities-data').textContent);
-        const amounts = JSON.parse(document.getElementById('amounts-data').textContent);
-        const shares = JSON.parse(document.getElementById('shares-data').textContent);
+    <!-- ③ 상담 챗봇 -->
+    <h2>③ 상담 챗봇 (최근 30일)</h2>
+    <p class="note">버튼·FAQ 검색·AI 보조 답변으로 해결한 비율과, 답하지 못한 질문(→ FAQ 키워드 보강 대상)입니다.</p>
+    <div class="cards">
+        <div class="card"><h4>전체 질문</h4><p>{{ chatbot_total }}</p></div>
+        <div class="card"><h4>응답률</h4><p style="color:#2f855a">{{ answer_rate }}%</p></div>
+    </div>
+    <div class="grid2">
+        <div class="box"><h3>응답 방식</h3>
+            {% if chatbot_total %}<canvas id="chatbotChart"></canvas>{% else %}<p class="empty">아직 챗봇 사용 기록이 없습니다.</p>{% endif %}
+        </div>
+        <div class="box"><h3>많이 찾은 질문 TOP 5</h3>
+            {% if top_faqs %}
+            <table>{% for f in top_faqs %}<tr><td>{{ forloop.counter }}. {{ f.faq }}</td><td style="text-align:right">{{ f.count }}회</td></tr>{% endfor %}</table>
+            {% else %}<p class="empty">데이터 없음</p>{% endif %}
+            <h3 style="margin-top:18px">답하지 못한 질문 (최근 10개)</h3>
+            {% if unanswered %}<ul class="unanswered">{% for q in unanswered %}<li>{{ q }}</li>{% endfor %}</ul>
+            {% else %}<p class="empty">모든 질문에 답했습니다 👍</p>{% endif %}
+        </div>
+    </div>
 
-        new Chart(document.getElementById('categoryChart'), {
-            type: 'bar',
-            data: {
-                labels: categories,
-                datasets: [
-                    { label: '판매량', data: quantities, backgroundColor: '#4299e1' },
-                    { label: '매출액', data: amounts, backgroundColor: '#48bb78', yAxisID: 'y1' },
-                ],
-            },
-            options: { scales: { y: { beginAtZero: true }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } } } },
-        });
+    <!-- ④ 운영 지표 추이 -->
+    <h2>④ 운영 지표 추이 (Spring Boot → Django 동기화)</h2>
+    <p class="note">Spring Boot 가 매일 23:50 에 보내 주는 하루 지표를 Django DB 에 쌓은 값입니다. (최근 30일)</p>
+    <form method="post" action="{% url 'sync_now' %}" style="margin-bottom:12px">{% csrf_token %}
+        <button class="sync" type="submit" {% if not sync_enabled %}disabled title="SPRING_API_BASE_URL / STATS_SYNC_TOKEN 설정 필요"{% endif %}>지금 동기화</button>
+    </form>
+    <div class="box">
+        {% if ops_dates %}<canvas id="opsChart" height="90"></canvas>
+        {% else %}<p class="empty">아직 동기화된 지표가 없습니다. '지금 동기화'를 눌러 보세요.</p>{% endif %}
+    </div>
+</div>
 
-        new Chart(document.getElementById('shareChart'), {
-            type: 'doughnut',
-            data: { labels: categories, datasets: [{ data: shares, backgroundColor: ['#4299e1','#48bb78','#f6ad55','#f56565','#9f7aea','#ed64a6'] }] },
-            options: { plugins: { title: { display: true, text: '카테고리별 판매 점유율(%)' } } },
-        });
-    </script>
+{{ categories|json_script:"categories" }}{{ quantities|json_script:"quantities" }}{{ amounts|json_script:"amounts" }}
+{{ shares|json_script:"shares" }}{{ daily_dates|json_script:"daily_dates" }}{{ daily_amounts|json_script:"daily_amounts" }}
+{{ activity_dates|json_script:"activity_dates" }}{{ activity_posts|json_script:"activity_posts" }}
+{{ activity_likes|json_script:"activity_likes" }}{{ activity_comments|json_script:"activity_comments" }}
+{{ top_tags|json_script:"top_tags" }}{{ top_tag_counts|json_script:"top_tag_counts" }}
+{{ chatbot_sources|json_script:"chatbot_sources" }}{{ chatbot_source_counts|json_script:"chatbot_source_counts" }}
+{{ ops_dates|json_script:"ops_dates" }}{{ ops_users|json_script:"ops_users" }}{{ ops_orders|json_script:"ops_orders" }}{{ ops_questions|json_script:"ops_questions" }}
+<script>
+    const d = (id) => JSON.parse(document.getElementById(id).textContent);
+    const COLORS = ['#4299e1', '#48bb78', '#f6ad55', '#f56565', '#9f7aea', '#ed64a6', '#38b2ac', '#a0aec0'];
+    const draw = (id, config) => { const el = document.getElementById(id); if (el) new Chart(el, config); };
+
+    draw('categoryChart', { type: 'bar', data: { labels: d('categories'), datasets: [
+        { label: '판매량', data: d('quantities'), backgroundColor: COLORS[0] },
+        { label: '매출액', data: d('amounts'), backgroundColor: COLORS[1], yAxisID: 'y1' } ] },
+        options: { scales: { y: { beginAtZero: true }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } } } } });
+    draw('shareChart', { type: 'doughnut', data: { labels: d('categories'), datasets: [{ data: d('shares'), backgroundColor: COLORS }] } });
+    draw('dailyChart', { type: 'line', data: { labels: d('daily_dates'), datasets: [{ label: '매출(원)', data: d('daily_amounts'), borderColor: COLORS[1], tension: .3 }] } });
+    draw('activityChart', { type: 'line', data: { labels: d('activity_dates'), datasets: [
+        { label: '게시글', data: d('activity_posts'), borderColor: COLORS[0], tension: .3 },
+        { label: '좋아요', data: d('activity_likes'), borderColor: COLORS[3], tension: .3 },
+        { label: '댓글', data: d('activity_comments'), borderColor: COLORS[4], tension: .3 } ] },
+        options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
+    draw('tagChart', { type: 'bar', data: { labels: d('top_tags').map(t => '#' + t), datasets: [{ label: '사용 횟수', data: d('top_tag_counts'), backgroundColor: COLORS[6] }] },
+        options: { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } } });
+    draw('chatbotChart', { type: 'pie', data: { labels: d('chatbot_sources'), datasets: [{ data: d('chatbot_source_counts'), backgroundColor: COLORS }] } });
+    draw('opsChart', { type: 'line', data: { labels: d('ops_dates'), datasets: [
+        { label: '신규 가입', data: d('ops_users'), borderColor: COLORS[0], tension: .3 },
+        { label: '결제 건수', data: d('ops_orders'), borderColor: COLORS[1], tension: .3 },
+        { label: '챗봇 질문', data: d('ops_questions'), borderColor: COLORS[2], tension: .3 } ] },
+        options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
+</script>
 </body>
 </html>

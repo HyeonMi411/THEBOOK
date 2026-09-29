@@ -15,6 +15,15 @@ public interface PostRepository extends JpaRepository<Post, Long>{ //Entity , PK
 	
 	// 해쉬태그이름으로 게시글 검색 → findBy   (해쉬태그이름: List<Hashtag>  hashtags 필드 name)
 	List<Post> findByHashtags_NameAndDeletedFalse(String name);
+
+	// project_4 신규 - 팔로잉 피드 / 프로필 화면 / 좋아요·리트윗한 글
+	List<Post> findByUser_IdInAndDeletedFalse(java.util.Collection<Long> userIds);
+
+	List<Post> findByUser_IdAndDeletedFalse(Long userId);
+
+	List<Post> findByIdInAndDeletedFalse(java.util.Collection<Long> ids);
+
+	long countByUser_IdAndDeletedFalse(Long userId);
 	
 	//비교- 결과값이 1개거나 없을때(null) - Optional
 	//Optional<AppUser>  findByEmail(String email);

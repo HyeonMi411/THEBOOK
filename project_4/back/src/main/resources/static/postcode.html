@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>우편번호 검색</title>
+  <!--
+    다음(카카오) 우편번호 서비스 - 무료, API 키 불필요.
+    Flutter 앱(webview_flutter)이 이 페이지를 열고, 주소를 고르면 JavaScriptChannel(PostcodeChannel)로 결과를 넘겨받는다.
+  -->
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+    #wrap { width: 100%; height: 100%; }
+    #notice { font-family: sans-serif; padding: 24px; color: #666; text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="wrap"></div>
+  <p id="notice" style="display:none">우편번호 서비스를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.</p>
+  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script>
+    function sendToApp(result) {
+      var json = JSON.stringify(result);
+      if (window.PostcodeChannel && window.PostcodeChannel.postMessage) {
+        window.PostcodeChannel.postMessage(json);      // Flutter 앱
+      } else {
+        document.body.innerHTML = '<pre style="padding:16px">' + json.replace(/</g, '&lt;') + '</pre>'; // 브라우저 확인용
+      }
+    }
+    if (typeof daum === 'undefined' || !daum.Postcode) {
+      document.getElementById('notice').style.display = 'block';
+    } else {
+      new daum.Postcode({
+        oncomplete: function (data) {
+          var address = data.roadAddress || data.jibunAddress;
+          var extra = '';
+          if (data.bname && /[동|로|가]$/g.test(data.bname)) { extra += data.bname; }
+          if (data.buildingName && data.apartment === 'Y') { extra += (extra ? ', ' : '') + data.buildingName; }
+          sendToApp({
+            zonecode: data.zonecode,
+            address: address,
+            extra: extra ? '(' + extra + ')' : '',
+            jibunAddress: data.jibunAddress || ''
+          });
+        },
+        width: '100%',
+        height: '100%'
+      }).embed(document.getElementById('wrap'));
+    }
+  </script>
+</body>
+</html>

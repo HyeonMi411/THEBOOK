@@ -13,7 +13,14 @@ class ApiClient {
   static const String _deployedBaseUrl = 'https://bookproject4.duckdns.org';
   static const String _localBaseUrl = 'http://localhost:8082';
 
+  // 빌드/실행 시 --dart-define=API_BASE_URL=... 로 서버 주소를 지정하면 그 값을 최우선으로 사용합니다.
+  //  - 에뮬레이터 로컬 개발 : flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8082
+  //  - 배포 APK 빌드        : GitHub Actions(deploy-project4.yml)가 API_BASE_URL_P4 시크릿으로 주입
+  static const String _envBaseUrl = String.fromEnvironment('API_BASE_URL');
+
   static String getBaseUrl() {
+    // 0. --dart-define 으로 지정된 주소가 있으면 그대로 사용
+    if (_envBaseUrl.isNotEmpty) return _envBaseUrl;
     // 1. 웹브라우저 실행 시 - 로컬 개발 기본값
     if (kIsWeb) return _localBaseUrl;
     try {

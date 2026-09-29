@@ -1,17 +1,25 @@
-# mobile2
+# BookStore v4 — Flutter 앱
 
-A new Flutter project.
+Feature-first 구조 (track011 수업 방식)
 
-## Getting Started
+```
+lib/
+├── main.dart / app.dart          # ProviderScope, 딥링크(bookstore4://) 처리, 라우트
+├── core/network/                 # ApiClient(서버 주소), DioClient(토큰 자동첨부·재발급), RefreshCookie
+├── core/utils/format.dart        # 가격·날짜·이미지 URL
+├── shared/                       # 하단 5탭(MainShell), 공통 레이아웃(🎧 챗봇), EmptyView/NetImage
+└── features/
+    ├── home/        날씨·베스트셀러·공지·책 소식
+    ├── books/       목록·자동완성·상세·외부 통합검색·국립중앙도서관 KDC·표지 OCR·관리자 도서 등록/수정
+    ├── cart/        장바구니·주문서(우편번호)·카카오페이
+    ├── orders/      주문내역
+    ├── post/        커뮤니티(피드·팔로잉·태그·좋아요·댓글·리트윗·프로필·팔로우)
+    ├── auth/        로그인(소셜)·이메일 인증 가입·소셜 가입확인·마이페이지
+    ├── map/         매장 지도 (OpenStreetMap)
+    ├── address/     다음 우편번호 WebView
+    ├── notices/     공지사항 (관리자 작성·수정·삭제)
+    └── chatbot/     상담 챗봇
+```
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+실행: `flutter pub get && flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8082`
+테스트: `flutter test`

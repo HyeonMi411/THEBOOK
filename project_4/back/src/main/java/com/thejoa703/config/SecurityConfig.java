@@ -68,6 +68,15 @@ public class SecurityConfig {
                 // project_4 신규: 게시글(Post) 조회는 비로그인도 가능, 작성/수정/삭제만 인증 필요
                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
+                // project_4 신규: 상담 챗봇은 로그인 전에도 문의할 수 있어야 하므로 전체공개
+                .requestMatchers("/api/chatbot/**").permitAll()
+                // project_4 신규: 커뮤니티 프로필/팔로워 조회는 전체공개, 내 정보(/me/**)와 팔로우(POST)는 로그인
+                .requestMatchers("/api/users/me/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
+                // project_4 신규: 날씨/매장/주소좌표/도서뉴스는 전체공개 (OCR 은 유료 API 라 POST = 로그인 필요)
+                .requestMatchers(HttpMethod.GET, "/api/util/**").permitAll()
+                // project_4 신규: Django 대시보드 → 통계 동기화 (JWT 대신 공유 토큰으로 컨트롤러에서 검증)
+                .requestMatchers(HttpMethod.POST, "/api/statistics/sync").permitAll()
                 // /api/ 요청은 jwt 인증필요
                 .requestMatchers("/api/**").authenticated()
                 // 나머지는 모두허용       
@@ -95,7 +104,7 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of(
             "http://localhost:3000",       // React 개발 서버
             "http://localhost:*",          // 로컬에서 뜨는 다른 포트들 (Flutter Web 등)
-            "https://bookproject3.duckdns.org"		// 배포된 도메인 (필요시 추가)
+            "https://bookproject4.duckdns.org"		// project_4 배포 도메인 (Flutter Web 빌드로 확인할 때)
         )); 
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

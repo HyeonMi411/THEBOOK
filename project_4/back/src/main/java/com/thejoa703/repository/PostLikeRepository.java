@@ -22,6 +22,10 @@ public interface PostLikeRepository   extends JpaRepository<PostLike, Long>{
 
 	//특정유저가 특정게시글에 좋아요 했는지  조회
 	Optional<PostLike> findByUser_IdAndPost_Id(Long userId, Long postId);
+
+	// 내가 좋아요한 게시글 id 목록 (마이페이지 - 좋아요한 글)
+	@Query("SELECT pl.post.id FROM PostLike pl WHERE pl.user.id = :userId ORDER BY pl.createdAt DESC")
+	java.util.List<Long> findPostIdsByUserId(@Param("userId") Long userId);
 	
 	//좋아요취소
 	//방법1: long deleteByUser_IdAndPost_Id(Long userId, Long postId);     → select (데이터베이스 조회) delete(개별삭제)

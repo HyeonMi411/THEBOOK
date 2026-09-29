@@ -1,46 +1,17 @@
-// 전역상태관리: 내 주문내역 (마이페이지)
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../../core/network/api_client.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class OrderState {
-  final List<dynamic> orders;
-  final bool loading;
-  final String? error;
+import '../../../core/network/dio_client.dart';
 
-  const OrderState({this.orders = const [], this.loading = false, this.error});
-}
-
-class OrderNotifier extends Notifier<OrderState> {
-  @override
-  OrderState build() {
-    _dio = Dio(BaseOptions(baseUrl: ApiClient.getBaseUrl()));
-    _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) async {
-      final token = await _storage.read(key: 'accessToken');
-      if (token != null) options.headers['Authorization'] = 'Bearer $token';
-      return handler.next(options);
-    }));
-    return const OrderState();
-  }
-
-  late final Dio _dio;
-  final _storage = const FlutterSecureStorage();
-
-  // 내 주문내역 조회 (GET /api/orders, 12개씩 페이징)
-  Future<void> fetchMyOrders() async {
-    state = OrderState(orders: state.orders, loading: true, error: null);
-    try {
-      final response = await _dio.get('/api/orders');
-      final data = response.data;
-      final list = (data is Map && data.containsKey('results')) ? data['results'] : data;
-      state = OrderState(orders: list ?? [], loading: false, error: null);
-    } catch (err) {
-      state = OrderState(orders: state.orders, loading: false, error: '주문내역 조회 실패: ${err.toString()}');
-    }
-  }
-}
-
-final orderProvider = NotifierProvider<OrderNotifier, OrderState>(() {
-  return OrderNotifier();
+/// 내 주문내역 (GET /api/orders?page=1&size=50 → PageResponseDto.content)
+final ordersProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final Response<dynamic> res = await DioClient.instance.get('/api/orders', queryParameters: {'page': 1, 'size': 50});
+  final dynamic data = res.data;
+  final List<dynamic> list = data is Map ? (data['content'] as List? ?? []) : (data as List);
+  return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
 });
+
+class OrderActions {
+  /// 결제 전 주문은 삭제, 결제완료/취소 주문은 내 목록에서만 숨김 (서버 정책)
+  static Future<void> delete(int orderId) => DioClient.instance.delete('/api/orders/$orderId');
+}

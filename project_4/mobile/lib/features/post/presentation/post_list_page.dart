@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../shared/components/app_layout.dart';
-import '../data/board_provider.dart';
-import '../../auth/data/auth_provider.dart';
-import 'post_detail_page.dart';
-import '../../../core/network/api_client.dart';
 
+import '../../../core/network/dio_client.dart';
+import '../../../shared/app_layout.dart';
+import '../../auth/data/auth_provider.dart';
+import '../data/board_provider.dart';
+import 'post_card.dart';
+import 'post_write_page.dart';
+
+/// 커뮤니티 - 전체 / 팔로잉 피드 + 해시태그 필터 + 글쓰기
 class PostListPage extends ConsumerStatefulWidget {
   const PostListPage({super.key});
 
@@ -13,155 +16,98 @@ class PostListPage extends ConsumerStatefulWidget {
   ConsumerState<PostListPage> createState() => _PostListPageState();
 }
 
-class _PostListPageState extends ConsumerState<PostListPage> {
-  // 이미지 URL을 안전하게 완성하는 헬퍼 메서드
-  String _resolveImageUrl(String url) { //url변환
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
+class _PostListPageState extends ConsumerState<PostListPage> with SingleTickerProviderStateMixin {
+  late final TabController _tab = TabController(length: 2, vsync: this)..addListener(() => setState(() {}));
+  String? _tag;
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
+  }
+
+  FeedQuery get _query => FeedQuery(feed: _tab.index == 1 ? 'following' : 'all', tag: _tag);
+
+  Future<void> _write() async {
+    if (!requireLogin(context, ref)) return;
+    final bool? created = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const PostWritePage()));
+    if (created == true) {
+      ref.invalidate(feedProvider);
+      ref.invalidate(hashtagsProvider);
     }
-    final String serverBaseUrl = ApiClient.getBaseUrl();  // https://d2big.ducksdns.org , localhost:8080
-    final cleanBase = serverBaseUrl.endsWith('/')   // 서버 도메인 추출
-        ? serverBaseUrl.substring(0, serverBaseUrl.length - 1)
-        : serverBaseUrl;
-    final cleanUrl = url.startsWith('/') ? url : '/$url';
-    return '$cleanBase$cleanUrl';
   }
 
   @override
-  void initState() {  // 위젯연결시 1번 
-    super.initState();
-    // 화면그림그리기
-    Future.microtask(() => ref.read(boardProvider.notifier).fetchPosts());
-  }// react useEffect( ..... , []) 와 동일 - 1번 읽어들임
-
-  @override
   Widget build(BuildContext context) {
-    final boardState = ref.watch(boardProvider); // watch  지속적으로 확인       useEffect( ..... , [user])
-    final authState = ref.watch(authProvider); // 로그인 상태 감지
-
-    return AppLayout(// 공통레이아웃
-      child: Scaffold(
-        body: boardState.loading && boardState.posts.isEmpty    //조건1:  로딩중?
-            ? const Center(child: CircularProgressIndicator())  // 로딩화면 
-            : boardState.posts.isEmpty    //조건2:  비었다면
-                ? const Center(child: Text('등록된 게시글이 없습니다.'))
-                : RefreshIndicator(   // 모바일당겨서 새로고침 - RefreshIndicator
-                    onRefresh: () async {
-                      await ref.read(boardProvider.notifier).fetchPosts();  // 게시글가져와주는 api
-                    },
-                    child: ListView.builder(  // 리스트
-                      itemCount: boardState.posts.length,
-                      itemBuilder: (context, index) {
-                        final post = boardState.posts[index];
-
-                        // 백엔드 API 응답 키(authorNickname 최우선) 안전하게 추출
-                        final String nickname = post['authorNickname'] ??
-                            post['userNickname'] ??
-                            post['nickname'] ??
-                            post['writerNickname'] ??
-                            post['user']?['nickname'] ??
-                            '익명';
-
-                        final String content = post['content'] ?? '';
-                        final List<dynamic> hashtags = post['hashtags'] ?? [];
-                        final List<dynamic> imageUrls = post['imageUrls'] ?? [];
-
-                        return Card(    // 카드스타일
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),   // 카드 외각 마진설정
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(   // 상세페이지로 이동
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      PostDetailPage(post: post), // 상세페이지 위젯
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Column(    // 세로정렬레이아웃
-                                crossAxisAlignment: CrossAxisAlignment.start, // 좌측정렬
-                                children: [
-                                  Text(
-                                    '작성자: $nickname',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    content,
-                                    style: const TextStyle(fontSize: 16),
-                                    maxLines: 2,  // 최대 2줄만보이게
-                                    overflow: TextOverflow.ellipsis,  // 말줄임표 ...
-                                  ),
-                                  const SizedBox(height: 6),
-                                  if (hashtags.isNotEmpty)  
-                                    Wrap(  // flex-wrap
-                                      spacing: 6.0,  // 요소간의 간격
-                                      children: hashtags
-                                          .map(
-                                            (tag) => Text(
-                                              tag.toString().startsWith('#')
-                                                  ? tag.toString()
-                                                  : '#$tag',
-                                              style: const TextStyle(
-                                                  color: Colors.indigo),
-                                            ),
-                                          )
-                                          .toList(),
-                                    ),
-                                  if (imageUrls.isNotEmpty) ...[
-                                    const SizedBox(height: 8),
-                                    ClipRRect(  // 자식이미지 모서리 둥글게
-                                      borderRadius: BorderRadius.circular(6.0),
-                                      child: Image.network(
-                                        _resolveImageUrl(
-                                            imageUrls.first.toString()),  // 이미지 주소 
-                                        height: 120,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,  // 이미지 비율 꽉채우기 object-fit : cover
-                                        errorBuilder: // 이미지 실패시
-                                            (context, error, stackTrace) =>
-                                                Container(
-                                          height: 120,
-                                          color: Colors.grey[200],
-                                          alignment: Alignment.center,
-                                          child: const Text(
-                                            '이미지를 불러올 수 없습니다.',
-                                            style: TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 12),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ]
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-        floatingActionButton: FloatingActionButton(   // 화면 우측하단 플로팅 글스기 버튼
-          onPressed: () { // 버튼클릭시
-            if (authState.user == null && authState.accessToken == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('로그인이 필요한 서비스입니다.')),
-              );
-              Navigator.pushNamed(context, '/login'); // pushNamed  - 로그인화면이동
-            } else {
-              Navigator.pushNamed(context, '/post-write');  // 작성화면
-            }
-          },
-          child: const Icon(Icons.create),   // 연필아이콘 
+    final bool loggedIn = ref.watch(authProvider.select((a) => a.isLoggedIn));
+    return AppLayout(
+      title: '커뮤니티',
+      bottom: TabBar(controller: _tab, tabs: const [Tab(text: '전체'), Tab(text: '팔로잉')]),
+      floatingActionButton: FloatingActionButton.extended(onPressed: _write, icon: const Icon(Icons.edit), label: const Text('글쓰기')),
+      child: Column(children: [
+        _tagBar(),
+        Expanded(
+          child: _tab.index == 1 && !loggedIn
+              ? const EmptyView(message: '로그인하면 팔로우한 사람들의 글을 모아 볼 수 있어요.', icon: Icons.group_outlined)
+              : _feed(),
         ),
+      ]),
+    );
+  }
+
+  Widget _tagBar() {
+    final AsyncValue<List<String>> tags = ref.watch(hashtagsProvider);
+    final List<String> list = tags.maybeWhen(data: (t) => t, orElse: () => const <String>[]);
+    if (list.isEmpty && _tag == null) return const SizedBox.shrink();
+    return SizedBox(
+      height: 48,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(4),
+            child: ChoiceChip(label: const Text('전체'), selected: _tag == null, onSelected: (_) => setState(() => _tag = null)),
+          ),
+          for (final String t in list)
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: ChoiceChip(label: Text('#$t'), selected: _tag == t, onSelected: (_) => setState(() => _tag = _tag == t ? null : t)),
+            ),
+        ],
       ),
+    );
+  }
+
+  Widget _feed() {
+    final FeedQuery q = _query;
+    final AsyncValue<List<Map<String, dynamic>>> posts = ref.watch(feedProvider(q));
+    return posts.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => EmptyView(message: errorMessage(e), onRetry: () => ref.invalidate(feedProvider(q))),
+      data: (list) => list.isEmpty
+          ? EmptyView(
+              message: q.feed == 'following'
+                  ? '팔로우한 사람의 글이 없어요.\n글쓴이 닉네임을 눌러 팔로우해 보세요.'
+                  : _tag != null ? '#$_tag 태그가 붙은 글이 없습니다.' : '첫 글을 남겨 보세요!',
+              icon: Icons.forum_outlined,
+            )
+          : RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(feedProvider(q));
+                ref.invalidate(hashtagsProvider);
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 80),
+                itemCount: list.length,
+                itemBuilder: (context, i) => PostCard(
+                  key: ValueKey('${list[i]['id']}-${list[i]['retweetedBy']}'),
+                  post: list[i],
+                  onTagTap: (t) => setState(() => _tag = t),
+                  onChanged: () => ref.invalidate(feedProvider(q)),
+                ),
+              ),
+            ),
     );
   }
 }

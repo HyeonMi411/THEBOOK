@@ -60,13 +60,38 @@ email:
     code-exp-seconds: 300        # 인증번호 유효시간 (5분)
     verified-exp-seconds: 1800   # 인증완료 상태 유지시간 (30분) - 이 안에 회원가입을 마쳐야 함
 
+# 상담 챗봇 - FAQ 로 답을 못 찾은 질문만 ChatGPT 에 보조로 물어봄 (키가 비어 있으면 AI 없이 FAQ + 상담원 안내만 동작)
 openai:
   api:
-    key: ${OPENAI_API_KEY:}   # AI RAG 챗봇 - platform.openai.com 에서 발급 (유료)
+    key: ${OPENAI_API_KEY:}
+    model: ${OPENAI_MODEL:gpt-4o-mini}
+
+# ── 외부 API (키가 비어 있으면 해당 기능만 "설정되지 않음" 안내를 내려주고 앱은 정상 동작) ──
+kma:
+  api-key: ${KMA_API_KEY:}              # 공공데이터포털 - 기상청 단기예보 조회서비스(초단기실황), 일반 인증키(Decoding)
+naver:
+  book:
+    client-id: ${NAVER_BOOK_CLIENT_ID:${NAVER_CLIENT_ID:}}          # 네이버 개발자센터 - 검색 API
+    client-secret: ${NAVER_BOOK_CLIENT_SECRET:${NAVER_CLIENT_SECRET:}}
+  ocr:
+    secret: ${NAVER_OCR_SECRET:}          # 네이버 클라우드 CLOVA OCR (General) Secret Key
+    invoke-url: ${NAVER_OCR_INVOKE_URL:}  # CLOVA OCR APIGW Invoke URL (…/general)
+sms:
+  api-key: ${COOLSMS_API_KEY:}            # CoolSMS(솔라피) API Key / Secret / 등록된 발신번호
+  api-secret: ${COOLSMS_API_SECRET:}
+  from: ${COOLSMS_FROM:}
+book-news:
+  # 도서 뉴스 - RSS(기계가 읽도록 공개된 피드)를 jsoup 으로 수집. 30분마다 갱신
+  rss-url: ${BOOK_NEWS_RSS_URL:https://news.google.com/rss/search?q=%EC%8B%A0%EA%B0%84+%EB%8F%84%EC%84%9C&hl=ko&gl=KR&ceid=KR:ko}
+statistics:
+  # 매일 23:50 에 Spring Boot → Django 대시보드로 운영 지표를 푸시 (DJANGO_SYNC_URL 이 비어 있으면 건너뜀)
+  django-sync-url: ${DJANGO_SYNC_URL:}
+  sync-token: ${STATS_SYNC_TOKEN:}
 
 file:
-  upload-dir: /home/ubuntu/app/project_4/back/build/libs/uploads
-  #upload-dir: uploads
+  # 기본값 uploads(실행 위치 기준). 서버(pm2)는 build/libs 에서 실행하므로 예전 경로와 동일한 위치가 되고,
+  # 로컬(bootRun)에서도 별도 설정 없이 그대로 동작한다. 다른 곳에 저장하려면 UPLOAD_DIR 로 지정.
+  upload-dir: ${UPLOAD_DIR:uploads}
 
 #server:
 #  port: 8484
@@ -74,4 +99,12 @@ file:
 # "https://bookproject3.duckdns.org"
 # 프록시서버(nginx) , 프로시가 전달해준 https 헤더정보 어떻게 처리할것인지
 server:
+  # project_3(8080)와 겹치지 않도록 project_4 는 로컬/서버 모두 기본 8082 (모바일 앱의 로컬 주소와도 일치)
+  port: ${SERVER_PORT:8082}
   forward-headers-strategy: native
+
+# 상담 챗봇에서 "상담원 문의" 버튼이 여는 이메일 주소
+chatbot:
+  contact-email: ${CHATBOT_CONTACT_EMAIL:jewelkhm@naver.com}
+  # 한 사용자(IP)가 1시간에 AI 보조답변을 받을 수 있는 최대 횟수 (OpenAI 비용 보호)
+  ai-hourly-limit: ${CHATBOT_AI_HOURLY_LIMIT:20}

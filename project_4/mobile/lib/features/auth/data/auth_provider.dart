@@ -1,204 +1,209 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';  // 리덕스
-import 'package:dio/dio.dart';  // axios  역할의 비동기 http 통신
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';  // jwt 저장라이브러리
-import '../../../core/network/api_client.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../../core/network/dio_client.dart';
+import '../../../core/network/refresh_cookie.dart';
+
+/// 로그인 상태 (React 의 Redux store 역할)
 class AuthState {
-  final Map<String, dynamic>? user; // 서버에서 받은 유저정보 dto객체
-  final String? accessToken;  // jwt access Token
-  final bool loading;  // 로딩중?
-  final String? error; // 에러
+  final Map<String, dynamic>? user; // 서버의 UserResponseDto
+  final bool loading;
+  final bool restored; // 앱 시작 시 저장된 토큰으로 로그인 복원을 시도했는지
 
-  const AuthState({
-    this.user,
-    this.accessToken,
-    this.loading = false,
-    this.error,
-  });
+  const AuthState({this.user, this.loading = false, this.restored = false});
+
+  bool get isLoggedIn => user != null;
+  bool get isAdmin => user?['role'] == 'ROLE_ADMIN';
+  int? get userId => user?['id'] is num ? (user!['id'] as num).toInt() : null;
+  String get nickname => user?['nickname']?.toString() ?? '';
+
+  AuthState copyWith({Map<String, dynamic>? user, bool? loading, bool? restored, bool clearUser = false}) {
+    return AuthState(
+      user: clearUser ? null : (user ?? this.user),
+      loading: loading ?? this.loading,
+      restored: restored ?? this.restored,
+    );
+  }
 }
 
-// [핵심] 최신 Riverpod 표준 Notifier 클래스 상속
 class AuthNotifier extends Notifier<AuthState> {
+  Dio get _dio => DioClient.instance;
+
   @override
   AuthState build() {
-    _initDio();   // Provider 생성시 인터셉터 설정 초기화 
-    return const AuthState();  // 초가회 상태 반환
+    // 재발급까지 실패(=세션 만료)하면 로그인 상태를 비운다
+    DioClient.onSessionExpired = () => state = state.copyWith(clearUser: true);
+    return const AuthState();
   }
 
-  late final Dio _dio;  // late (나중에-사용하기 직전에 초기화)  , final 변경 x
-  // OS 암호화 저장소 객체 생성 (localStorage 대신 모바일 보안 영역 사용)
-  final _storage = const FlutterSecureStorage();  // os 암호화 로컬저장소 
-
-  void _initDio() {
-    _dio = Dio(BaseOptions(
-      baseUrl: ApiClient.getBaseUrl(),  // 부품객체 : Apiclient  http://localhost:8080
-      headers: {'Content-Type': 'application/json'},
-    ));
-
-    // [핵심] Dio Interceptor 설정 (Axios interceptor와 100% 동일)
-    _dio.interceptors.add(InterceptorsWrapper(
-      // 매 api 요청마다  SecureStorage에서 토큰 일어와서 Authorization 해서 주입
-      onRequest: (options, handler) async {
-        final token = await _storage.read(key: 'accessToken');
-        if (token != null) {
-          // Authorization 헤더에 Bearer 토큰 주입
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-      // 에러응답  - 401(토큰만료) → 재발급시도
-      onError: (DioException e, handler) async {
-        // [핵심] HTTP 401 Unauthorized 감지 시 토큰 재발급 후 원래 요청 재시도
-        if (e.response?.statusCode == 401) {
-          final success = await _refreshAccessToken();
-          if (success) {
-            final token = await _storage.read(key: 'accessToken');
-            e.requestOptions.headers['Authorization'] = 'Bearer $token';
-            // 기존 실패했던 API 요청 재전송
-            final clonedRequest = await _dio.fetch(e.requestOptions); // 원래요청 재전송
-            return handler.resolve(clonedRequest);
-          }
-        }
-        return handler.next(e);
-      },
-    ));
-  }
-  // jwt 토큰 재발급 비동기 로직
-  Future<bool> _refreshAccessToken() async {
+  /// 앱 시작 시 한 번 - 저장된 토큰(없으면 리프레시 쿠키)으로 로그인 상태 복원
+  /// (예전 앱은 앱을 다시 켜면 토큰이 남아 있어도 user 가 비어 있어서 항상 로그아웃 상태로 보였다)
+  Future<void> restoreSession() async {
     try {
-      final response = await _dio.post('/auth/refresh');  // boot 요청경로
-      final newAccessToken = response.data['accessToken'];
-      if (newAccessToken != null) {
-        await _storage.write(key: 'accessToken', value: newAccessToken);
-        state = AuthState(
-          user: state.user,
-          accessToken: newAccessToken,
-          loading: state.loading,
-          error: state.error,
-        );
-        return true;
+      String? token = await DioClient.readAccessToken();
+      if (token == null && await DioClient.refreshAccessToken()) {
+        token = await DioClient.readAccessToken();
+      }
+      if (token != null) {
+        final Response<dynamic> res = await _dio.get('/auth/me');
+        state = state.copyWith(user: Map<String, dynamic>.from(res.data as Map), restored: true);
+        return;
       }
     } catch (_) {
-      await logout();   // refresh 실패시 강제로그아웃
+      await DioClient.clearTokens();
     }
-    return false;
+    state = state.copyWith(clearUser: true, restored: true);
   }
-  // 로그인
-  Future<bool> login(Map<String, dynamic> credentials) async {
-    // 로딩상태시작
-    state = AuthState(
-      user: state.user,
-      accessToken: state.accessToken,
-      loading: true,
-      error: null,
-    );
-    
-    try {
-      final response = await _dio.post('/auth/login', data: credentials);
-      final accessToken = response.data['accessToken'];
-      final user = response.data['user'];
 
-      if (user != null && accessToken != null) {
-        await _storage.write(key: 'accessToken', value: accessToken);
-        state = AuthState(
-          user: user,
-          accessToken: accessToken,
-          loading: false,
-          error: null,
-        );
-        return true;
-      } else {
-        state = AuthState(
-          user: state.user,
-          accessToken: state.accessToken,
-          loading: false,
-          error: '아이디 또는 비밀번호가 올바르지 않습니다.',
-        );
-        return false;
-      }
-    } catch (err) {
-      state = AuthState(
-        user: state.user,
-        accessToken: state.accessToken,
-        loading: false,
-        error: '로그인 실패: ${err.toString()}',
-      );
-      return false;
+  Future<void> _applyLoginResponse(Response<dynamic> res) async {
+    await RefreshCookie.saveFromResponse(res); // Set-Cookie 의 refreshToken 보관 (모바일은 쿠키 자동저장이 없음)
+    final Map<dynamic, dynamic> data = res.data as Map;
+    await DioClient.saveAccessToken(data['accessToken'] as String);
+    state = state.copyWith(user: Map<String, dynamic>.from(data['user'] as Map), loading: false);
+  }
+
+  /// @return 실패 시 에러 메시지, 성공 시 null
+  Future<String?> login(String email, String password) async {
+    state = state.copyWith(loading: true);
+    try {
+      final Response<dynamic> res = await _dio.post('/auth/login', data: {'email': email, 'password': password});
+      await _applyLoginResponse(res);
+      return null;
+    } catch (e) {
+      state = state.copyWith(loading: false);
+      return errorMessage(e, fallback: '이메일 또는 비밀번호가 올바르지 않습니다.');
     }
   }
-  // 로그아웃 액션
+
+  /// 소셜 로그인 후 딥링크로 받은 일회용 코드 → 토큰
+  Future<String?> exchangeSocialCode(String code) async {
+    state = state.copyWith(loading: true);
+    try {
+      final Response<dynamic> res = await _dio.post('/auth/app/exchange', data: {'code': code});
+      await _applyLoginResponse(res);
+      return null;
+    } catch (e) {
+      state = state.copyWith(loading: false);
+      return errorMessage(e, fallback: '소셜 로그인에 실패했습니다.');
+    }
+  }
+
+  Future<Map<String, dynamic>?> socialPreview(String signupToken) async {
+    try {
+      final Response<dynamic> res = await _dio.get('/auth/social/preview', queryParameters: {'signupToken': signupToken});
+      return Map<String, dynamic>.from(res.data as Map);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> completeSocialSignup(String signupToken, String nickname) async {
+    try {
+      final Response<dynamic> res =
+          await _dio.post('/auth/social/signup', data: {'signupToken': signupToken, 'nickname': nickname});
+      await _applyLoginResponse(res);
+      return null;
+    } catch (e) {
+      return errorMessage(e, fallback: '가입을 완료하지 못했습니다.');
+    }
+  }
+
+  // ── 회원가입 (이메일 인증 → 중복확인 → 가입) ──
+
+  Future<String?> sendEmailCode(String email) async {
+    try {
+      await _dio.post('/auth/email/send-code', queryParameters: {'email': email});
+      return null;
+    } catch (e) {
+      return errorMessage(e, fallback: '인증번호를 보내지 못했습니다.');
+    }
+  }
+
+  Future<String?> verifyEmailCode(String email, String code) async {
+    try {
+      await _dio.post('/auth/email/verify-code', queryParameters: {'email': email, 'code': code});
+      return null;
+    } catch (e) {
+      return errorMessage(e, fallback: '인증번호가 올바르지 않습니다.');
+    }
+  }
+
+  /// true = 이미 사용 중
+  Future<bool> isEmailTaken(String email) async {
+    final Response<dynamic> res = await _dio.get('/auth/check-email', queryParameters: {'email': email});
+    return res.data == true;
+  }
+
+  Future<bool> isNicknameTaken(String nickname) async {
+    final Response<dynamic> res = await _dio.get('/auth/check-nickname', queryParameters: {'nickname': nickname});
+    return res.data == true;
+  }
+
+  /// profileImage 는 선택 (서버 multipart 파트명 ufile)
+  Future<String?> signup(String email, String password, String nickname, {XFile? profileImage}) async {
+    try {
+      await _dio.post('/auth/signup',
+          data: FormData.fromMap({
+            'email': email,
+            'password': password,
+            'nickname': nickname,
+            if (profileImage != null)
+              'ufile': MultipartFile.fromBytes(await profileImage.readAsBytes(), filename: profileImage.name),
+          }));
+      return null;
+    } catch (e) {
+      return errorMessage(e, fallback: '회원가입에 실패했습니다.');
+    }
+  }
+
+  // ── 마이페이지 ──
+
+  Future<String?> updateNickname(String nickname) async {
+    final int? id = state.userId;
+    if (id == null) return '로그인이 필요합니다.';
+    try {
+      final Response<dynamic> res = await _dio.patch('/auth/$id/nickname', queryParameters: {'nickname': nickname});
+      state = state.copyWith(user: Map<String, dynamic>.from(res.data as Map));
+      return null;
+    } catch (e) {
+      return errorMessage(e, fallback: '닉네임을 바꾸지 못했습니다.');
+    }
+  }
+
+  Future<String?> updateProfileImage(XFile file) async {
+    final int? id = state.userId;
+    if (id == null) return '로그인이 필요합니다.';
+    try {
+      final FormData form = FormData.fromMap({
+        'ufile': MultipartFile.fromBytes(await file.readAsBytes(), filename: file.name),
+      });
+      final Response<dynamic> res = await _dio.patch('/auth/$id/profile-image', data: form);
+      state = state.copyWith(user: Map<String, dynamic>.from(res.data as Map));
+      return null;
+    } catch (e) {
+      return errorMessage(e, fallback: '프로필 사진을 바꾸지 못했습니다.');
+    }
+  }
+
+  Future<String?> withdraw() async {
+    try {
+      await _dio.delete('/auth/me', options: await RefreshCookie.cookieOptions());
+      await DioClient.clearTokens();
+      state = state.copyWith(clearUser: true);
+      return null;
+    } catch (e) {
+      return errorMessage(e, fallback: '탈퇴 처리에 실패했습니다.');
+    }
+  }
+
   Future<void> logout() async {
     try {
-      await _dio.post('/auth/logout');  
+      await _dio.post('/auth/logout', options: await RefreshCookie.cookieOptions());
     } catch (_) {}
-    await _storage.delete(key: 'accessToken');  // 저장된 토큰삭제
-    state = const AuthState();  // 상태초기화
-  }
-
-  // 회원가입
-  Future<bool> signup(Map<String, dynamic> data) async {
-    state = AuthState(
-      user: state.user,
-      accessToken: state.accessToken,
-      loading: true,
-      error: null,
-    );
-
-    try {
-      // Spring Boot @RequestPart 멀티파트 수신 대응용 FormData 객체 생성
-      final formData = FormData.fromMap({
-        'email': data['email'],
-        'password': data['password'],
-        'nickname': data['nickname'],
-      });
-
-      await _dio.post(
-        '/auth/signup', 
-        data: formData,
-        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
-      );
-
-      state = AuthState(
-        user: state.user,
-        accessToken: state.accessToken,
-        loading: false,
-        error: null,
-      );
-      return true;
-    } catch (err) {
-      state = AuthState(
-        user: state.user,
-        accessToken: state.accessToken,
-        loading: false,
-        error: '회원가입 실패: ${err.toString()}',
-      );
-      return false;
-    }
-  }
-  // 이메일 중복체크 api  ( GET   /auth/check-email )
-  Future<bool> checkEmailDuplicate(String email) async {
-    try {
-      final response = await _dio.get('/auth/check-email', queryParameters: {'email': email});
-      return response.data;
-    } catch (e) {
-      return false;
-    }
-  }
-  // 닉네임 중복체크 api  ( GET   /auth/check-nickname )
-  Future<bool> checkNicknameDuplicate(String nickname) async {
-    try {
-      final response = await _dio.get('/auth/check-nickname', queryParameters: {'nickname': nickname});
-      return response.data;  // true:이미존재, false: 사용가능
-    } catch (e) {
-      return false;
-    }
+    await DioClient.clearTokens();
+    state = state.copyWith(clearUser: true);
   }
 }
-// [핵심] Riverpod NotifierProvider 등록
-final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
-  return AuthNotifier();
-});
 
-//  React [Redux + Saga + api/axios.js(jwt 토큰처리)]
-//  AuthState    - Redux
-//  _dio.interceptors :  api 요청마다 `Bearer ${token}` 을 헤더주입 , 401 에러토큰
+final authProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);

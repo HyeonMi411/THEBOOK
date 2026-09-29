@@ -1,174 +1,127 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/board_provider.dart';
+
+import '../../../core/network/dio_client.dart';
+import '../../../core/utils/format.dart';
+import '../../../shared/app_layout.dart';
 import '../../auth/data/auth_provider.dart';
-import '../../../core/network/api_client.dart';
+import '../data/board_provider.dart';
+import 'post_comments_section.dart';
+import 'post_write_page.dart';
+import 'user_profile_page.dart';
 
-class PostDetailPage extends ConsumerWidget {  // final Map<String, dynamic> post;
-
-  const PostDetailPage({super.key, required this.post});
-
-  // 이미지 URL 정합성 맞추기 헬퍼 메서드
-  String _resolveImageUrl(String url) {
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    final String serverBaseUrl = ApiClient.getBaseUrl();
-    final cleanBase = serverBaseUrl.endsWith('/')
-        ? serverBaseUrl.substring(0, serverBaseUrl.length - 1)
-        : serverBaseUrl;
-    final cleanUrl = url.startsWith('/') ? url : '/$url';
-    return '$cleanBase$cleanUrl';
-  }
+class PostDetailPage extends ConsumerWidget {
+  final int postId;
+  const PostDetailPage({super.key, required this.postId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final postId = post['id'];
-
-    // [수정 포인트]: boardState가 BoardState 객체이므로 내부 리스트(posts, boardList, items)를 감지하여 순회
-    final boardState = ref.watch(boardProvider);
-    Map<String, dynamic> currentPost = post; // 찾지 못할 경우 기본 post 사용
-
-    final dynamic rawPosts = (boardState as dynamic).posts ??
-        (boardState as dynamic).boardList ??
-        (boardState as dynamic).items;
-
-    if (rawPosts is List) {
-      for (final item in rawPosts) {
-        if (item is Map && item['id'] == postId) {
-          currentPost = Map<String, dynamic>.from(item);
-          break;
-        }
-      }
-    }
-
-    // 널 안전성(Null Safety) 및 타입 안전 추출
-    final String postNickname = (currentPost['authorNickname'] ??
-            currentPost['userNickname'] ??
-            currentPost['nickname'] ??
-            currentPost['writerNickname'] ??
-            currentPost['user']?['nickname'] ??
-            currentPost['writer']?['nickname'] ??
-            '')
-        .toString();
-
-    final String content = (currentPost['content'] ?? '').toString();
-    final List<dynamic> hashtags =
-        currentPost['hashtags'] is List ? currentPost['hashtags'] : [];
-    final List<dynamic> imageUrls =
-        currentPost['imageUrls'] is List ? currentPost['imageUrls'] : [];
-    final String createdAt = (currentPost['createdAt'] ?? '').toString();
-
-    // 현재 로그인한 사용자 정보 감지
-    final authState = ref.watch(authProvider);
-    final currentUser = authState.user;
-
-    // 작성자 본인 판별 로직
-    bool isMyPost = false;
-
-    if (currentUser != null) {
-      final postUserId = currentPost['authorId'] ??
-          currentPost['userId'] ??
-          currentPost['user_id'] ??
-          currentPost['memberId'] ??
-          currentPost['writerId'];
-
-      final currentUserId = currentUser['id'] ??
-          currentUser['userId'] ??
-          currentUser['memberId'] ??
-          currentUser['authorId'];
-
-      final currentNickname = currentUser['nickname'] ??
-          currentUser['authorNickname'] ??
-          currentUser['userNickname'] ??
-          currentUser['name'] ??
-          '';
-
-      if (postUserId != null && currentUserId != null) {
-        isMyPost =
-            postUserId.toString().trim() == currentUserId.toString().trim();
-      }
-
-      if (!isMyPost && postNickname.isNotEmpty && currentNickname.isNotEmpty) {
-        isMyPost = postNickname.trim() == currentNickname.trim();
-      }
-    }
-
+    final AsyncValue<Map<String, dynamic>> post = ref.watch(postDetailProvider(postId));
+    final int? myId = ref.watch(authProvider).userId;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('게시글 상세보기'),
+        title: const Text('게시글'),
         actions: [
+          post.maybeWhen(
+            data: (p) => myId != null && myId == asInt(p['userId'])
+                ? PopupMenuButton<String>(
+                    onSelected: (v) => v == 'edit' ? _edit(context, ref, p) : _delete(context, ref),
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(value: 'edit', child: Text('수정')),
+                      PopupMenuItem(value: 'delete', child: Text('삭제')),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+            orElse: () => const SizedBox.shrink(),
+          ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            Text(
-              '작성자: ${postNickname.isEmpty ? '익명' : postNickname}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
-            ),
-            const SizedBox(height: 4),
-            if (createdAt.isNotEmpty)
-              Text(
-                '작성일: $createdAt',
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-            const Divider(height: 24),
-            Text(
-              content,
-              style: const TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 16),
-            if (hashtags.isNotEmpty)
-              Wrap(
-                spacing: 6.0,
-                children: hashtags
-                    .map(
-                      (tag) => Text(
-                        tag.toString().startsWith('#')
-                            ? tag.toString()
-                            : '#$tag',
-                        style: const TextStyle(
-                          color: Colors.indigo,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            const SizedBox(height: 16),
-            if (imageUrls.isNotEmpty)
-              ...imageUrls.map((url) {
-                final resolvedUrl = _resolveImageUrl(url.toString());
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Image.network(
-                      Uri.encodeFull(resolvedUrl),
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        padding: const EdgeInsets.all(16),
-                        color: Colors.grey[200],
-                        child: Text(
-                          '이미지를 불러올 수 없습니다.\n($resolvedUrl)',
-                          textAlign: TextAlign.center,
-                          style:
-                              const TextStyle(color: Colors.red, fontSize: 11),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-          ],
-        ),
+      body: post.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => EmptyView(message: errorMessage(e)),
+        data: (p) => _body(context, ref, p),
       ),
     );
+  }
+
+  Widget _body(BuildContext context, WidgetRef ref, Map<String, dynamic> p) {
+    final List<dynamic> images = p['imageUrls'] as List? ?? [];
+    final List<dynamic> tags = p['hashtags'] as List? ?? [];
+    final String profile = p['userProfileImage']?.toString() ?? '';
+    final bool mine = ref.read(authProvider).userId == asInt(p['userId']);
+
+    Future<void> act(Future<Map<String, dynamic>> Function() call) async {
+      if (!requireLogin(context, ref)) return;
+      try {
+        await call();
+        ref.invalidate(postDetailProvider(postId));
+      } catch (e) {
+        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage(e))));
+      }
+    }
+
+    return ListView(padding: const EdgeInsets.all(16), children: [
+      ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: CircleAvatar(
+          backgroundImage: profile.isNotEmpty ? NetworkImage(imageUrl(profile)) : null,
+          child: profile.isEmpty ? const Icon(Icons.person) : null,
+        ),
+        title: Text(p['userNickname']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(shortDateTime(p['createdAt'])),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => UserProfilePage(userId: asInt(p['userId'])))),
+      ),
+      Text(p['content']?.toString() ?? '', style: const TextStyle(fontSize: 16, height: 1.6)),
+      for (final dynamic img in images)
+        Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: ClipRRect(borderRadius: BorderRadius.circular(8), child: NetImage(imageUrl(img), fit: BoxFit.fitWidth, fallbackIcon: Icons.image)),
+        ),
+      if (tags.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Wrap(spacing: 6, children: [for (final dynamic t in tags) Chip(label: Text('#$t'))]),
+        ),
+      Row(children: [
+        TextButton.icon(
+          onPressed: () => act(() => BoardApi.toggleLike(postId)),
+          icon: Icon(p['likedByMe'] == true ? Icons.favorite : Icons.favorite_border, color: Colors.red),
+          label: Text('좋아요 ${p['likeCount'] ?? 0}'),
+        ),
+        TextButton.icon(
+          onPressed: mine ? null : () => act(() => BoardApi.toggleRetweet(postId)),
+          icon: Icon(Icons.repeat, color: p['retweetedByMe'] == true ? Colors.green : null),
+          label: Text('리트윗 ${p['retweetCount'] ?? 0}'),
+        ),
+      ]),
+      const Divider(),
+      PostCommentsSection(postId: postId, onChanged: () => ref.invalidate(postDetailProvider(postId))),
+    ]);
+  }
+
+  Future<void> _edit(BuildContext context, WidgetRef ref, Map<String, dynamic> p) async {
+    final bool? ok = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => PostWritePage(editing: p)));
+    if (ok == true) ref.invalidate(postDetailProvider(postId));
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: const Text('이 글을 삭제할까요?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('삭제')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await BoardApi.delete(postId);
+      ref.invalidate(feedProvider);
+      if (context.mounted) Navigator.pop(context);
+    } catch (e) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage(e))));
+    }
   }
 }

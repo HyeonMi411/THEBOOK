@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "analytics",
+    "opslog",
 ]
 
 MIDDLEWARE = [
@@ -121,6 +122,12 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ── Spring Boot ↔ Django 통계 동기화 ──
+# Spring Boot 가 매일 POST 할 때, 그리고 "지금 동기화" 버튼으로 Spring Boot 를 호출할 때 쓰는 공유 토큰
+STATS_SYNC_TOKEN = env("STATS_SYNC_TOKEN", default="")
+# 예: http://localhost:8082 (project_4/back)
+SPRING_API_BASE_URL = env("SPRING_API_BASE_URL", default="")
 
 LOGIN_URL = "/login"
 LOGIN_REDIRECT_URL = "/"
