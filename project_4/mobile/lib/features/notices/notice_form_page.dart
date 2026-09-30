@@ -9,6 +9,7 @@ import '../../core/network/dio_client.dart';
 import '../../core/utils/format.dart';
 import '../../shared/app_layout.dart';
 import '../home/data/home_provider.dart';
+import '../../core/network/upload.dart';
 
 /// 공지사항 등록 / 수정 (관리자) - 3차 /notices/new, 공지 수정 모달과 같은 항목 (제목·내용·첨부 이미지)
 class NoticeFormPage extends ConsumerStatefulWidget {
@@ -59,7 +60,7 @@ class _NoticeFormPageState extends ConsumerState<NoticeFormPage> {
       final FormData form = FormData.fromMap({
         'btitle': _title.text.trim(),
         'bcontent': _content.text.trim(),
-        if (_file != null) 'bfile': MultipartFile.fromBytes(await _file!.readAsBytes(), filename: _file!.name),
+        if (_file != null) 'bfile': await imagePart(_file!),
       });
       if (_isEdit) {
         final int id = asInt(widget.editing!['id']);

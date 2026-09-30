@@ -19,6 +19,7 @@ class NoticeListPage extends ConsumerWidget {
       appBar: AppBar(title: const Text('공지사항')),
       floatingActionButton: isAdmin
           ? FloatingActionButton.extended(
+              heroTag: 'fab-notice-write',
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NoticeFormPage())),
               icon: const Icon(Icons.edit),
               label: const Text('공지 작성'),

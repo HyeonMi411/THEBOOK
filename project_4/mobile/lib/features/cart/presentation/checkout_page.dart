@@ -41,6 +41,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   String _zipcode = '';
   String _address = '';
   bool _busy = false;
+  int? _orderId; // 이미 만든 주문 - 결제 준비가 실패해도 다시 누르면 같은 주문으로 결제 (장바구니는 주문 생성 때 비워지므로)
 
   @override
   void initState() {
@@ -79,7 +80,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
     setState(() => _busy = true);
     try {
-      final int orderId = await OrderApi.createOrder(
+      final int orderId = _orderId ?? await OrderApi.createOrder(
         cartItemIds: widget.cartItemIds,
         bookId: widget.bookId,
         quantity: widget.quantity,
@@ -89,8 +90,17 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         address: _address,
         addressDetail: _detail.text.trim(),
       );
-      ref.read(cartProvider.notifier).fetch(); // 주문된 장바구니 항목은 서버에서 비워짐
-      final String url = await OrderApi.kakaoPayReady(orderId);
+      if (_orderId == null) {
+        _orderId = orderId;
+        ref.read(cartProvider.notifier).fetch(); // 주문된 장바구니 항목은 서버에서 비워짐
+      }
+      final String url;
+      try {
+        url = await OrderApi.kakaoPayReady(orderId);
+      } catch (e) {
+        _toast('${errorMessage(e, fallback: '결제를 준비하지 못했습니다.')}\n주문은 저장됐어요. 다시 누르거나 마이 → 주문내역에서 결제할 수 있어요.');
+        return;
+      }
       final bool opened = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
       if (!mounted) return;
       if (!opened) {

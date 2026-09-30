@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../shared/image_source_sheet.dart';
 import '../data/auth_provider.dart';
 
 /// 회원가입 - 서버 규칙 그대로: 이메일 인증번호(5분 유효) 확인 → 이메일/닉네임 중복확인 → 가입
@@ -103,8 +104,8 @@ class _SignupPageState extends ConsumerState<SignupPage> {
   }
 
   Future<void> _pickProfile() async {
-    final XFile? f = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 800, imageQuality: 85);
-    if (f == null) return;
+    final XFile? f = await pickImageWithDefaults(context, title: '프로필 이미지 선택', maxWidth: 800);
+    if (f == null || !mounted) return;
     final Uint8List bytes = await f.readAsBytes();
     if (bytes.length > 5 * 1024 * 1024) return _toast('프로필 사진은 5MB 이하만 가능해요.');
     setState(() {

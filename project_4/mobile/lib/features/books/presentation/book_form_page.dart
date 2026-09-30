@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/utils/format.dart';
 import '../../../shared/app_layout.dart';
+import '../../../shared/image_source_sheet.dart';
 import '../data/book_provider.dart';
 
 /// 도서 등록 / 수정 (관리자) - 3차 /books/new, 도서 수정 모달과 같은 항목
@@ -49,7 +50,7 @@ class _BookFormPageState extends ConsumerState<BookFormPage> {
   }
 
   Future<void> _pickCover() async {
-    final XFile? f = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1200, imageQuality: 85);
+    final XFile? f = await pickImageWithDefaults(context, title: '표지 이미지 선택', allowCamera: true);
     if (f == null) return;
     final Uint8List bytes = await f.readAsBytes();
     if (bytes.length > 5 * 1024 * 1024) {
@@ -126,7 +127,7 @@ class _BookFormPageState extends ConsumerState<BookFormPage> {
             ),
             const SizedBox(width: 14),
             const Expanded(
-              child: Text('표지를 눌러 이미지를 선택하세요.\nJPG · PNG · GIF · WEBP / 5MB 이하\n(수정 시 선택하지 않으면 기존 표지 유지)',
+              child: Text('표지를 눌러 기본 이미지나 앨범 사진을 선택하세요.\nJPG · PNG · GIF · WEBP / 5MB 이하\n(수정 시 선택하지 않으면 기존 표지 유지)',
                   style: TextStyle(color: Colors.grey, height: 1.6)),
             ),
           ]),

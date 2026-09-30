@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../../core/network/upload.dart';
 
 List<Map<String, dynamic>> _toList(dynamic data) =>
     (data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
@@ -81,7 +82,7 @@ class BoardApi {
   static Future<FormData> _form(String content, String hashtags, List<XFile> images) async {
     final List<MultipartFile> files = [];
     for (final XFile f in images) {
-      files.add(MultipartFile.fromBytes(await f.readAsBytes(), filename: f.name));
+      files.add(await imagePart(f));
     }
     return FormData.fromMap({'content': content, 'hashtags': hashtags, if (files.isNotEmpty) 'files': files});
   }

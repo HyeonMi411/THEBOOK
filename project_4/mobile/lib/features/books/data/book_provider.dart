@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../../core/network/upload.dart';
 
 /// 도서 목록 상태 (페이지 단위로 이어 붙이는 무한 스크롤)
 class BookListState {
@@ -126,7 +127,7 @@ class BookApi {
         if (e.value != null && e.value.toString().trim().isNotEmpty) e.key: e.value.toString().trim(),
     };
     if (cover != null) {
-      body['cover'] = MultipartFile.fromBytes(await cover.readAsBytes(), filename: cover.name);
+      body['cover'] = await imagePart(cover);
     }
     final FormData form = FormData.fromMap(body);
     final Response<dynamic> res = id == null
@@ -157,10 +158,7 @@ class BookApi {
 
   /// 표지 사진 → { lines: [...], keyword: "추천 검색어" }
   static Future<Map<String, dynamic>> ocr(XFile image) async {
-    final String name = image.name.toLowerCase().endsWith('.png') ? image.name : 'cover.jpg';
-    final FormData form = FormData.fromMap({
-      'image': MultipartFile.fromBytes(await image.readAsBytes(), filename: name),
-    });
+    final FormData form = FormData.fromMap({'image': await imagePart(image)});
     final Response<dynamic> res = await _dio.post('/api/util/ocr', data: form);
     return Map<String, dynamic>.from(res.data as Map);
   }

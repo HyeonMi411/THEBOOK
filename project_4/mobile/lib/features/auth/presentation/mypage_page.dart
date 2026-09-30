@@ -4,12 +4,14 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/utils/format.dart';
 import '../../../shared/app_layout.dart';
+import '../../../shared/image_source_sheet.dart';
 import '../../books/presentation/external_search_page.dart';
 import '../../map/presentation/store_map_page.dart';
 import '../../orders/presentation/orders_page.dart';
 import '../../post/presentation/liked_posts_page.dart';
 import '../../post/presentation/user_profile_page.dart';
 import '../data/auth_provider.dart';
+import '../../../shared/text_input_dialog.dart';
 
 class MyPage extends ConsumerWidget {
   const MyPage({super.key});
@@ -106,7 +108,7 @@ class MyPage extends ConsumerWidget {
   }
 
   Future<void> _changeImage(BuildContext context, WidgetRef ref) async {
-    final XFile? file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 800, imageQuality: 85);
+    final XFile? file = await pickImageWithDefaults(context, title: '프로필 사진 변경', allowCamera: true, maxWidth: 800);
     if (file == null) return;
     final String? err = await ref.read(authProvider.notifier).updateProfileImage(file);
     if (context.mounted) {
@@ -115,20 +117,14 @@ class MyPage extends ConsumerWidget {
   }
 
   Future<void> _changeNickname(BuildContext context, WidgetRef ref) async {
-    final TextEditingController c = TextEditingController(text: ref.read(authProvider).nickname);
-    final String? value = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('닉네임 변경'),
-        content: TextField(controller: c, maxLength: 20, autofocus: true),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, c.text.trim()), child: const Text('변경')),
-        ],
-      ),
+    final String? value = await showTextInputDialog(
+      context,
+      title: '닉네임 변경',
+      initialValue: ref.read(authProvider).nickname,
+      maxLength: 20,
+      confirmText: '변경',
     );
-    c.dispose();
-    if (value == null || value.isEmpty) return;
+    if (value == null || value.isEmpty || !context.mounted) return;
     final String? err = await ref.read(authProvider.notifier).updateNickname(value);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err ?? '닉네임을 바꿨습니다.')));

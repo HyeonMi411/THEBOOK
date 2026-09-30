@@ -83,6 +83,10 @@ public class SecurityConfig {
                 .anyRequest().permitAll()
             )
             // Oauth2 로그인은 소셜로그인전용 
+            // 로그인이 필요한 API 에 토큰이 없거나 만료된 경우 → 401 (기본값은 소셜 로그인 페이지로 302 리다이렉트).
+            // 앱(DioClient)은 401 을 받아야 refreshToken 으로 재발급 후 원래 요청을 재시도한다.
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                    new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED)))
             .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2SuccessHandler))
             // 시큐리티 체인안에서 동작 
             .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);

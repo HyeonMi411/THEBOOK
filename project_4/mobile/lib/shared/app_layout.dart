@@ -84,7 +84,8 @@ class EmptyView extends StatelessWidget {
   }
 }
 
-/// 네트워크 이미지 (실패 시 아이콘)
+/// 네트워크 이미지 - 주소가 없거나 불러오지 못하면 "NO IMAGE" 자리표시 (3차 웹과 같은 표시)
+/// 작은 썸네일(가로·세로 60 미만)은 글자 없이 아이콘만 표시
 class NetImage extends StatelessWidget {
   final String url;
   final double? width;
@@ -95,16 +96,31 @@ class NetImage extends StatelessWidget {
   const NetImage(this.url,
       {super.key, this.width, this.height, this.fit = BoxFit.cover, this.fallbackIcon = Icons.menu_book});
 
+  Widget _placeholder() {
+    return LayoutBuilder(builder: (context, c) {
+      final double w = width ?? (c.maxWidth.isFinite ? c.maxWidth : 100);
+      final double h = height ?? (c.maxHeight.isFinite ? c.maxHeight : 100);
+      final bool small = w < 60 || h < 60;
+      return Container(
+        width: width,
+        height: height,
+        color: const Color(0xFFEEF1F5),
+        alignment: Alignment.center,
+        child: small
+            ? Icon(fallbackIcon, size: 20, color: const Color(0xFFB0B8C4))
+            : Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(fallbackIcon, size: 32, color: const Color(0xFFB0B8C4)),
+                const SizedBox(height: 6),
+                const Text('NO IMAGE',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1, color: Color(0xFFB0B8C4))),
+              ]),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final Widget fallback = Container(
-      width: width,
-      height: height,
-      color: Colors.grey[200],
-      alignment: Alignment.center,
-      child: Icon(fallbackIcon, color: Colors.grey),
-    );
-    if (url.isEmpty) return fallback;
-    return Image.network(url, width: width, height: height, fit: fit, errorBuilder: (_, _, _) => fallback);
+    if (url.isEmpty) return _placeholder();
+    return Image.network(url, width: width, height: height, fit: fit, errorBuilder: (_, _, _) => _placeholder());
   }
 }

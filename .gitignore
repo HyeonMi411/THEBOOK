@@ -33,4 +33,6 @@ node_modules/
 *.pem 
 *.local.md
 *.gradle
-          
+
+# 개인 학습 노트 (GitHub 제외)
+project_3_2/

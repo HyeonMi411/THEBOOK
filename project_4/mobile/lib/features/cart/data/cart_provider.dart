@@ -99,11 +99,19 @@ class OrderApi {
     return ((res.data as Map)['id'] as num).toInt();
   }
 
-  /// 카카오페이 결제 준비 → 결제창 URL (모바일 URL 우선)
+  /// 결제창 방식 - 실행할 때 --dart-define=PAY_MODE=pc 를 주면 QR 결제창(PC 용 URL)을 연다.
+  ///  - 기본(mobile): 카카오톡 앱으로 결제 → 실제 휴대폰용
+  ///  - pc          : 브라우저에 QR 코드 → 다른 휴대폰의 카카오톡으로 찍어서 결제
+  ///                  (카카오톡이 없는 에뮬레이터에서 테스트할 때. 모바일 URL 은 Play 스토어로 이동해 버림)
+  static const bool _qrPayment = String.fromEnvironment('PAY_MODE') == 'pc';
+
+  /// 카카오페이 결제 준비 → 결제창 URL
   static Future<String> kakaoPayReady(int orderId) async {
     final Response<dynamic> res = await _dio.post('/api/payments/kakao/ready', data: {'orderId': orderId});
     final Map<dynamic, dynamic> data = res.data as Map;
     final String? mobile = data['redirectMobileUrl'] as String?;
-    return (mobile != null && mobile.isNotEmpty) ? mobile : data['redirectUrl'] as String;
+    final String? pc = data['redirectUrl'] as String?;
+    if (_qrPayment && pc != null && pc.isNotEmpty) return pc;
+    return (mobile != null && mobile.isNotEmpty) ? mobile : pc!;
   }
 }

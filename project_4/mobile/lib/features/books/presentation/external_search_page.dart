@@ -8,6 +8,7 @@ import '../../../shared/app_layout.dart';
 import '../../auth/data/auth_provider.dart';
 import '../data/book_provider.dart';
 import 'national_library_page.dart';
+import '../../../shared/text_input_dialog.dart';
 
 /// 외부 도서 통합검색 - 카카오 / 네이버 / 국립중앙도서관 (boot1 수업의 MultiBookSearchService 를 앱 화면으로)
 /// 일반 회원: 검색 + 원문 보기 / 관리자: 가격 확인 후 쇼핑몰에 바로 등록
@@ -51,28 +52,18 @@ class _ExternalSearchPageState extends ConsumerState<ExternalSearchPage> {
   }
 
   Future<void> _import(Map<String, dynamic> book) async {
-    final TextEditingController price = TextEditingController(text: book['price']?.toString() ?? '');
-    final bool? ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('쇼핑몰에 등록'),
-        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(book['title']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          TextField(controller: price, keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: '판매가(원)', border: OutlineInputBorder())),
-          const SizedBox(height: 6),
-          const Text('재고는 등록 후 도서 상세 > 관리자 메뉴 > 재고 수량 변경에서 입력해 주세요.', style: TextStyle(fontSize: 12, color: Colors.grey)),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('등록')),
-        ],
-      ),
+    final String? input = await showTextInputDialog(
+      context,
+      title: '쇼핑몰에 등록',
+      header: Text(book['title']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
+      initialValue: book['price']?.toString() ?? '',
+      label: '판매가(원)',
+      keyboardType: TextInputType.number,
+      helper: '재고는 등록 후 도서 상세 > 관리자 메뉴 > 재고 수량 변경에서 입력해 주세요.',
+      confirmText: '등록',
     );
-    final int? p = int.tryParse(price.text.trim());
-    price.dispose();
-    if (ok != true || !mounted) return;
+    if (input == null || !mounted) return;
+    final int? p = int.tryParse(input);
     try {
       await BookApi.importExternal({...book, 'price': p});
       ref.invalidate(bookListProvider);

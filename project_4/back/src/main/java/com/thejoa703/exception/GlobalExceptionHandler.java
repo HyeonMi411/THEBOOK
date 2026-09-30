@@ -21,6 +21,12 @@ import org.springframework.web.client.RestClientException;
 public class GlobalExceptionHandler {
 
 	//1. 데이터가 없을때 ( 404 Not Found)
+    // 로그인 정보가 없거나 만료 → 401 (앱이 토큰을 재발급하고 다시 요청함)
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<Map<String, String>> handleAuthentication(org.springframework.security.core.AuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(createErrorBody("로그인이 필요합니다."));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleResourceNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(createErrorBody(ex.getMessage()));

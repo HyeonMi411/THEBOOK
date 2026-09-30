@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../../core/network/refresh_cookie.dart';
+import '../../../core/network/upload.dart';
 
 /// 로그인 상태 (React 의 Redux store 역할)
 class AuthState {
@@ -149,7 +150,7 @@ class AuthNotifier extends Notifier<AuthState> {
             'password': password,
             'nickname': nickname,
             if (profileImage != null)
-              'ufile': MultipartFile.fromBytes(await profileImage.readAsBytes(), filename: profileImage.name),
+              'ufile': await imagePart(profileImage),
           }));
       return null;
     } catch (e) {
@@ -176,7 +177,7 @@ class AuthNotifier extends Notifier<AuthState> {
     if (id == null) return '로그인이 필요합니다.';
     try {
       final FormData form = FormData.fromMap({
-        'ufile': MultipartFile.fromBytes(await file.readAsBytes(), filename: file.name),
+        'ufile': await imagePart(file),
       });
       final Response<dynamic> res = await _dio.patch('/auth/$id/profile-image', data: form);
       state = state.copyWith(user: Map<String, dynamic>.from(res.data as Map));

@@ -43,7 +43,7 @@ class _PostListPageState extends ConsumerState<PostListPage> with SingleTickerPr
     return AppLayout(
       title: '커뮤니티',
       bottom: TabBar(controller: _tab, tabs: const [Tab(text: '전체'), Tab(text: '팔로잉')]),
-      floatingActionButton: FloatingActionButton.extended(onPressed: _write, icon: const Icon(Icons.edit), label: const Text('글쓰기')),
+      floatingActionButton: FloatingActionButton.extended(heroTag: 'fab-post-write', onPressed: _write, icon: const Icon(Icons.edit), label: const Text('글쓰기')),
       child: Column(children: [
         _tagBar(),
         Expanded(

@@ -125,6 +125,7 @@ class _BookListPageState extends ConsumerState<BookListPage> {
       title: '도서',
       floatingActionButton: isAdmin
           ? FloatingActionButton.extended(
+              heroTag: 'fab-book-create',
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BookFormPage())),
               icon: const Icon(Icons.add),
               label: const Text('도서 등록'),

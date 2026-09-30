@@ -9,6 +9,7 @@ import '../../cart/data/cart_provider.dart';
 import '../../cart/presentation/checkout_page.dart';
 import '../data/book_provider.dart';
 import 'book_form_page.dart';
+import '../../../shared/text_input_dialog.dart';
 
 class BookDetailPage extends ConsumerStatefulWidget {
   final int bookId;
@@ -45,22 +46,17 @@ class _BookDetailPageState extends ConsumerState<BookDetailPage> {
       return;
     }
     if (action == 'stock') {
-      final TextEditingController c = TextEditingController(text: '${book['stockQuantity'] ?? 0}');
-      final int? qty = await showDialog<int>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('재고 수량 변경'),
-          content: TextField(controller: c, keyboardType: TextInputType.number, autofocus: true,
-              decoration: const InputDecoration(suffixText: '권', border: OutlineInputBorder())),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
-            FilledButton(onPressed: () => Navigator.pop(ctx, int.tryParse(c.text.trim())), child: const Text('저장')),
-          ],
-        ),
+      final String? input = await showTextInputDialog(
+        context,
+        title: '재고 수량 변경',
+        initialValue: '${book['stockQuantity'] ?? 0}',
+        keyboardType: TextInputType.number,
+        suffix: '권',
+        confirmText: '저장',
       );
-      c.dispose();
-      if (qty == null) return;
-      if (qty < 0) return _toast('재고는 0 이상이어야 합니다.');
+      if (input == null || !mounted) return;
+      final int? qty = int.tryParse(input);
+      if (qty == null || qty < 0) return _toast('재고는 0 이상의 숫자로 입력해 주세요.');
       try {
         await BookApi.updateStock(widget.bookId, qty);
         ref.invalidate(bookDetailProvider(widget.bookId));

@@ -40,3 +40,4 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/avatars/   # 기본 프로필/표지 이미지 (회원가입·프로필 변경·도서 등록에서 선택)
