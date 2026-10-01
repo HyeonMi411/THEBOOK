@@ -41,3 +41,4 @@ project_3_2/
 # Python / Django local
 __pycache__/
 *.sqlite3
+ 
