@@ -465,9 +465,14 @@ public class BookService {
 	// 결제완료(PAID) 주문만 집계하므로 결제전/취소/실패 주문은 랭킹에 영향을 주지 않음.
 	@SuppressWarnings("unchecked")
 	public List<BestsellerBookDto> getBestsellers() {
-		List<BestsellerBookDto> cached = (List<BestsellerBookDto>) redisTemplate.opsForValue().get(BESTSELLER_CACHE_KEY);
-		if (cached != null) {
-			return cached;
+		try {
+			List<BestsellerBookDto> cached = (List<BestsellerBookDto>) redisTemplate.opsForValue().get(BESTSELLER_CACHE_KEY);
+			if (cached != null) {
+				return cached;
+			}
+		} catch (Exception e) {
+			// 캐시 형식이 바뀌었거나 Redis 오류 → 캐시를 버리고 DB 에서 다시 집계
+			try { redisTemplate.delete(BESTSELLER_CACHE_KEY); } catch (Exception ignore) { }
 		}
 
 		List<Map<String, Object>> rows = orderItemMapper.findBestSellerBookIds(BESTSELLER_TOP_N);
@@ -486,7 +491,11 @@ public class BookService {
 			result.add(dto);
 		}
 
-		redisTemplate.opsForValue().set(BESTSELLER_CACHE_KEY, result, BESTSELLER_CACHE_TTL_SECONDS, TimeUnit.SECONDS);
+		try {
+			redisTemplate.opsForValue().set(BESTSELLER_CACHE_KEY, result, BESTSELLER_CACHE_TTL_SECONDS, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			// 캐시 저장 실패는 응답에 영향을 주지 않음 (다음 요청에서 다시 DB 집계)
+		}
 		return result;
 	}
 
