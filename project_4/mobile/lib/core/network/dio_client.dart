@@ -51,11 +51,18 @@ class DioClient {
             final String? token = await _storage.read(key: _accessKey);
             req.headers['Authorization'] = 'Bearer $token';
             req.extra['retried'] = true;
+            // 사진 업로드처럼 FormData(multipart) 요청은 한 번 전송하면 다시 쓸 수 없어서
+            // ("FormData has already been finalized") 그대로 재전송하면 앱 내부 오류가 난다 → 복제해서 다시 보냄
+            if (req.data is FormData) {
+              req.data = (req.data as FormData).clone();
+            }
             try {
               final Response<dynamic> retried = await dio.fetch(req);
               return handler.resolve(retried);
             } on DioException catch (retryError) {
               return handler.next(retryError);
+            } catch (retryError) {
+              return handler.next(DioException(requestOptions: req, error: retryError));
             }
           }
           await clearTokens();

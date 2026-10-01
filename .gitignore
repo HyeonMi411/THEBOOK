@@ -37,3 +37,7 @@ node_modules/
 
 # 개인 학습 노트 (GitHub 제외)
 project_3_2/
+
+# Python / Django local
+__pycache__/
+*.sqlite3

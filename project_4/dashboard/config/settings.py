@@ -131,3 +131,7 @@ SPRING_API_BASE_URL = env("SPRING_API_BASE_URL", default="")
 
 LOGIN_URL = "/login"
 LOGIN_REDIRECT_URL = "/"
+
+# Allow local Oracle 18c XE (Django 6 requires 19+; dashboard only reads)
+from django.db.backends.oracle.features import DatabaseFeatures as _OraFeatures
+_OraFeatures.minimum_database_version = (18,)

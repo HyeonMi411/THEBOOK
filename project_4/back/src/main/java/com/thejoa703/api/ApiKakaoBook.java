@@ -42,6 +42,7 @@ public class ApiKakaoBook {
                 .fromUriString("https://dapi.kakao.com/v3/search/book")
                 .queryParam("target", "title")
                 .queryParam("query", query)
+                .encode()
                 .build()
                 .toUri();
 
