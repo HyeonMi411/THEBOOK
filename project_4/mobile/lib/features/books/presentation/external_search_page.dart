@@ -10,7 +10,7 @@ import '../data/book_provider.dart';
 import 'national_library_page.dart';
 import '../../../shared/text_input_dialog.dart';
 
-/// 외부 도서 통합검색 - 카카오 / 네이버 / 국립중앙도서관 (boot1 수업의 MultiBookSearchService 를 앱 화면으로)
+/// 외부 도서 통합검색 - 카카오 / 국립중앙도서관 (boot1 수업의 MultiBookSearchService 를 앱 화면으로)
 /// 일반 회원: 검색 + 원문 보기 / 관리자: 가격 확인 후 쇼핑몰에 바로 등록
 class ExternalSearchPage extends ConsumerStatefulWidget {
   const ExternalSearchPage({super.key});
@@ -20,7 +20,7 @@ class ExternalSearchPage extends ConsumerStatefulWidget {
 }
 
 class _ExternalSearchPageState extends ConsumerState<ExternalSearchPage> {
-  static const Map<String, String> _sources = {'kakao': '카카오', 'naver': '네이버', 'nl': '국립중앙도서관'};
+  static const Map<String, String> _sources = {'kakao': '카카오', 'nl': '국립중앙도서관'};
   final TextEditingController _keyword = TextEditingController();
   String _source = 'kakao';
   bool _loading = false;

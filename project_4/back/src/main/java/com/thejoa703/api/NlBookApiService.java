@@ -44,6 +44,7 @@ public class NlBookApiService {
                 .queryParam("kwd", keyword)
                 .queryParam("pageSize", 12)   // 화면에 12개씩 노출과 통일
                 .queryParam("pageNum", page)
+                .encode()
                 .build()
                 .toUri();
 
