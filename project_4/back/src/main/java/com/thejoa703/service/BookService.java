@@ -190,6 +190,8 @@ public class BookService {
 		// 삭제하면 FK 제약조건 위반(ORA-02292)이 발생. 재고(BOOK_STOCK)도 그대로 둡니다
 		// (판매내역 통계 등에서 필요할 수 있고, 삭제된 도서는 목록/검색에서 어차피 제외됨).
 		bookMapper.updateDeleted(bookId, true);
+		// 삭제된 도서가 베스트셀러 캐시(최대 10분)에 남아 홈에 계속 보이지 않도록 바로 비운다
+		try { evictBestsellerCache(); } catch (Exception ignore) { }
 	}
 
 	@PreAuthorize("hasRole('ADMIN')")

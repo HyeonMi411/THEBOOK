@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/utils/format.dart';
 import '../../../shared/app_layout.dart';
+import '../../../shared/main_shell.dart';
 import '../../auth/data/auth_provider.dart';
 import '../../cart/data/cart_provider.dart';
 import '../../cart/presentation/checkout_page.dart';
@@ -30,7 +31,11 @@ class _BookDetailPageState extends ConsumerState<BookDetailPage> {
     final controller = ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(err ?? '장바구니에 담았습니다.'),
       duration: const Duration(seconds: 3),
-      action: err == null ? SnackBarAction(label: '보기', onPressed: () => Navigator.popUntil(context, (r) => r.isFirst)) : null,
+      action: err == null ? SnackBarAction(label: '보기', onPressed: () {
+        // 첫 화면(하단 탭)으로 돌아간 뒤 장바구니 탭(인덱스 3)으로 바로 전환
+        Navigator.popUntil(context, (r) => r.isFirst);
+        MainShell.tabIndex.value = 3;
+      }) : null,
     ));
     Future.delayed(const Duration(seconds: 3), controller.close);
   }

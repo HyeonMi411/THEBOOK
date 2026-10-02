@@ -42,3 +42,5 @@ project_3_2/
 __pycache__/
 *.sqlite3
  
+# Eclipse 빌드 출력 (하위 폴더 포함)
+bin/

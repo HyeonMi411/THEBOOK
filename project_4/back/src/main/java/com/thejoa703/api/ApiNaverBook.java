@@ -1,12 +1,10 @@
 package com.thejoa703.api;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -32,12 +30,7 @@ public class ApiNaverBook {
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	public ApiNaverBook(RestClient.Builder builder) {
-		// 네이버 오픈API 는 Java HttpClient 의 HTTP/2 요청에 404(SE05)를 돌려주는 경우가 있어서
-		// 이 클라이언트만 HTTP/1.1 로 고정. (공용 builder 를 건드리지 않도록 clone 사용)
-		this.restClient = builder.clone()
-				.requestFactory(new JdkClientHttpRequestFactory(
-						HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()))
-				.build();
+		this.restClient = builder.build();
 	}
 
 	public boolean isConfigured() {
