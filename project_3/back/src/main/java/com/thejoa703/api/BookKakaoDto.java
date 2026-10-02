@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.Data;
 
 /**
- * 카카오 도서검색 API(https://dapi.kakao.com/v3/search/book) 응답을 담는 Dto
+ * 카카오 도서검색 API(https://dapi.kakao.com/v3/search/book) 응답을 담는 Dto 
  * boot1(the703) 의 api/BookKakaoDto.java 를 그대로 재현했음.
  */
 @Data

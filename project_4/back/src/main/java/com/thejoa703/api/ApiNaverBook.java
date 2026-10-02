@@ -16,7 +16,7 @@ import com.thejoa703.dto.UtilDto.ExternalBookDto;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 네이버 책 검색 API (openapi.naver.com/v1/search/book.json)
+ * 네이버 책 검색 API (openapi.naver.com/v1/search/book.json) 
  * boot1 ApiNaverBook 에서 setTitle() 을 세 번 호출해 저자/표지가 제목을 덮어쓰던 버그를 고쳐서 가져옴.
  */
 @Slf4j
