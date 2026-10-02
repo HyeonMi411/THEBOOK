@@ -32,7 +32,7 @@ node_modules/
 *.key
 *.pem 
 *.local.md
-*.gradle
+.gradle/
 *.log
 
 # 개인 학습 노트 (GitHub 제외)
