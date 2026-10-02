@@ -1,378 +1,227 @@
-name: Deploy project_4 (Spring Boot API + Django Dashboard + Flutter APK)
+name: Deploy Fullstack App   # 워크플로우 이름 정의 - d2big.duckdns.org  도메인추가 변경사항없음
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 이 파일은 반드시 "저장소 루트"의 .github/workflows/ 에 있어야 GitHub 가 인식합니다.
-#   (예전 위치 project_4/.github/workflows/deploy.yml 은 GitHub 가 읽지 않으므로 삭제하세요.)
-# project_3 의 deploy.yml 과는 별개 파일이라 서로 영향을 주지 않습니다. (paths 필터로 각자의 폴더 변경에만 동작)
-#
-# 포트/이름 배정 (EC2 한 대에 project_3 와 함께 올라가므로 겹치면 안 됨)
-#   project_3 : backend 8080 / frontend 3000 / dashboard 8081  (pm2: backend, frontend, project3-dashboard)
-#   project_4 : backend 8082 / dashboard 8083                  (pm2: project4-backend, project4-dashboard)
-# ─────────────────────────────────────────────────────────────────────────────
-
-on:
-  push:
-    branches:
-      - main
+on:     # 실행조건 정의
+  push:    # push 이벤트 발생시 실행
+    branches:   
+      - main   # main 브랜치에 push 될 때만 실행     
     paths:
-      - 'project_4/back/**'
-      - 'project_4/dashboard/**'
-      - 'project_4/mobile/**'
-      - '.github/workflows/deploy-project4.yml'
-  workflow_dispatch:
+      - 'project_3/**'
 
-# 같은 워크플로우가 겹쳐서 돌며 pm2 를 동시에 재시작하는 일을 방지 (진행 중인 배포는 끝까지 실행)
-concurrency:
-  group: deploy-project4
-  cancel-in-progress: false
-
-permissions:
-  contents: read
-
-jobs:
-  # ═══════════════════════════════ 1. Spring Boot 백엔드 ═══════════════════════════════
-  backend:
-    runs-on: ubuntu-latest
+jobs:       # 실행할 job 정의
+  backend:     # 백엔드 배포 job
+    runs-on: ubuntu-latest  # ubuntu 최신버젼환경
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3    # 저장소 코드 가져오기
 
-      # build.gradle 의 java toolchain 이 17 이므로 CI 도 17 로 맞춘다.
-      # (예전 workflow 는 JDK 21 이라 toolchain 17 과 어긋났고, project_3 도 17 로 성공 중)
+      - name: Check gradle wrapper
+        run: |
+          chmod +x project_3/back/gradlew
+          ls -la project_3/back/gradle/wrapper/
+
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v3  # Java 환경설정
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
+          java-version: '17'         # Java 17    ##
+          distribution: 'temurin'    
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-        working-directory: project_4/back
+      - name: Grant execute permission for gradlew  
+        run: chmod +x ./gradlew       # gradlew 실행권한
+        working-directory: project_3/back   # project_3/back 디렉토리에서 실행  ##
 
       - name: Build Spring Boot App
-        run: ./gradlew clean build -x test
-        working-directory: project_4/back
+        run: ./gradlew clean build -x test  # 테스트제외하고 빌드
+        working-directory: project_3/back  # project_3/back 디렉토리
 
-      - name: Verify JAR was built
+      - name: Debug Backend Files
         run: |
-          ls -l build/libs
-          test -f build/libs/back-0.0.1-SNAPSHOT.jar || { echo "::error::build/libs/back-0.0.1-SNAPSHOT.jar 가 없습니다 (settings.gradle 의 rootProject.name / build.gradle 의 version 확인)"; exit 1; }
-        working-directory: project_4/back
+          echo "=== project_3/back 디렉터리 ==="
+          ls -al project_3/back
+          echo "=== build/libs 디렉터리 ==="
+          ls -al project_3/back/build/libs
 
-      # 시크릿을 스크립트에 직접 끼워 넣지 않고 env 로 받아 printf 로 기록한다.
-      # (값에 따옴표/공백/$ 가 있어도 셸 문법이 깨지지 않고, 로그 마스킹도 유지됨)
-      # 값은 작은따옴표로 감싸 저장 → EC2 에서 `set -a; . .env` 로 안전하게 읽는다.
-      - name: Create Backend .env from Secrets
-        env:
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
-          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
-          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
-          GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          KAKAO_PAY_SECRET_KEY: ${{ secrets.KAKAO_PAY_SECRET_KEY }}
-          NL_API_KEY: ${{ secrets.NL_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          # 카카오페이 결제 후 돌아올 주소 = project_4 백엔드의 외부 주소 (PaymentCallbackController 가 /payment/** 처리)
-          FRONTEND_BASE_URL: ${{ secrets.FRONTEND_BASE_URL_P4 }}
-          # 모바일 소셜 로그인 중계 주소 = https://<project_4 도메인>/oauth2/app/callback , /oauth2/app/signup
-          OAUTH2_REDIRECT_URL: ${{ secrets.OAUTH2_REDIRECT_URL_P4 }}
-          OAUTH2_SIGNUP_CONFIRM_URL: ${{ secrets.OAUTH2_SIGNUP_CONFIRM_URL_P4 }}
-          # ── 외부 API (비어 있으면 해당 기능만 "설정 안 됨" 안내, 앱은 정상 동작) ──
-          KMA_API_KEY: ${{ secrets.KMA_API_KEY }}
-          NAVER_BOOK_CLIENT_ID: ${{ secrets.NAVER_BOOK_CLIENT_ID }}
-          NAVER_BOOK_CLIENT_SECRET: ${{ secrets.NAVER_BOOK_CLIENT_SECRET }}
-          NAVER_OCR_SECRET: ${{ secrets.NAVER_OCR_SECRET }}
-          NAVER_OCR_INVOKE_URL: ${{ secrets.NAVER_OCR_INVOKE_URL }}
-          COOLSMS_API_KEY: ${{ secrets.COOLSMS_API_KEY }}
-          COOLSMS_API_SECRET: ${{ secrets.COOLSMS_API_SECRET }}
-          COOLSMS_FROM: ${{ secrets.COOLSMS_FROM }}
-          # Spring → Django 통계 동기화 (같은 EC2 의 대시보드 8083 포트)
-          DJANGO_SYNC_URL: http://localhost:8083/api/statistics/
-          STATS_SYNC_TOKEN: ${{ secrets.STATS_SYNC_TOKEN }}
+      - name: Find JAR file (fat jar만 선택)
+        run: echo "JAR_FILE=$(ls project_3/back/build/libs/*SNAPSHOT.jar | grep -v plain | head -n 1)" >> $GITHUB_ENV
+        # plain.jar 제외하고 실행 가능한 fat JAR만 선택
+
+      - name: Debug JAR_FILE
+        run: echo "선택된 JAR_FILE=${{ env.JAR_FILE }}"
+
+      - name: Ensure JAR exists
         run: |
-          : > project_4/back/.env
-          for KEY in DB_USERNAME DB_PASSWORD JWT_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET \
-                     KAKAO_CLIENT_ID NAVER_CLIENT_ID NAVER_CLIENT_SECRET GMAIL_USERNAME GMAIL_APP_PASSWORD \
-                     KAKAO_PAY_SECRET_KEY NL_API_KEY OPENAI_API_KEY FRONTEND_BASE_URL OAUTH2_REDIRECT_URL \
-                     OAUTH2_SIGNUP_CONFIRM_URL KMA_API_KEY NAVER_BOOK_CLIENT_ID NAVER_BOOK_CLIENT_SECRET \
-                     NAVER_OCR_SECRET NAVER_OCR_INVOKE_URL COOLSMS_API_KEY COOLSMS_API_SECRET COOLSMS_FROM \
-                     DJANGO_SYNC_URL STATS_SYNC_TOKEN; do
-            VALUE="${!KEY}"
-            # 비어 있는 값은 기록하지 않는다 → application.yml 의 ${KEY:기본값} 이 그대로 적용됨
-            if [ -n "$VALUE" ]; then
-              printf "%s='%s'\n" "$KEY" "$VALUE" >> project_4/back/.env
-            fi
-          done
-          # 필수 값 점검 (값은 출력하지 않고 이름만 알려줌)
-          MISSING=""
-          for KEY in DB_USERNAME DB_PASSWORD JWT_SECRET FRONTEND_BASE_URL; do
-            grep -q "^$KEY=" project_4/back/.env || MISSING="$MISSING $KEY"
-          done
-          if [ -n "$MISSING" ]; then
-            echo "::error::GitHub Secrets 에 값이 없습니다:$MISSING  (FRONTEND_BASE_URL 은 시크릿 이름이 FRONTEND_BASE_URL_P4 입니다)"
+          if [ ! -f "${{ env.JAR_FILE }}" ]; then
+            echo "❌ JAR file not found: ${{ env.JAR_FILE }}"
+            ls -al project_3/back/build/libs
             exit 1
           fi
-          echo "✅ .env 생성 완료 ($(wc -l < project_4/back/.env)개 항목)"
+          echo "✅ JAR file found: ${{ env.JAR_FILE }}"
+
+      - name: Create Backend .env from Secrets
+        run: |                     # secrets 기반으로 .env 파일 생성    
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> project_3/back/.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> project_3/back/.env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> project_3/back/.env
+          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> project_3/back/.env
+          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> project_3/back/.env
+          echo "KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" >> project_3/back/.env
+          echo "NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID }}" >> project_3/back/.env
+          echo "NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}" >> project_3/back/.env
+          echo "GMAIL_USERNAME=${{ secrets.GMAIL_USERNAME }}" >> project_3/back/.env
+          echo "GMAIL_APP_PASSWORD=${{ secrets.GMAIL_APP_PASSWORD }}" >> project_3/back/.env
+          echo "KAKAO_PAY_SECRET_KEY=${{ secrets.KAKAO_PAY_SECRET_KEY }}" >> project_3/back/.env
+          echo "NL_API_KEY=${{ secrets.NL_API_KEY }}" >> project_3/back/.env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> project_3/back/.env
+          echo "FRONTEND_BASE_URL=${{ secrets.FRONTEND_BASE_URL }}" >> project_3/back/.env
 
       - name: Ensure app directory exists on EC2
-        uses: appleboy/ssh-action@v0.1.7
+        uses: appleboy/ssh-action@v0.1.7                 #   EC2 접속후 디렉토리 생성
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: mkdir -p /home/ubuntu/app/project_4/back/build/libs
+          script: mkdir -p /home/ubuntu/app
 
-      # source 의 경로 구조가 그대로 target 아래에 만들어진다
-      #  → /home/ubuntu/app/project_4/back/build/libs/back-0.0.1-SNAPSHOT.jar
+        # - name: Copy Backend build/libs to EC2
+        # uses: appleboy/scp-action@v0.1.7
+        # with:
+        #   host: ${{ secrets.EC2_HOST }}
+        #   username: ${{ secrets.EC2_USER }}
+        #   key: ${{ secrets.EC2_SSH_KEY }}
+        #   source: "project_3/back/build/libs/*"
+        #   target: "/home/ubuntu/app/project_3/back/build/libs"
+        # 🔧 build/libs 전체를 복사해서 EC2에서 직접 실행  
+        
       - name: Copy Backend JAR to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "project_4/back/build/libs/back-0.0.1-SNAPSHOT.jar"
+          source: "project_3/back/build/libs/back-0.0.1-SNAPSHOT.jar"
           target: "/home/ubuntu/app"
 
-      - name: Copy Backend .env to EC2
-        uses: appleboy/scp-action@v0.1.7
+      - name: Debug EC2 app directory
+        uses: appleboy/ssh-action@v0.1.7   # .EC2 파일확인
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "project_4/back/.env"
+          script: ls -lh /home/ubuntu/app/project_3/back/build/libs
+
+ 
+      - name: Copy Backend .env to EC2
+        uses: appleboy/scp-action@v0.1.7   #  .env 파일을 ec2로 복사
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "project_3/back/.env"
           target: "/home/ubuntu/app"
 
-      # project_3 와 같은 EC2 의 Oracle/Redis 컨테이너를 그대로 쓰므로, 백엔드를 띄우기 전에 실제 쿼리로 준비 상태를 확인
+
+
       - name: Wait for Oracle & Redis readiness on EC2
-        uses: appleboy/ssh-action@v0.1.7
+        uses: appleboy/ssh-action@v0.1.7    # db와 redis 준비상태 확인
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "[DB-CHECK] Oracle/Redis 실제 연결 확인 시작"
-            DB_OK=0
-            for i in $(seq 1 30); do
-              if docker exec oracle-xe bash -c "echo 'SELECT 1 FROM DUAL;' | sqlplus -s ${{ secrets.DB_USERNAME }}/${{ secrets.DB_PASSWORD }}@localhost:1521/XE" 2>/dev/null | grep -q "^1$"; then
-                echo "[DB-CHECK] Oracle 쿼리 성공 (시도 $i/30)"
-                DB_OK=1
+            echo "⏳ Waiting for Oracle DB (1521) and Redis (6379)..."
+            for i in {1..30}; do
+              nc -z localhost 1521 && nc -z localhost 6379
+              if [ $? -eq 0 ]; then
+                echo "✅ Oracle & Redis are ready"
                 break
               fi
-              echo "[DB-CHECK] Oracle 아직 응답 없음, 10초 후 재시도 ($i/30)"
+              echo "Not ready yet... retry in 10s ($i/30)"
               sleep 10
             done
-            if [ "$DB_OK" -ne 1 ]; then
-              echo "[DB-CHECK] ❌ Oracle 연결 실패 - 배포 중단"
-              exit 1
-            fi
 
-            REDIS_OK=0
-            for i in $(seq 1 10); do
-              if docker exec redis redis-cli ping 2>/dev/null | grep -q "PONG"; then
-                echo "[DB-CHECK] Redis 응답 성공 (시도 $i/10)"
-                REDIS_OK=1
-                break
-              fi
-              echo "[DB-CHECK] Redis 아직 응답 없음, 5초 후 재시도 ($i/10)"
-              sleep 5
-            done
-            if [ "$REDIS_OK" -ne 1 ]; then
-              echo "[DB-CHECK] ❌ Redis 연결 실패 - 배포 중단"
-              exit 1
-            fi
-            echo "[DB-CHECK] ✅ Oracle & Redis 전부 정상 확인됨"
-
-      # build/libs 에서 실행해야 업로드 폴더(uploads)가 기존과 같은 위치(build/libs/uploads)가 된다.
-      # 포트는 application.yml 의 server.port(기본 8082)를 따르며, 명시적으로도 한 번 더 지정한다.
-      - name: Run Backend on EC2 with pm2 + health check
+      - name: Run Backend on EC2 with pm2 (build/libs에서 실행)
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/app/project_4/back/build/libs
-            pm2 delete project4-backend || true
-            # .env 의 값을 환경변수로 올린 뒤 pm2 가 그 환경으로 java 를 실행 (공백/특수문자가 있어도 안전)
-            set -a
-            . /home/ubuntu/app/project_4/back/.env
-            set +a
-            pm2 start java --name project4-backend -- -Dserver.port=8082 -jar back-0.0.1-SNAPSHOT.jar
-            pm2 save
+            cd /home/ubuntu/app/project_3/back/build/libs
+            pm2 delete backend || true
+            export $(cat /home/ubuntu/app/project_3/back/.env | xargs)
+            pm2 start java --name backend -- -jar back-0.0.1-SNAPSHOT.jar
 
-            # 실제로 기동됐는지 확인 (환경변수 누락 등으로 기동 실패하면 여기서 배포를 실패 처리)
-            echo "[HEALTH] project4-backend 기동 확인 (최대 120초)"
-            for i in $(seq 1 60); do
-              CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/v3/api-docs || true)
-              if [ "$CODE" = "200" ]; then
-                echo "[HEALTH] ✅ 기동 확인 (HTTP 200, 시도 $i/60)"
-                exit 0
-              fi
-              sleep 2
-            done
-            echo "[HEALTH] ❌ 기동 실패 - 최근 로그:"
-            pm2 logs project4-backend --lines 60 --nostream || true
-            exit 1
-
-  # ═══════════════════════════════ 2. Django 판매 통계 대시보드 ═══════════════════════════════
-  dashboard:
+  frontend:
     runs-on: ubuntu-latest
-    needs: backend   # Spring Boot(같은 Oracle DB의 주인)가 먼저 배포되어 있어야 함
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          python-version: '3.12'
+          node-version: '18'
 
-      - name: Install dependencies
+      # 🔑 Secrets 기반으로 .env.production 먼저 생성
+      - name: Create Frontend .env.production
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-        working-directory: project_4/dashboard
+          echo "NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}" > project_3/front/.env.production
 
-      # settings.py 는 ORACLE_PASSWORD 가 없으면 즉시 예외를 던진다. 예전 workflow 는 .env 를 만들기 "전에"
-      # check 를 돌려서 항상 여기서 실패했다. → 자리표시용 더미 값을 env 로 주고 코드 자체만 검사한다.
-      # (실제 DB 에는 연결하지 않으며, 진짜 값은 아래 .env 생성 단계에서 시크릿으로 만든다)
-      - name: Django check (배포 전 코드 자체 검증)
-        env:
-          DJANGO_SECRET_KEY: ci-check-dummy-key-not-for-production
-          DJANGO_DEBUG: 'False'
-          DJANGO_ALLOWED_HOSTS: localhost
-          ORACLE_DSN: localhost:1521/XE
-          ORACLE_USER: ci
-          ORACLE_PASSWORD: ci
+      # 빌드 전에 .env.production이 반영되도록 순서 조정   
+      - name: Build Frontend
         run: |
-          python manage.py check
-          python manage.py test   # pandas 집계·통계 수신 API 테스트 (Oracle 불필요, sqlite 만 사용)
-        working-directory: project_4/dashboard
+          npm install
+          npm run build -- --no-lint
+        working-directory: project_3/front
 
-      # settings.py 의 .env 파서는 따옴표를 벗기지 않으므로, 값은 따옴표 없이 그대로 기록한다.
-      - name: Create dashboard .env from Secrets
-        env:
-          DJANGO_SECRET_KEY: ${{ secrets.DASHBOARD_SECRET_KEY }}
-          DJANGO_ALLOWED_HOSTS: ${{ secrets.DASHBOARD_ALLOWED_HOSTS }}
-          ORACLE_DSN: ${{ secrets.ORACLE_DSN }}
-          ORACLE_USER: ${{ secrets.DB_USERNAME }}
-          ORACLE_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          STATS_SYNC_TOKEN: ${{ secrets.STATS_SYNC_TOKEN }}
+      - name: Debug Frontend Files
         run: |
-          MISSING=""
-          for KEY in DJANGO_SECRET_KEY DJANGO_ALLOWED_HOSTS ORACLE_DSN ORACLE_USER ORACLE_PASSWORD; do
-            [ -n "${!KEY}" ] || MISSING="$MISSING $KEY"
-          done
-          if [ -n "$MISSING" ]; then
-            echo "::error::GitHub Secrets 에 값이 없습니다 (환경변수 이름 기준):$MISSING  → DASHBOARD_SECRET_KEY, DASHBOARD_ALLOWED_HOSTS, ORACLE_DSN, DB_USERNAME, DB_PASSWORD 시크릿을 확인하세요"
-            exit 1
-          fi
-          {
-            echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY"
-            echo "DJANGO_DEBUG=False"
-            echo "DJANGO_ALLOWED_HOSTS=$DJANGO_ALLOWED_HOSTS"
-            echo "ORACLE_DSN=$ORACLE_DSN"
-            echo "ORACLE_USER=$ORACLE_USER"
-            echo "ORACLE_PASSWORD=$ORACLE_PASSWORD"
-            echo "STATS_SYNC_TOKEN=$STATS_SYNC_TOKEN"
-            echo "SPRING_API_BASE_URL=http://localhost:8082"
-          } > project_4/dashboard/.env
-          echo "✅ dashboard .env 생성 완료"
+          ls -al project_3/front
+          ls -al project_3/front/.next || true
+          ls -al project_3/front/public || true
 
-      - name: Ensure app directory exists on EC2
+      - name: Ensure front directory exists on EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: mkdir -p /home/ubuntu/app/project_4/dashboard
+          script: mkdir -p /home/ubuntu/app/front
 
-      - name: Copy dashboard code to EC2
+      # 빌드 결과물(.next, public, package.json,   .env.production)을 압축     
+      - name: Archive frontend build
+        run: |
+          cd project_3/front
+          tar -czf ../../frontend-build.tar.gz .next public package.json .env.production
+
+      - name: Copy frontend archive to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "project_4/dashboard/*,project_4/dashboard/.env"
-          target: "/home/ubuntu/app"
+          source: "frontend-build.tar.gz"
+          target: "/home/ubuntu/app/front"
 
-      # Django 자체 관리자 계정(auth_user)용 로컬 sqlite 만 migrate 한다.
-      # analytics(Oracle 매핑, managed=False) 쪽은 DB 라우터가 마이그레이션을 막아 Oracle 에는 아무것도 만들지 않는다.
-      - name: Install deps & migrate (local sqlite only) on EC2
+      - name: Extract archive on EC2 (기존 빌드 정리 후)
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/app/project_4/dashboard
-            python3 -m venv .venv || true
-            . .venv/bin/activate
-            pip install -r requirements.txt
-            pip install gunicorn
-            python manage.py migrate --database=default --noinput
+            cd /home/ubuntu/app/front
+            rm -rf .next public
+            tar -xzf frontend-build.tar.gz
 
-      - name: Restart dashboard with pm2 (gunicorn, port 8083)
+      - name: Run Frontend on EC2 with pm2
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/app/project_4/dashboard
-            pm2 delete project4-dashboard || true
-            pm2 start ".venv/bin/gunicorn" --name project4-dashboard -- config.wsgi:application --bind 0.0.0.0:8083
-            pm2 save
+            cd /home/ubuntu/app/front
+            npm install --production
+            pm2 delete frontend || true
+            pm2 start npm --name "frontend" -- run start
 
-  # ═══════════════════════════════ 3. Flutter 모바일 앱 (APK) ═══════════════════════════════
-  build-mobile-apk:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK 17 (Android build)
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      # pubspec.yaml 이 Dart ^3.13.3 을 요구한다. 예전 workflow 는 Flutter 3.24.0(Dart 3.5)으로 고정해서
-      # `flutter pub get` 단계에서 "SDK 버전 불일치"로 항상 실패했다. → 버전을 고정하지 않고 최신 stable 을 사용.
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-        working-directory: project_4/mobile
-
-      # 정적 분석 결과를 로그로 보여주되 배포를 막지는 않는다.
-      # (info 수준 lint 로 실패하는 것을 막기 위해 continue-on-error. 진짜 컴파일 에러는 아래 build 단계에서 실패로 잡힘)
-      - name: Flutter analyze (참고용 - 실패해도 계속 진행)
-        continue-on-error: true
-        run: flutter analyze
-        working-directory: project_4/mobile
-
-      # API_BASE_URL_P4 시크릿(예: https://bookproject4.duckdns.org)을 앱에 심는다. 비어 있으면 api_client.dart 의 기본값을 사용.
-      - name: Flutter test (포맷 유틸 단위 테스트)
-        run: flutter test
-        working-directory: project_4/mobile
-
-      - name: Build APK
-        env:
-          API_BASE_URL: ${{ secrets.API_BASE_URL_P4 }}
-        run: flutter build apk --release --dart-define=API_BASE_URL="$API_BASE_URL"
-        working-directory: project_4/mobile
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: project4-app-release
-          path: project_4/mobile/build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
