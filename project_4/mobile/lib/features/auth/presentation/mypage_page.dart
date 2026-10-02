@@ -11,6 +11,7 @@ import '../../orders/presentation/orders_page.dart';
 import '../../post/presentation/liked_posts_page.dart';
 import '../../post/presentation/user_profile_page.dart';
 import '../data/auth_provider.dart';
+import 'admin_stats_page.dart';
 import '../../../shared/text_input_dialog.dart';
 
 class MyPage extends ConsumerWidget {
@@ -76,6 +77,7 @@ class MyPage extends ConsumerWidget {
           _tile(context, Icons.favorite_border, '좋아요한 글', const LikedPostsPage()),
           _tile(context, Icons.map_outlined, '매장 지도', const StoreMapPage()),
           if (auth.isAdmin) _tile(context, Icons.library_add_outlined, '외부 도서 검색·등록 (관리자)', const ExternalSearchPage()),
+          if (auth.isAdmin) _tile(context, Icons.insights_outlined, '운영 통계 (관리자)', const AdminStatsPage()),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout),

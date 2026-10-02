@@ -152,3 +152,30 @@ def sync_now(request):
     except requests.RequestException as e:
         messages.error(request, f"Spring Boot 서버에 연결하지 못했습니다: {e}")
     return redirect("dashboard")
+
+
+def _jsonable(data):
+    """날짜·Decimal 등 JSON 으로 바로 못 바꾸는 값을 문자열로 바꿔서 앱이 읽을 수 있게"""
+    return json.loads(json.dumps(data, default=str, ensure_ascii=False))
+
+
+def api_stats(request):
+    """앱 관리자 통계 화면용 JSON API.
+    Spring Boot(/api/admin/stats)가 관리자 JWT 를 확인한 뒤 X-Sync-Token 을 붙여 대신 호출한다.
+    대시보드 화면과 같은 집계 함수를 그대로 써서 웹 대시보드와 앱 숫자가 항상 같다."""
+    if request.method != "GET":
+        return JsonResponse({"status": "fail", "message": "GET 요청만 지원합니다."}, status=405)
+    token = request.headers.get("X-Sync-Token", "")
+    if not settings.STATS_SYNC_TOKEN or token != settings.STATS_SYNC_TOKEN:
+        return JsonResponse({"status": "fail", "message": "동기화 토큰이 올바르지 않습니다."}, status=403)
+    data = {"db_error": None}
+    try:
+        data["sales"] = _sales_context()
+        data["community"] = _community_context()
+        data["chatbot"] = _chatbot_context()
+    except DatabaseError as e:
+        log.warning("Oracle 조회 실패: %s", e)
+        data["db_error"] = "Oracle 에 연결하지 못했습니다."
+    data["ops"] = analysis.ops_trend(list(ServiceLog.objects.values(
+        "date", "new_users", "paid_orders", "chatbot_questions")))
+    return JsonResponse(_jsonable(data))
