@@ -26,10 +26,13 @@ class _BookDetailPageState extends ConsumerState<BookDetailPage> {
     if (!requireLogin(context, ref)) return;
     final String? err = await ref.read(cartProvider.notifier).add(widget.bookId, _qty);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    // 최신 Flutter 는 '보기' 같은 버튼이 달린 스낵바를 자동으로 닫지 않아서(다른 버튼을 가림) 3초 뒤 직접 닫는다
+    final controller = ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(err ?? '장바구니에 담았습니다.'),
+      duration: const Duration(seconds: 3),
       action: err == null ? SnackBarAction(label: '보기', onPressed: () => Navigator.popUntil(context, (r) => r.isFirst)) : null,
     ));
+    Future.delayed(const Duration(seconds: 3), controller.close);
   }
 
   void _buyNow(Map<String, dynamic> book) {
