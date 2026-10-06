@@ -44,4 +44,26 @@ __pycache__/
  
 # Eclipse 빌드 출력 (하위 폴더 포함)
 bin/
- 
+
+# ── 비밀값: 절대 GitHub에 올리지 않기 ──
+**/application-oauth.properties
+**/application-secret*.yml
+**/application-secret*.properties
+.env.*
+!**/.env.example
+!project_3/front/.env.production
+*.jks
+*.keystore
+**/*accessKeys*.csv
+
+# ── 로컬 실행·자동 생성 파일 ──
+local.properties
+*.sqlite3
+**/ephemeral/
+.flutter-plugins-dependencies
+HELP.md
+
+# ── 큰 파일·압축 파일 ──
+*.zip
+*.apk
+*.mp4
