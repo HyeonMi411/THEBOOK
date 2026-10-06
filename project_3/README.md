@@ -1,6 +1,6 @@
 # 📚 BookStore v3 — 온라인 도서 쇼핑몰 (Spring Boot 3 + Next.js)
 
-> BookStore 프로젝트의 최종 버전입니다. 백엔드/프론트엔드를 REST API로 완전히 분리하고, JWT 인증·카카오페이 실결제·Redis 캐싱·AI RAG 챗봇까지 실무 서비스 수준의 기능을 갖췄습니다.
+> BookStore 프로젝트의 세 번째 버전이자 웹 배포 버전입니다. 백엔드/프론트엔드를 REST API로 완전히 분리하고, JWT 인증·카카오페이 실결제·Redis 캐싱·AI RAG 챗봇까지 실무 서비스 수준의 기능을 갖췄습니다.
 
 ---
 
@@ -11,7 +11,7 @@
 | [v1](../project_1) | Spring MVC + MyBatis + JSP | - |
 | [v2](../project_2) | Spring Boot + Thymeleaf + OAuth2 + AI RAG | - |
 | **v3 (현재)** | REST API + JWT + Next.js + 카카오페이 | 🟢 배포됨 |
-| [v4](../project_4) | Flutter 모바일 앱 + SNS 게시판 + 통계 대시보드 | 🟡 배포 준비 중 |
+| [v4](../project_4) | Flutter 모바일 앱 + SNS 게시판 + 통계 대시보드 | - |
 
 ---
 
@@ -24,7 +24,7 @@
 | 배포 주소 | https://bookproject3.duckdns.org/books |
 | 이전 버전 | [← v2 (Spring Boot + Thymeleaf)](../project_2) · [v1 (Spring MVC + MyBatis)](../project_1) |
 
-v1 → v2 → v3로 이어지는 BookStore 시리즈의 최종 단계입니다. 데이터 접근 계층을 도메인 특성에 따라 **JPA와 MyBatis로 의도적으로 분리**했고, 개발 과정에서 발견한 보안 취약점(IDOR, 파일 업로드 검증 미비, 계정 중복 등)과 외부 API 연동 이슈(Jackson 역직렬화, 비용 통제)를 실제로 찾아 수정한 이력이 있습니다.
+v1 → v2 → v3로 이어지는 웹 버전의 완성 단계이며, 이후 v4에서 모바일 앱으로 확장했습니다. 데이터 접근 계층을 도메인 특성에 따라 **JPA와 MyBatis로 의도적으로 분리**했고, 개발 과정에서 발견한 보안 취약점(IDOR, 파일 업로드 검증 미비, 계정 중복 등)과 외부 API 연동 이슈(Jackson 역직렬화, 비용 통제)를 실제로 찾아 수정한 이력이 있습니다.
 
 ---
 
