@@ -36,12 +36,29 @@ public class RedisConfig {
         // key 직렬화 : KEY깨지지 않게 문자열로 
         template.setKeySerializer(new StringRedisSerializer());
         
-        // Value 직렬화        
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        // Value 직렬화 - 도서 정보의 날짜(LocalDate/LocalDateTime)도 저장할 수 있도록 JavaTimeModule 을 등록한
+        // ObjectMapper 사용. (기본 GenericJackson2JsonRedisSerializer 는 Java 날짜 타입을 못 다뤄서,
+        //  판매 기록이 생긴 뒤 베스트셀러를 캐시에 저장할 때 500 오류가 났음)
+        GenericJackson2JsonRedisSerializer valueSerializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper());
+        template.setValueSerializer(valueSerializer);
         // hash 구조 직렬화 설정
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setHashValueSerializer(valueSerializer);
 
         return template;
+    }
+
+    /** Redis 캐시용 ObjectMapper - 기본 직렬화기와 같은 타입 정보(@class) + Java 날짜 지원 */
+    private com.fasterxml.jackson.databind.ObjectMapper redisObjectMapper() {
+        com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+        om.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        om.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        om.disable(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        om.activateDefaultTyping(
+                om.getPolymorphicTypeValidator(),
+                com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping.EVERYTHING,
+                com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY);
+        GenericJackson2JsonRedisSerializer.registerNullValueSerializer(om, null);
+        return om;
     }    
 }
