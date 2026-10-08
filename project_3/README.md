@@ -9,7 +9,7 @@
 | 버전 | 설명 | 상태 |
 |---|---|---|
 | [v1](../project_1) | Spring MVC + MyBatis + JSP | - |
-| [v2](../project_2) | Spring Boot + Thymeleaf + OAuth2 + AI RAG | - |
+| [v2](../project_2) | Spring Boot + Thymeleaf + OAuth2 소셜로그인 | - |
 | **v3 (현재)** | REST API + JWT + Next.js + 카카오페이 | 🟢 배포됨 |
 | [v4](../project_4) | Flutter 모바일 앱 + SNS 게시판 + 통계 대시보드 | - |
 
@@ -94,7 +94,7 @@ Spring Boot 3
 ```
 
 ### ERD 핵심 구조
-`APP_USER` — `BOOK`(1:1 `BOOK_STOCK`) — `CART`/`CART_ITEM` — `ORDERS`/`ORDER_ITEM` — `SBOARD2`(공지사항)
+`APP_USER` — `BOOK`(1:1 `BOOK_STOCK`) — `CART`/`CART_ITEM` — `ORDERS`/`ORDER_ITEMS` — `SBOARD2`(공지사항)
 
 ### 배포 구조
 ```
@@ -121,9 +121,11 @@ GitHub Actions → EC2 SSH 배포 → pm2 (backend/frontend 프로세스 관리)
 ```
 1. 결제 준비 — 재고 확인만, 차감하지 않음
 2. 사용자 결제 진행 — 카카오페이 결제창
-3. 결제 승인 — 이 시점에만 실제 재고 차감(비관적+낙관적 락)
+3. 결제 승인 — 카카오페이 승인 API를 호출하기 전에 재고를 잠그고 확인·차감(비관적+낙관적 락)
+   → 재고가 부족하면 승인 요청 자체를 보내지 않음
 ```
 결제 준비 시점이 아니라 **승인 시점**에 재고를 차감하는 이유는, 결제창에서 이탈하는 사용자 때문에 재고가 미리 묶이는 것을 방지하기 위해서입니다.
+또한 재고 확인을 승인 API 호출 **앞**에 두어, "결제는 완료됐는데 재고 부족으로 주문만 취소되는" 상황이 생기지 않도록 했습니다.
 
 ---
 
@@ -149,12 +151,23 @@ GitHub Actions → EC2 SSH 배포 → pm2 (backend/frontend 프로세스 관리)
 | "탈퇴한 계정" 오탐 | 소프트 삭제된 계정으로 비밀번호를 바꿔도 탈퇴 플래그 때문에 로그인 차단 | 탈퇴 여부를 먼저 확인해 정확한 에러 메시지 노출, 실제 계정 삭제 절차 수립 |
 | 카카오 로그아웃/결제 리다이렉트 실패 (KOE007) | 카카오 개발자 콘솔에 배포 도메인이 Redirect URI로 미등록 | 카카오 로그인/카카오페이 콘솔 양쪽에 실제 도메인 등록 |
 
+**운영 단계 (배포 후 직접 사용하며 발견, 2026.10)**
+
+| 문제 | 원인 | 해결 |
+|---|---|---|
+| GitHub Actions 빌드 실패 | Gradle 플러그인 저장소를 찾지 못함 | `settings.gradle`에 `pluginManagement`(gradlePluginPortal + mavenCentral) 추가 |
+| 카카오 도서검색 결과 0건 | 한글 검색어를 URL 인코딩하지 않고 외부 API 호출 | `UriComponentsBuilder`에 `.encode()` 추가 |
+| 베스트셀러 500 오류 | Redis 캐시에 날짜(`LocalDateTime`) 직렬화 설정 누락 | `JavaTimeModule`을 등록한 ObjectMapper로 `RedisConfig` 수정 |
+| 결제는 됐는데 재고 부족 가능성 | 카카오페이 승인 API 호출 **후**에 재고를 확인하는 순서 | 재고 잠금·확인·차감을 승인 호출 **앞**으로 옮기고, 재고 부족 시 승인 API가 호출되지 않음을 테스트로 검증 |
+
 ---
 
 ## 🚀 실행 방법
 
 ### 백엔드
 ```bash
+cd back
+
 # 1. Oracle DB 준비, Redis 실행
 redis-server
 
@@ -168,6 +181,7 @@ redis-server
 
 ### 프론트엔드
 ```bash
+cd front
 npm install
 npm run dev
 ```
@@ -175,8 +189,8 @@ npm run dev
 
 ### 테스트
 ```bash
-./gradlew test      # 백엔드 (JUnit5)
-npx jest             # 프론트엔드 — 11 suites / 180 tests
+cd back && ./gradlew test      # 백엔드 (JUnit5)
+cd front && npx jest             # 프론트엔드 — 11 suites / 180 tests
 ```
 
 ---

@@ -8,6 +8,7 @@
 | 구분 | 개인 프로젝트 (기획·백엔드·앱·대시보드 1인 개발) |
 | 시연 영상 | [앱 1편](https://www.youtube.com/watch?v=pUG-v9Hbqv8) · [앱 2편](https://www.youtube.com/watch?v=EuUjMA2sNWk) · [운영 대시보드](https://www.youtube.com/watch?v=K4Q3YSEAb-0) |
 | 이전 버전 | [← v3 (REST API + JWT + Next.js)](../project_3) |
+| 배포 | 로컬 실행 기준 (서버 비용과 운영 중인 v3 보호를 위해 미배포, 배포 워크플로 `deploy-project4.yml`은 수동 실행용으로 준비) |
 
 | 구성 | 기술 | 포트 |
 |---|---|---|
@@ -66,15 +67,18 @@ Flutter 앱 ──REST(JWT)──▶ Spring Boot API ──▶ Oracle (업무 �
 
 ## 🚀 실행 방법
 
+각 단계는 `project_4/` 폴더 기준, **별도 터미널**에서 실행합니다.
+
 ```bash
 # 1) 백엔드 (Oracle, Redis 실행 후)
-cd back && cp .env.example .env    # 값 채우기 (외부 API 키는 비워도 실행됨)
+cd back && cp .env.example .env    # 값 채우기 (JWT_SECRET은 필수, 외부 API 키는 비워도 실행됨)
 ./gradlew bootRun                   # http://localhost:8082/swagger-ui/index.html
 
 # 2) 대시보드
 cd dashboard && cp .env.example .env
 pip install -r requirements.txt
 python manage.py migrate --database=default
+python manage.py createsuperuser --database=default   # 대시보드 로그인 계정
 python manage.py runserver          # http://localhost:8000
 
 # 3) 앱 (에뮬레이터)

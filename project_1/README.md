@@ -9,7 +9,7 @@
 | 버전 | 설명 | 상태 |
 |---|---|---|
 | **v1 (현재)** | Spring MVC + MyBatis + JSP | - |
-| [v2](../project_2) | Spring Boot + Thymeleaf + OAuth2 + AI RAG | - |
+| [v2](../project_2) | Spring Boot + Thymeleaf + OAuth2 소셜로그인 | - |
 | [v3](../project_3) | REST API + JWT + Next.js + 카카오페이 | 🟢 배포됨 |
 | [v4](../project_4) | Flutter 모바일 앱 + SNS 게시판 + 통계 대시보드 | - |
 
@@ -30,12 +30,12 @@
 ## 🛠 기술 스택
 
 **Backend**
-- Java, Spring MVC (XML Context 설정: `root-context.xml`, `servlet-context.xml`, `security-context.xml`)
-- Spring Security (세션 기반 폼 로그인)
+- Java 11, Spring MVC 4.3 (XML Context 설정: `root-context.xml`, `servlet-context.xml`, `security-context.xml`)
+- Spring Security 4.2 (세션 기반 폼 로그인)
 - MyBatis + MyBatis-Spring
 
 **Database**
-- MySQL, Oracle(ojdbc11) 병행 지원
+- MySQL (mysql-connector-java 8.0) / HikariCP 커넥션 풀
 - log4jdbc-log4j2-jdbc4 (SQL 로깅)
 
 **View**
@@ -48,9 +48,9 @@
 
 ## ✨ 주요 기능
 
-1. **회원가입 / 로그인** — 세션 기반 Spring Security 인증
-2. **도서 관리** — 등록 / 수정 / 삭제 / 목록 조회
-3. **게시판** — 글쓰기 / 수정 / 삭제 / 목록 / 상세 조회
+1. **회원가입 / 로그인 / 마이페이지** — 세션 기반 Spring Security 인증, 이메일·닉네임 중복확인
+2. **도서 관리** — 등록(이미지 업로드) / 수정 / 삭제 / 목록(페이징) / 상세 조회
+3. **게시판** — 글쓰기(파일 첨부) / 수정 / 삭제 / 목록(페이징) / 상세 조회
 
 ---
 
@@ -65,7 +65,7 @@ com.the703
 ├── security     # LoginSuccessHandler, CustomUserDetailsService, DeniedHandler
 └── util
 
-src/main/resources (config)
+src/main/java/config
 ├── root-context.xml       # 공통 Bean 설정
 ├── servlet-context.xml    # MVC 설정
 ├── security-context.xml   # Spring Security 설정
@@ -99,12 +99,10 @@ XML 기반 설정으로 Bean과 요청 흐름을 직접 구성하며 Spring의 �
 ## 🚀 실행 방법
 
 ```bash
-# 1. MySQL 또는 Oracle DB 준비 후 계정/스키마 생성
-# 2. config/*.xml 에서 DB 접속 정보 확인
-# 3. Maven 빌드
-mvn clean install
-
-# 4. Tomcat 등 서블릿 컨테이너에 war 배포 후 실행
+# 1. MySQL DB 준비 후 계정/스키마 생성
+# 2. src/main/java/config/db.properties 에서 DB 접속 정보 수정
+# 3. STS(Eclipse)에서 프로젝트를 Tomcat 서버에 추가해 실행
+#    (Maven 빌드 시: mvn clean package -DskipTests → war를 Tomcat에 배포)
 ```
 
 배포된 버전은 없으며, 로컬 서블릿 컨테이너(Tomcat)에서 실행해 확인하는 버전입니다.

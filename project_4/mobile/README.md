@@ -1,6 +1,6 @@
 # BookStore v4 — Flutter 앱
 
-Feature-first 구조 (track011 수업 방식)
+Feature-first 구조 (기능별 data / presentation 분리)
 
 ```
 lib/
@@ -22,4 +22,6 @@ lib/
 ```
 
 실행: `flutter pub get && flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8082`
-테스트: `flutter test`
+※ `--dart-define=API_BASE_URL` 없이 Android로 빌드하면 미배포 서버 주소를 바라보므로 반드시 지정합니다.
+
+테스트: `flutter test` (가격·날짜 포맷 유틸 단위 테스트)

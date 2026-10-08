@@ -12,8 +12,8 @@
 | 버전 | 핵심 변화 | 기간 | 결과물 |
 |---|---|---|---|
 | [**v1**](./project_1) | Spring MVC + MyBatis — 3-Tier 아키텍처 기본기 | 2026.06.16 ~ 06.22 | 시연 영상 |
-| [**v2**](./project_2) | Spring Boot 전환 + OAuth2 소셜로그인 + AI RAG 챗봇 | 2026.07.02 ~ 07.14 | 시연 영상 |
-| [**v3**](./project_3) | REST API + JWT + Next.js 분리, 카카오페이 결제, AWS 배포 | 2026.08.12 ~ 08.28 | 🟢 **배포됨** → [bookproject3.duckdns.org](https://bookproject3.duckdns.org/books) |
+| [**v2**](./project_2) | Spring Boot 전환 + OAuth2 소셜로그인 | 2026.07.02 ~ 07.14 | 시연 영상 |
+| [**v3**](./project_3) | REST API + JWT + Next.js 분리, 카카오페이 결제, AI 문서 챗봇, AWS 배포 | 2026.08.12 ~ 08.28 | 🟢 **배포됨** → [bookproject3.duckdns.org](https://bookproject3.duckdns.org/books) |
 | [**v4**](./project_4) | Flutter 모바일 앱 + SNS 커뮤니티 + Django 운영 대시보드 | 2026.09.11 ~ 09.23 | 시연 영상 · 앱 소스 |
 
 각 폴더의 README에 버전별 기술 스택, 트러블슈팅, 실행 방법이 정리되어 있습니다.
@@ -29,7 +29,8 @@ v1 (2026.06)              v2 (2026.07)              v3 (2026.08)                
 Spring MVC(XML)    ──▶    Spring Boot        ──▶    REST API + Next.js SPA ──▶   Flutter 모바일 앱
 MyBatis 단일              자동설정                  JPA + MyBatis 하이브리드      + SNS 커뮤니티
 세션 인증                 OAuth2 소셜로그인         JWT 무상태 인증               + 외부 API 장애 대응
-JSP                       AI RAG 챗봇               Redis 캐싱, 카카오페이        + Django 운영 대시보드
+JSP                       외부 API 연동             Redis 캐싱, 카카오페이        + Django 운영 대시보드
+                                                    AI 문서 챗봇(RAG)
                                                     EC2 배포 · CI/CD              (Java ↔ Python 연동)
 ```
 
@@ -57,11 +58,13 @@ JSP                       AI RAG 챗봇               Redis 캐싱, 카카오페
 | 버전 | 문제 | 해결 |
 |---|---|---|
 | v1 | XML Bean 등록 범위 충돌 | root-context / servlet-context 역할 분리 |
-| v2 | PDF가 길수록 AI 응답 지연·비용 증가 | 컨텍스트 길이 상한 적용 |
+| v3 | AI 챗봇에 긴 PDF를 그대로 보내면 응답 지연·비용 증가 | 입력 6,000자·응답 500토큰 상한 적용 |
 | v3 | 결제 승인 시점 재고 동시 차감 | 비관적 락 + 낙관적 락 이중 적용 |
 | v3 | JPA 1차 캐시와 MyBatis 데이터 불일치 | `entityManager.clear()`로 동기화 |
 | v3 | 하드 삭제 시 FK 제약 위반(ORA-02292) | Soft Delete 정책으로 전환 |
 | v3 배포 | nginx 라우팅·CI/CD 시크릿·Redirect URI 누락 | 운영 로그로 원인 추적 후 해결 |
+| v3 운영 | 도서검색 0건·베스트셀러 500·CI 빌드 실패 | 한글 URL 인코딩, Redis 날짜 직렬화, Gradle 플러그인 저장소 설정 수정 |
+| v3 운영 | 카카오페이 승인 후에 재고를 확인하는 순서 | 재고 확인·차감을 승인 API 호출 앞으로 옮겨 "결제됐는데 재고 없음" 방지 |
 | v4 | 앱에서 15분마다 로그인 해제 | 앱 저장소에 토큰 보관 + Dio 인터셉터 자동 재발급 |
 | v4 | 한글 검색 시 외부 API 400·502 | URL 인코딩 누락 수정 |
 | v4 | 기상청 API 장애·키 미설정 | Open-Meteo 대체 경로 |
@@ -74,7 +77,7 @@ JSP                       AI RAG 챗봇               Redis 캐싱, 카카오페
 ```
 THEBOOK/
 ├── project_1/   Spring MVC + MyBatis
-├── project_2/   Spring Boot + Thymeleaf + AI RAG
+├── project_2/   Spring Boot + Thymeleaf + OAuth2
 ├── project_3/   REST API + JWT + Next.js (AWS 배포됨)
 │   ├── back/       Spring Boot
 │   └── front/      Next.js
