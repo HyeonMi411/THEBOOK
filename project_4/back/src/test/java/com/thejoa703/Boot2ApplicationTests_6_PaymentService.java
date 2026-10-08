@@ -368,6 +368,10 @@ class Boot2ApplicationTests_6_PaymentService {
 
 		assertThatThrownBy(() -> paymentService.approve(buyer.getId(), order.getId(), "pg_token_test"))
 				.isInstanceOf(IllegalStateException.class);
+
+		// 재고가 부족하면 카카오페이 결제 승인(실제 결제)은 호출되지 않아야 함
+		Mockito.verify(kakaoPayApiService, Mockito.never()).approve(
+				Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 	}
 
 	//-------------------------------------------------------------------

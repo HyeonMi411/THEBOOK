@@ -98,10 +98,9 @@ public class PaymentService {
 			throw new IllegalStateException("결제 준비가 되지 않은 주문입니다.");
 		}
 
-		KakaoPayApproveResponse res = kakaoPayApiService.approve(
-				order.getTid(), String.valueOf(orderId), String.valueOf(userId), pgToken
-		);
-
+		// [순서] 1) 재고 확인·차감  2) 카카오페이 결제 승인
+		// 재고를 먼저 잠그고(비관적 락) 확인한 뒤에 결제를 승인해야, 재고가 부족할 때 돈이 빠져나가지 않음.
+		// 카카오페이 승인이 실패하면 예외가 발생하고 @Transactional 이 재고 차감까지 함께 롤백함.
 		for (OrderItem item : order.getItems()) {
 			BookStock stock = bookStockRepository.findByIdForUpdate(item.getBook().getId())
 					.orElseThrow(() -> new IllegalStateException("재고 정보가 없습니다: " + item.getBookTitleSnapshot()));
@@ -116,6 +115,11 @@ public class PaymentService {
 				throw new IllegalStateException("[" + item.getBookTitleSnapshot() + "] 재고 갱신 충돌이 발생했습니다. 다시 시도해주세요.");
 			}
 		}
+
+		// 재고 확보가 끝난 뒤에만 실제 결제(카카오페이 승인)를 진행
+		KakaoPayApproveResponse res = kakaoPayApiService.approve(
+				order.getTid(), String.valueOf(orderId), String.valueOf(userId), pgToken
+		);
 
 		order.setOrderStatus(OrderStatus.PAID);
 		order.setApprovedAt(LocalDateTime.now());
